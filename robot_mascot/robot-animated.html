@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simtec Robot</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .scene {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Shadow on the ground */
+  .shadow {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 30px;
+    background: radial-gradient(ellipse, rgba(0,220,255,0.25) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: shadowPulse 3s ease-in-out infinite;
+    filter: blur(4px);
+  }
+
+  /* Outer glow ring */
+  .glow-ring {
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center,
+      rgba(0,220,255,0.06) 0%,
+      rgba(255,60,190,0.04) 40%,
+      transparent 70%
+    );
+    animation: glowPulse 2.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Floating particles */
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: float linear infinite;
+    opacity: 0;
+  }
+
+  .particle:nth-child(1)  { width:4px; height:4px; background:#00dcff; left:15%; top:70%; animation-duration:4.2s; animation-delay:0s; }
+  .particle:nth-child(2)  { width:3px; height:3px; background:#ff3cbe; left:80%; top:60%; animation-duration:3.7s; animation-delay:0.8s; }
+  .particle:nth-child(3)  { width:5px; height:5px; background:#00dcff; left:25%; top:80%; animation-duration:5.1s; animation-delay:1.5s; }
+  .particle:nth-child(4)  { width:3px; height:3px; background:#ff3cbe; left:70%; top:75%; animation-duration:4.8s; animation-delay:0.3s; }
+  .particle:nth-child(5)  { width:4px; height:4px; background:#00dcff; left:50%; top:85%; animation-duration:3.9s; animation-delay:2.1s; }
+  .particle:nth-child(6)  { width:2px; height:2px; background:#ff3cbe; left:35%; top:65%; animation-duration:4.5s; animation-delay:1.0s; }
+  .particle:nth-child(7)  { width:3px; height:3px; background:#00dcff; left:88%; top:70%; animation-duration:5.3s; animation-delay:0.5s; }
+  .particle:nth-child(8)  { width:4px; height:4px; background:#ff3cbe; left:10%; top:55%; animation-duration:4.0s; animation-delay:1.8s; }
+
+  /* The robot image */
+  .robot {
+    position: relative;
+    width: 340px;
+    image-rendering: crisp-edges;
+    animation:
+      hover 3s ease-in-out infinite,
+      sway  6s ease-in-out infinite,
+      glowFilter 2.8s ease-in-out infinite;
+    transform-origin: center bottom;
+    z-index: 2;
+  }
+
+  /* Play button pulse overlay */
+  .play-pulse {
+    position: absolute;
+    /* Approximately where the play button is on the tablet */
+    top: 38%;
+    left: 34%;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(0, 220, 255, 0.3);
+    animation: playPulse 1.8s ease-out infinite;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .play-pulse::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,220,255,0.25);
+    animation: playRing 1.8s ease-out infinite;
+  }
+
+  /* Eye glow dots */
+  .eye {
+    position: absolute;
+    border-radius: 50%;
+    animation: eyeGlow 2.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .eye-left  { width:10px; height:10px; background:#00dcff; top:14.5%; left:38%; box-shadow: 0 0 8px #00dcff, 0 0 16px #00dcff; }
+  .eye-right { width:10px; height:10px; background:#00dcff; top:14.5%; left:55%; box-shadow: 0 0 8px #00dcff, 0 0 16px #00dcff; }
+
+  /* ─── Keyframes ─── */
+
+  @keyframes hover {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50%       { transform: translateY(-18px) rotate(0deg); }
+  }
+
+  @keyframes sway {
+    0%, 100% { transform: translateY(0px) rotate(-1.2deg); }
+    25%       { transform: translateY(-9px) rotate(0.8deg); }
+    50%       { transform: translateY(-18px) rotate(1.5deg); }
+    75%       { transform: translateY(-9px) rotate(-0.5deg); }
+  }
+
+  @keyframes glowFilter {
+    0%, 100% {
+      filter: drop-shadow(0 0 6px rgba(0,220,255,0.5))
+              drop-shadow(0 0 16px rgba(0,220,255,0.25))
+              drop-shadow(0 0 3px rgba(255,60,190,0.4));
+    }
+    50% {
+      filter: drop-shadow(0 0 12px rgba(0,220,255,0.8))
+              drop-shadow(0 0 30px rgba(0,220,255,0.4))
+              drop-shadow(0 0 8px rgba(255,60,190,0.7));
+    }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { transform: scale(1);   opacity: 0.6; }
+    50%       { transform: scale(1.1); opacity: 1;   }
+  }
+
+  @keyframes shadowPulse {
+    0%, 100% { transform: translateX(-50%) scaleX(1);   opacity: 0.6; }
+    50%       { transform: translateX(-50%) scaleX(0.75); opacity: 0.3; }
+  }
+
+  @keyframes float {
+    0%   { transform: translateY(0)   translateX(0);   opacity: 0;   }
+    10%  { opacity: 0.9; }
+    90%  { opacity: 0.7; }
+    100% { transform: translateY(-120px) translateX(20px); opacity: 0; }
+  }
+
+  @keyframes playPulse {
+    0%   { transform: scale(0.8); opacity: 0.8; }
+    60%  { transform: scale(1.6); opacity: 0;   }
+    100% { transform: scale(0.8); opacity: 0;   }
+  }
+
+  @keyframes playRing {
+    0%   { transform: scale(1);   opacity: 0.6; }
+    100% { transform: scale(1.8); opacity: 0;   }
+  }
+
+  @keyframes eyeGlow {
+    0%, 100% { box-shadow: 0 0 6px #00dcff, 0 0 12px #00dcff; opacity: 1; }
+    50%       { box-shadow: 0 0 14px #00dcff, 0 0 28px #00dcff, 0 0 4px #fff; opacity: 0.7; }
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+  <!-- Ambient glow -->
+  <div class="glow-ring"></div>
+
+  <!-- Floating particles -->
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+
+  <!-- Robot with overlays -->
+  <div style="position:relative; display:inline-block;">
+    <img class="robot" src="3.png" alt="Simtec Robot">
+    <div class="eye eye-left"></div>
+    <div class="eye eye-right"></div>
+    <div class="play-pulse"></div>
+  </div>
+
+  <!-- Ground shadow -->
+  <div class="shadow"></div>
+</div>
+</body>
+</html>
