@@ -11,12 +11,10 @@ const inter = Inter({
 
 const leagueSpartan = localFont({
   src: [
-    { path: "../public/fonts/leaguespartan-bold.woff2", format: "woff2" },
-    { path: "../public/fonts/leaguespartan-bold.woff", format: "woff" },
+    { path: "../public/fonts/leaguespartan-bold.woff2", weight: "700" },
+    { path: "../public/fonts/leaguespartan-bold.woff", weight: "700" },
   ],
   variable: "--font-league-spartan",
-  weight: "700",
-  display: "swap",
 });
 
 export const metadata: Metadata = {
