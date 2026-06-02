@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <footer className="px-4 py-16 text-white md:px-16 md:py-24" style={{ background: "#111937" }}>
       <div className="mx-auto max-w-[var(--container-content)]">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between">
           <div>
             <Logo white />
             <p className="mt-6 max-w-xs text-sm text-white/70">

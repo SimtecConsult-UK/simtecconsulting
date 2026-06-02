@@ -349,7 +349,7 @@ export function HowItWorks() {
   }, []);
 
   return (
-    <section className="relative bg-[var(--color-surface-container-low)] px-4 pb-32 pt-24 md:px-16">
+    <section className="relative overflow-hidden bg-[var(--color-surface-container-low)] px-4 pb-32 pt-24 md:px-16">
       <HowItWorksTriangles />
       <h2
         className="relative z-10 mx-auto mb-16 max-w-xl text-center text-[22px] font-bold leading-snug tracking-[-0.01em] text-[var(--color-on-surface)] md:text-[28px]"

@@ -13,7 +13,7 @@ export function Hero() {
           className="mx-auto max-w-[840px] text-center text-[36px] font-bold leading-[1.04] tracking-[-0.02em] text-white sm:text-[48px] md:text-[60px] lg:text-[72px]"
           style={{ fontFamily: "var(--font-league-spartan)" }}
         >
-          Operational Systems for Construction Companies
+          Operational Systems Built for Real Construction Work
         </h1>
 
         <div className="mt-12 flex justify-center md:mt-16">

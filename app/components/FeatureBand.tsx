@@ -11,22 +11,17 @@ export function FeatureBand() {
 
         {/* Heading */}
         <h2
-          className="mx-auto max-w-[840px] text-center text-[36px] font-bold leading-[1.04] tracking-[-0.02em] sm:text-[48px] md:text-[60px] lg:text-[72px]"
+          className="text-center text-[36px] font-bold leading-[1.1] sm:text-[48px] md:text-[60px] lg:text-[72px]"
           style={{ fontFamily: "var(--font-league-spartan)" }}
         >
           <span
-            className="bg-clip-text text-transparent"
-            style={{
-              backgroundImage:
-                "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #4a6cf7 100%)",
-            }}
+            className="block whitespace-nowrap bg-clip-text text-transparent"
+            style={{ backgroundImage: "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #4a6cf7 100%)" }}
           >
             Operational Systems
           </span>
-          <br />
-          <span className="text-on-surface">Built for Real</span>
-          <br />
-          <span className="whitespace-nowrap text-on-surface">Construction Workflows</span>
+          <span className="block text-on-surface">Built for Real</span>
+          <span className="block text-on-surface">Construction Workflows</span>
         </h2>
 
         {/* Solution tabs */}
