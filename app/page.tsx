@@ -17,7 +17,7 @@ export default function Home() {
   return (
     <>
       <Nav />
-      <div className="flex min-h-screen flex-col" style={{ background: "linear-gradient(to bottom, #f8f1fe 0%, #f0e5fd 60%, #f5ecfe 100%)" }}>
+      <div className="flex min-h-screen flex-col" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0) 80%), #0b0a0c" }}>
         <Hero />
         <PartnerLogos />
       </div>

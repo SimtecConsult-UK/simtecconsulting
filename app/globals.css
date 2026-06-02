@@ -213,6 +213,11 @@
   animation: label-reveal 0.4s ease forwards;
 }
 
+/* ── League Spartan — global letter-spacing ── */
+[style*="font-league-spartan"] {
+  letter-spacing: 0.05em !important;
+}
+
 html {
   scroll-behavior: smooth;
 }
