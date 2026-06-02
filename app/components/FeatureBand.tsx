@@ -1,4 +1,3 @@
-import { ProductMock } from "./ProductMock";
 import { SolutionTabs } from "./SolutionTabs";
 
 
@@ -6,25 +5,8 @@ export function FeatureBand() {
   return (
     <section
       id="solutions"
-      className="relative overflow-hidden bg-[var(--color-surface-container-low)] px-4 py-24 md:px-16 md:py-32"
+      className="relative px-4 py-24 md:px-16 md:py-32"
     >
-      {/* Ambient depth shadows */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-[10%] top-[52%] h-[520px] w-[520px] rounded-full opacity-[0.16] blur-[120px]"
-        style={{ background: "#ff5db3" }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute right-[5%] top-[65%] h-[440px] w-[440px] rounded-full opacity-[0.13] blur-[110px]"
-        style={{ background: "#4a6cf7" }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute bottom-[8%] left-[38%] h-[360px] w-[360px] rounded-full opacity-[0.11] blur-[100px]"
-        style={{ background: "#b04df0" }}
-      />
-
       <div className="relative mx-auto max-w-[var(--container-content)]">
 
         {/* Heading */}
@@ -50,11 +32,6 @@ export function FeatureBand() {
         {/* Solution tabs */}
         <div className="mt-16 md:mt-20">
           <SolutionTabs />
-        </div>
-
-        {/* Product mock */}
-        <div className="mt-20 md:mt-28">
-          <ProductMock />
         </div>
 
       </div>

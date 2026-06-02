@@ -67,71 +67,65 @@ export function ProblemCards() {
   }, [active]);
 
   return (
-    <div
-      ref={containerRef}
-      className="relative overflow-hidden bg-[var(--color-surface-container-low)] py-14"
-    >
-      {/* Edge fade masks */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-36 md:w-56"
-        style={{ background: "linear-gradient(to right, var(--color-surface-container-low), transparent)" }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-36 md:w-56"
-        style={{ background: "linear-gradient(to left, var(--color-surface-container-low), transparent)" }}
-      />
+    // No overflow-hidden here — lets the parent's blobs paint through uninterrupted
+    <div ref={containerRef} className="relative py-14">
 
       {/* Label */}
       <p className="mb-6 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--color-outline)]">
         We Help Solve
       </p>
 
-      {/* Scrolling track */}
+      {/* Overflow clip + opacity-based edge fades via mask-image (colour-independent) */}
       <div
-        className="flex items-center"
+        className="relative overflow-hidden"
         style={{
-          gap: "5rem",
-          transform: `translateX(${tx}px)`,
-          transition: withTransition ? `transform ${TRANS_MS}ms cubic-bezier(0.4, 0, 0.2, 1)` : "none",
-          willChange: "transform",
+          maskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
         }}
       >
-        {TRACK.map((item, i) => {
-          const dist = Math.abs(i - active);
-          return (
-            <span
-              key={i}
-              ref={(el) => {
-                itemRefs.current[i] = el;
-              }}
-              className="select-none whitespace-nowrap font-bold"
-              style={
-                dist === 0
-                  ? {
-                      fontFamily: "var(--font-league-spartan)",
-                      fontSize: "clamp(26px, 3vw, 52px)",
-                      backgroundImage:
-                        "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #4a6cf7 100%)",
-                      backgroundClip: "text",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      color: "transparent",
-                    }
-                  : {
-                      fontFamily: "var(--font-league-spartan)",
-                      fontSize: "clamp(26px, 3vw, 52px)",
-                      color: "var(--color-outline-variant)",
-                      WebkitTextFillColor: "var(--color-outline-variant)",
-                      transition: `color ${TRANS_MS}ms ease`,
-                    }
-              }
-            >
-              {item}
-            </span>
-          );
-        })}
+
+        {/* Scrolling track */}
+        <div
+          className="flex items-center"
+          style={{
+            gap: "5rem",
+            transform: `translateX(${tx}px)`,
+            transition: withTransition ? `transform ${TRANS_MS}ms cubic-bezier(0.4, 0, 0.2, 1)` : "none",
+            willChange: "transform",
+          }}
+        >
+          {TRACK.map((item, i) => {
+            const dist = Math.abs(i - active);
+            return (
+              <span
+                key={i}
+                ref={(el) => { itemRefs.current[i] = el; }}
+                className="select-none whitespace-nowrap font-bold"
+                style={
+                  dist === 0
+                    ? {
+                        fontFamily: "var(--font-league-spartan)",
+                        fontSize: "clamp(26px, 3vw, 52px)",
+                        backgroundImage: "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #4a6cf7 100%)",
+                        backgroundClip: "text",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        color: "transparent",
+                      }
+                    : {
+                        fontFamily: "var(--font-league-spartan)",
+                        fontSize: "clamp(26px, 3vw, 52px)",
+                        color: "var(--color-outline-variant)",
+                        WebkitTextFillColor: "var(--color-outline-variant)",
+                        transition: `color ${TRANS_MS}ms ease`,
+                      }
+                }
+              >
+                {item}
+              </span>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

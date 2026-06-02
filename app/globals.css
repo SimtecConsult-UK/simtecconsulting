@@ -247,3 +247,47 @@ body {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
+
+/* ── CRT terminal drag cursor ── */
+.terminal-title-bar {
+  cursor: grab;
+}
+body.is-dragging,
+body.is-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+/* ── CRT terminal cursor ── */
+@keyframes terminal-blink {
+  0%, 49%  { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.terminal-cursor {
+  animation: terminal-blink 1s step-end infinite;
+  display: inline-block;
+}
+.terminal-scrollarea {
+  scrollbar-width: none;
+}
+.terminal-scrollarea::-webkit-scrollbar {
+  display: none;
+}
+
+/* Revealed scrollbar once typing is done — must come after the hide rules */
+.terminal-scrollbar-on {
+  scrollbar-width: thin;
+  scrollbar-color: #00ff41 rgba(0, 255, 65, 0.08);
+}
+.terminal-scrollbar-on::-webkit-scrollbar {
+  display: block;
+  width: 5px;
+}
+.terminal-scrollbar-on::-webkit-scrollbar-track {
+  background: rgba(0, 255, 65, 0.06);
+}
+.terminal-scrollbar-on::-webkit-scrollbar-thumb {
+  background: #00ff41;
+  border-radius: 0;
+  box-shadow: 0 0 6px rgba(0, 255, 65, 0.6);
+}
