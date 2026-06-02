@@ -18,14 +18,14 @@ export function PainPointBand() {
       const extra = wrapper.offsetHeight - vh;
 
       if (scrolled <= 0) {
-        card.style.transform = "scale(0.88)";
+        card.style.transform = "scale(0.62)";
         card.style.borderRadius = "32px";
         card.style.overflow = "hidden";
         return;
       }
 
       const progress = Math.min(scrolled / extra, 1);
-      const scale = 0.88 + progress * 0.06;
+      const scale = 0.62 + progress * 0.32;
       const radius = 32 - progress * 16;
       card.style.transform = `scale(${scale})`;
       card.style.borderRadius = `${radius}px`;

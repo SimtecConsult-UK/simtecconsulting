@@ -1,3 +1,5 @@
+"use client";
+import { useState, useEffect } from "react";
 import { Logo } from "./Logo";
 
 const links = [
@@ -7,8 +9,25 @@ const links = [
 ];
 
 export function Nav() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <nav className="relative z-20 w-full">
+    <nav
+      className="fixed top-0 left-0 right-0 z-50"
+      style={{
+        transition: "background 300ms ease, box-shadow 300ms ease, backdrop-filter 300ms ease",
+        background: scrolled ? "rgba(255,255,255,0.85)" : "transparent",
+        backdropFilter: scrolled ? "blur(12px)" : "none",
+        WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
+        boxShadow: scrolled ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
+      }}
+    >
       <div className="mx-auto flex max-w-[var(--container-content)] items-center justify-between px-4 py-5 md:px-16">
         <Logo />
         <ul className="hidden items-center gap-10 md:flex">
@@ -16,7 +35,7 @@ export function Nav() {
             <li key={link.href}>
               <a
                 href={link.href}
-                className="text-[15px] font-semibold text-white/90 transition-colors hover:text-white"
+                className="text-[15px] font-semibold text-[#1a1530]/80 transition-colors hover:text-[#1a1530]"
               >
                 {link.label}
               </a>
@@ -27,7 +46,7 @@ export function Nav() {
           href="#contact"
           className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand-blue)] px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#5d7dfa]"
         >
-          Speak to us
+          Book a Workshop
         </a>
       </div>
     </nav>

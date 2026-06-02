@@ -5,18 +5,18 @@ import React from "react";
 import { HowItWorksTriangles } from "./HowItWorksTriangles";
 
 const DOT_COUNT               = 12;
-const DOT_INTERVAL_MS         = 120;
-const CONNECTOR_MS            = DOT_COUNT * DOT_INTERVAL_MS; // 1440 ms
-const CONSTRUCTION_MS         = 2000; // construction animation duration (÷1.5)
+const DOT_INTERVAL_MS         = 60;   // 2× speed
+const CONNECTOR_MS            = DOT_COUNT * DOT_INTERVAL_MS; // 720 ms
+const CONSTRUCTION_MS         = 1000; // 2× speed
 const ICON_FADE_MS            = 400;  // cross-fade construction → icon
 const POST_CONSTRUCTION_PAUSE = 400;  // breathing room before connector starts
 const UNLOCK_PAUSE_MS         = 350;  // gap after connector before next step
 const CYCLE_MS =
   CONSTRUCTION_MS + ICON_FADE_MS + POST_CONSTRUCTION_PAUSE + CONNECTOR_MS + UNLOCK_PAUSE_MS;
 
-const CONNECTOR_H        = 200; // px
-const STEP_W             = 288; // 192 × 1.5
-const CIRCLE_W           = 120; // 80 × 1.5
+const CONNECTOR_H        = 260; // px
+const STEP_W             = 576; // 2× previous
+const CIRCLE_W           = 240; // 2× previous
 const circleCenterOffset = STEP_W / 2; // 144 px from the aligned edge
 
 /* ── tiny construction SVG ────────────────────────────────────────────────── */
@@ -27,7 +27,7 @@ function ConstructionSVG() {
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="h-[84px] w-[84px]"
+      className="h-[168px] w-[168px]"
     >
       {/* Fence — appears first */}
       <g className="c-fence" stroke="#f97316" strokeWidth="1.5">
@@ -100,7 +100,7 @@ const steps = [
     description: "We work with stakeholders to understand workflows, inefficiencies and operational pressures.",
     icon: (
       // Clipboard with magnifying glass — investigation / discovery
-      <svg viewBox="0 0 40 40" className="h-[54px] w-[54px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 40 40" className="h-[108px] w-[108px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="9" y="9" width="22" height="27" rx="2" />
         <path d="M15 9V7a2 2 0 014 0v2" />
         <rect x="13" y="7" width="14" height="4" rx="1" />
@@ -115,7 +115,7 @@ const steps = [
     description: "Operational processes are mapped, prioritised and standardised for digitisation.",
     icon: (
       // Flowchart: top box branches into two — process mapping
-      <svg viewBox="0 0 40 40" className="h-[54px] w-[54px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 40 40" className="h-[108px] w-[108px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="13" y="3" width="14" height="9" rx="2" />
         <path d="M20 12v5M20 17l-8 5M20 17l8 5" />
         <rect x="3" y="24" width="13" height="9" rx="2" />
@@ -128,7 +128,7 @@ const steps = [
     description: "Reusable components and targeted custom development are combined to create a tailored operational system.",
     icon: (
       // Monitor with code brackets — building the system
-      <svg viewBox="0 0 40 40" className="h-[54px] w-[54px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 40 40" className="h-[108px] w-[108px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="4" y="6" width="32" height="22" rx="3" />
         <path d="M4 22h32" />
         <path d="M15 34h10M20 28v6" />
@@ -141,7 +141,7 @@ const steps = [
     description: "Systems are rolled out across teams, projects and operational workflows.",
     icon: (
       // Rocket launching — rollout / go-live
-      <svg viewBox="0 0 40 40" className="h-[54px] w-[54px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 40 40" className="h-[108px] w-[108px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 4s-9 5-9 16h18C29 9 20 4 20 4z" />
         <circle cx="20" cy="15" r="3" />
         <path d="M11 20l-3 8h24l-3-8" />
@@ -154,7 +154,7 @@ const steps = [
     description: "Simtec continues to host, support and evolve systems over time.",
     icon: (
       // Server racks + circular arrows — ongoing hosting & iteration
-      <svg viewBox="0 0 40 40" className="h-[54px] w-[54px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 40 40" className="h-[108px] w-[108px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="5" y="7" width="30" height="8" rx="2" />
         <rect x="5" y="19" width="30" height="8" rx="2" />
         <circle cx="30" cy="11" r="1.5" fill="currentColor" stroke="none" />
@@ -357,7 +357,7 @@ export function HowItWorks() {
       >
         From Operational Challenge to Working System
       </h2>
-      <div ref={containerRef} className="relative z-10 mx-auto max-w-3xl">
+      <div ref={containerRef} className="relative z-10 mx-auto max-w-5xl">
         {steps.map((step, idx) => (
           <React.Fragment key={step.number}>
 
@@ -368,7 +368,7 @@ export function HowItWorks() {
                 {/* Circle */}
                 <div
                   ref={(el) => { circleRefs.current[idx] = el; }}
-                  className="relative flex items-center justify-center rounded-full border-2"
+                  className="relative flex items-center justify-center rounded-full border-[3px]"
                   style={{
                     width: CIRCLE_W, height: CIRCLE_W,
                     borderColor: "var(--color-outline-variant)",
@@ -398,19 +398,19 @@ export function HowItWorks() {
                 {/* Label */}
                 <div
                   ref={(el) => { labelRefs.current[idx] = el; }}
-                  className="mt-6"
+                  className="mt-12"
                   style={{ opacity: 0 }}
                 >
-                  <div className="text-[15px] font-bold tracking-[0.14em] text-[var(--color-brand-blue)]">
+                  <div className="text-[30px] font-bold tracking-[0.14em] text-[var(--color-brand-blue)]">
                     STEP {step.number}
                   </div>
                   <h3
-                    className="mt-1 text-[27px] font-bold leading-tight text-on-surface"
+                    className="mt-2 text-[54px] font-bold leading-tight text-on-surface"
                     style={{ fontFamily: "var(--font-league-spartan)" }}
                   >
                     {step.title}
                   </h3>
-                  <p className="mt-2 text-[18px] leading-relaxed text-on-surface-variant">
+                  <p className="mt-4 text-[36px] leading-relaxed text-on-surface-variant">
                     {step.description}
                   </p>
                 </div>

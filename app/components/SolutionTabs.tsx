@@ -164,7 +164,7 @@ export function SolutionTabs() {
 
       {/* Card */}
       <div
-        className="rounded-2xl border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] p-8"
+        className="rounded-2xl border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] p-8 shadow-[0_8px_48px_-8px_rgba(0,0,0,0.13),0_2px_10px_-4px_rgba(0,0,0,0.07)]"
         onMouseEnter={() => { pausedRef.current = true; }}
         onMouseLeave={() => { pausedRef.current = false; }}
       >

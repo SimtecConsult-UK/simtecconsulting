@@ -107,15 +107,26 @@ export function ProblemCards() {
                 itemRefs.current[i] = el;
               }}
               className="select-none whitespace-nowrap font-bold"
-              style={{
-                fontFamily: "var(--font-league-spartan)",
-                fontSize: "clamp(26px, 3vw, 52px)",
-                color:
-                  dist === 0
-                    ? "var(--color-on-surface)"
-                    : "var(--color-outline-variant)",
-                transition: `color ${TRANS_MS}ms ease`,
-              }}
+              style={
+                dist === 0
+                  ? {
+                      fontFamily: "var(--font-league-spartan)",
+                      fontSize: "clamp(26px, 3vw, 52px)",
+                      backgroundImage:
+                        "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #4a6cf7 100%)",
+                      backgroundClip: "text",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      color: "transparent",
+                    }
+                  : {
+                      fontFamily: "var(--font-league-spartan)",
+                      fontSize: "clamp(26px, 3vw, 52px)",
+                      color: "var(--color-outline-variant)",
+                      WebkitTextFillColor: "var(--color-outline-variant)",
+                      transition: `color ${TRANS_MS}ms ease`,
+                    }
+              }
             >
               {item}
             </span>
