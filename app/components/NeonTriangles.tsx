@@ -47,7 +47,7 @@ export function NeonTriangles() {
           repeatCount="indefinite"
         />
         <polygon
-          points="980,60 620,720 1380,660"
+          points="928,130 640,658 1248,610"
           fill="none"
           stroke="#00e5ff"
           strokeWidth="1.8"
@@ -63,7 +63,7 @@ export function NeonTriangles() {
           />
         </polygon>
         <polygon
-          points="980,60 620,720 1380,660"
+          points="928,130 640,658 1248,610"
           fill="none"
           stroke="#00e5ff"
           strokeWidth="1"
@@ -84,7 +84,7 @@ export function NeonTriangles() {
           repeatCount="indefinite"
         />
         <polygon
-          points="1060,130 680,700 1420,580"
+          points="992,186 688,642 1280,546"
           fill="none"
           stroke="#a855f7"
           strokeWidth="1.8"
@@ -101,7 +101,7 @@ export function NeonTriangles() {
           />
         </polygon>
         <polygon
-          points="1060,130 680,700 1420,580"
+          points="992,186 688,642 1280,546"
           fill="none"
           stroke="#a855f7"
           strokeWidth="1"
@@ -122,7 +122,7 @@ export function NeonTriangles() {
           repeatCount="indefinite"
         />
         <polygon
-          points="940,220 730,680 1220,620"
+          points="896,258 728,626 1120,578"
           fill="none"
           stroke="#e040fb"
           strokeWidth="1.6"
@@ -139,7 +139,7 @@ export function NeonTriangles() {
           />
         </polygon>
         <polygon
-          points="940,220 730,680 1220,620"
+          points="896,258 728,626 1120,578"
           fill="none"
           stroke="#e040fb"
           strokeWidth="0.9"
@@ -160,7 +160,7 @@ export function NeonTriangles() {
           repeatCount="indefinite"
         />
         <polygon
-          points="820,100 1140,640 560,560"
+          points="800,162 1056,594 592,530"
           fill="none"
           stroke="#7c3aed"
           strokeWidth="1.4"
@@ -177,7 +177,7 @@ export function NeonTriangles() {
           />
         </polygon>
         <polygon
-          points="820,100 1140,640 560,560"
+          points="800,162 1056,594 592,530"
           fill="none"
           stroke="#7c3aed"
           strokeWidth="0.8"

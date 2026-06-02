@@ -158,25 +158,25 @@
 .c-windows { opacity: 0; }
 
 .is-constructing .c-fence {
-  animation: c-fade-up 0.27s ease forwards;
+  animation: c-fade-up 0.135s ease forwards;
 }
 .is-constructing .c-crane-group {
-  animation: c-fade-in 0.33s 0.33s ease both;
+  animation: c-fade-in 0.165s 0.165s ease both;
 }
 .is-constructing .c-cable {
-  animation: c-draw 0.47s 0.73s ease forwards;
+  animation: c-draw 0.235s 0.365s ease forwards;
 }
 .is-constructing .c-block-1 {
-  animation: c-block-rise 0.2s 1.07s ease forwards;
+  animation: c-block-rise 0.1s 0.535s ease forwards;
 }
 .is-constructing .c-block-2 {
-  animation: c-block-rise 0.2s 1.3s ease forwards;
+  animation: c-block-rise 0.1s 0.65s ease forwards;
 }
 .is-constructing .c-block-3 {
-  animation: c-block-rise 0.2s 1.53s ease forwards;
+  animation: c-block-rise 0.1s 0.765s ease forwards;
 }
 .is-constructing .c-windows {
-  animation: c-fade-in 0.23s 1.73s ease both;
+  animation: c-fade-in 0.115s 0.865s ease both;
 }
 
 @keyframes c-fade-up {

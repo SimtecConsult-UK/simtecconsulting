@@ -15,10 +15,8 @@ import { Testimonials } from "./components/Testimonials";
 export default function Home() {
   return (
     <>
-      <div style={{ background: "#E46897" }}>
-        <Nav />
-      </div>
-      <div style={{ background: "linear-gradient(to bottom, #E46897 0%, #eda8c0 60%, #d85e8e 100%)" }}>
+      <Nav />
+      <div className="flex min-h-screen flex-col" style={{ background: "linear-gradient(to bottom, #f8f1fe 0%, #f0e5fd 60%, #f5ecfe 100%)" }}>
         <Hero />
         <PartnerLogos />
       </div>
