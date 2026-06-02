@@ -10,7 +10,7 @@ export function Hero() {
 
       <div className="relative mx-auto max-w-[var(--container-content)] w-full px-4 py-10 md:px-16">
         <h1
-          className="mx-auto max-w-[840px] text-center text-[36px] font-bold leading-[1.04] tracking-[-0.02em] text-[#1a1530] sm:text-[48px] md:text-[60px] lg:text-[72px]"
+          className="mx-auto max-w-[840px] text-center text-[36px] font-bold leading-[1.04] tracking-[-0.02em] text-white sm:text-[48px] md:text-[60px] lg:text-[72px]"
           style={{ fontFamily: "var(--font-league-spartan)" }}
         >
           Operational Systems for Construction Companies

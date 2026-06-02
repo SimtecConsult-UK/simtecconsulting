@@ -1,160 +1,100 @@
-export function HowItWorksTriangles() {
+type TriDef = {
+  top: string;
+  left?: string;
+  right?: string;
+  color: string;
+  size: number;
+  dur: string;
+  tx: string;
+  opacity: number;
+};
+
+const tris: TriDef[] = [
+  { top: "3%",  right: "2%",  color: "#00e5ff", size: 320, dur: "9s",  tx: "0,0; 6,-16; -4,9; 0,0",  opacity: 0.45 },
+  { top: "9%",  left:  "1%",  color: "#a855f7", size: 270, dur: "12s", tx: "0,0; -5,13; 4,-10; 0,0", opacity: 0.38 },
+  { top: "30%", right: "0%",  color: "#e040fb", size: 295, dur: "7s",  tx: "0,0; -4,-18; 3,7; 0,0",  opacity: 0.40 },
+  { top: "37%", left:  "1%",  color: "#00e5ff", size: 250, dur: "10s", tx: "0,0; 7,11; -5,-8; 0,0",  opacity: 0.35 },
+  { top: "63%", right: "1%",  color: "#7c3aed", size: 285, dur: "11s", tx: "0,0; 5,-13; -4,8; 0,0",  opacity: 0.38 },
+  { top: "70%", left:  "2%",  color: "#e040fb", size: 240, dur: "8s",  tx: "0,0; -6,14; 4,-8; 0,0",  opacity: 0.33 },
+];
+
+function Tri({ t, i }: { t: TriDef; i: number }) {
+  const s = t.size;
+  const pts =
+    i % 2 === 0
+      ? `${s * 0.5},${s * 0.07} ${s * 0.04},${s * 0.87} ${s * 0.96},${s * 0.81}`
+      : `${s * 0.5},${s * 0.93} ${s * 0.05},${s * 0.13} ${s * 0.95},${s * 0.19}`;
+
+  const pos: React.CSSProperties = {
+    position: "absolute",
+    top: t.top,
+    width: s,
+    height: s,
+    opacity: t.opacity,
+  };
+  if (t.left  !== undefined) pos.left  = t.left;
+  if (t.right !== undefined) pos.right = t.right;
+
   return (
     <svg
       aria-hidden
-      viewBox="0 0 1440 1800"
-      preserveAspectRatio="none"
+      viewBox={`0 0 ${s} ${s}`}
       xmlns="http://www.w3.org/2000/svg"
-      className="pointer-events-none absolute inset-0 h-full w-full"
+      style={pos}
     >
       <defs>
-        <filter id="hiw-glow-cyan" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="5" result="blur" />
+        <filter id={`hiw-g-${i}`} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="6" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <filter id="hiw-glow-purple" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="5" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <filter id="hiw-glow-pink" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="4" result="blur" />
-          <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
       </defs>
-
-      {/* ── Top-right — cyan, 9s ── */}
-      <g opacity="0.45">
+      <g>
         <animateTransform
-          attributeName="transform" type="translate"
-          values="0,0; 7,-16; -4,10; 0,0"
-          keyTimes="0; 0.33; 0.66; 1"
+          attributeName="transform"
+          type="translate"
+          values={t.tx}
+          keyTimes="0;0.33;0.66;1"
           calcMode="spline"
-          keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1"
-          dur="9s" repeatCount="indefinite"
+          keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
+          dur={t.dur}
+          repeatCount="indefinite"
         />
-        <polygon points="1180,60 920,340 1400,290"
-          fill="none" stroke="#00e5ff" strokeWidth="1.6"
-          filter="url(#hiw-glow-cyan)">
-          <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite"
-            calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
+        <polygon
+          points={pts}
+          fill="none"
+          stroke={t.color}
+          strokeWidth="1.6"
+          filter={`url(#hiw-g-${i})`}
+        >
+          <animate
+            attributeName="opacity"
+            values="0.7;1;0.7"
+            dur="4s"
+            repeatCount="indefinite"
+            calcMode="spline"
+            keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
+          />
         </polygon>
-        <polygon points="1180,60 920,340 1400,290"
-          fill="none" stroke="#00e5ff" strokeWidth="0.8" opacity="0.9" />
-      </g>
-
-      {/* ── Top-left — purple, 12s ── */}
-      <g opacity="0.38">
-        <animateTransform
-          attributeName="transform" type="translate"
-          values="0,0; -6,14; 5,-10; 0,0"
-          keyTimes="0; 0.4; 0.7; 1"
-          calcMode="spline"
-          keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1"
-          dur="12s" repeatCount="indefinite"
-        />
-        <polygon points="120,100 30,360 340,280"
-          fill="none" stroke="#a855f7" strokeWidth="1.5"
-          filter="url(#hiw-glow-purple)">
-          <animate attributeName="opacity" values="0.6;0.9;0.6" dur="6s" begin="1s"
-            repeatCount="indefinite" calcMode="spline"
-            keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-        </polygon>
-        <polygon points="120,100 30,360 340,280"
-          fill="none" stroke="#a855f7" strokeWidth="0.8" opacity="0.8" />
-      </g>
-
-      {/* ── Mid-right — pink, 7s ── */}
-      <g opacity="0.4">
-        <animateTransform
-          attributeName="transform" type="translate"
-          values="0,0; -5,-20; 4,8; 0,0"
-          keyTimes="0; 0.5; 0.75; 1"
-          calcMode="spline"
-          keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1"
-          dur="7s" repeatCount="indefinite"
-        />
-        <polygon points="1250,720 1020,1020 1430,950"
-          fill="none" stroke="#e040fb" strokeWidth="1.5"
-          filter="url(#hiw-glow-pink)">
-          <animate attributeName="opacity" values="0.65;1;0.65" dur="5s" begin="0.5s"
-            repeatCount="indefinite" calcMode="spline"
-            keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-        </polygon>
-        <polygon points="1250,720 1020,1020 1430,950"
-          fill="none" stroke="#e040fb" strokeWidth="0.8" opacity="0.85" />
-      </g>
-
-      {/* ── Mid-left — cyan, 10s ── */}
-      <g opacity="0.35">
-        <animateTransform
-          attributeName="transform" type="translate"
-          values="0,0; 8,12; -6,-8; 0,0"
-          keyTimes="0; 0.45; 0.72; 1"
-          calcMode="spline"
-          keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1"
-          dur="10s" repeatCount="indefinite"
-        />
-        <polygon points="80,760 20,1060 340,980"
-          fill="none" stroke="#00e5ff" strokeWidth="1.3"
-          filter="url(#hiw-glow-cyan)">
-          <animate attributeName="opacity" values="0.5;0.85;0.5" dur="7s" begin="2s"
-            repeatCount="indefinite" calcMode="spline"
-            keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-        </polygon>
-        <polygon points="80,760 20,1060 340,980"
-          fill="none" stroke="#00e5ff" strokeWidth="0.7" opacity="0.75" />
-      </g>
-
-      {/* ── Lower-right — purple, 11s ── */}
-      <g opacity="0.38">
-        <animateTransform
-          attributeName="transform" type="translate"
-          values="0,0; 6,-14; -5,9; 0,0"
-          keyTimes="0; 0.35; 0.68; 1"
-          calcMode="spline"
-          keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1"
-          dur="11s" repeatCount="indefinite"
-        />
-        <polygon points="1150,1300 900,1560 1400,1480"
-          fill="none" stroke="#7c3aed" strokeWidth="1.4"
-          filter="url(#hiw-glow-purple)">
-          <animate attributeName="opacity" values="0.55;0.9;0.55" dur="6s" begin="1.5s"
-            repeatCount="indefinite" calcMode="spline"
-            keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-        </polygon>
-        <polygon points="1150,1300 900,1560 1400,1480"
-          fill="none" stroke="#7c3aed" strokeWidth="0.7" opacity="0.7" />
-      </g>
-
-      {/* ── Bottom-left — pink, 8s ── */}
-      <g opacity="0.33">
-        <animateTransform
-          attributeName="transform" type="translate"
-          values="0,0; -7,15; 5,-9; 0,0"
-          keyTimes="0; 0.42; 0.74; 1"
-          calcMode="spline"
-          keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1"
-          dur="8s" repeatCount="indefinite"
-        />
-        <polygon points="160,1450 60,1700 400,1640"
-          fill="none" stroke="#e040fb" strokeWidth="1.2"
-          filter="url(#hiw-glow-pink)">
-          <animate attributeName="opacity" values="0.5;0.85;0.5" dur="5s" begin="3s"
-            repeatCount="indefinite" calcMode="spline"
-            keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-        </polygon>
-        <polygon points="160,1450 60,1700 400,1640"
-          fill="none" stroke="#e040fb" strokeWidth="0.7" opacity="0.7" />
+        <polygon points={pts} fill="none" stroke={t.color} strokeWidth="0.9" opacity="0.9" />
       </g>
     </svg>
+  );
+}
+
+export function HowItWorksTriangles() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      style={{ zIndex: 0 }}
+    >
+      {tris.map((t, i) => (
+        <Tri key={i} t={t} i={i} />
+      ))}
+    </div>
   );
 }

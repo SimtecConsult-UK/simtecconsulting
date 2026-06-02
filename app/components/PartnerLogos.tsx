@@ -120,7 +120,7 @@ export function PartnerLogos() {
       <div className="w-full px-8 py-8 md:px-16">
         <div className="mx-auto max-w-[var(--container-content)] grid grid-cols-2 items-center gap-8 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10">
           {logoNames.map((name) => (
-            <div key={name} className="flex h-16 items-center justify-center text-[#1a1530]" aria-label={name}>
+            <div key={name} className="flex h-16 items-center justify-center text-white/50" aria-label={name}>
               <LogoNode name={name} />
             </div>
           ))}
