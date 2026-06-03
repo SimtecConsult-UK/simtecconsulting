@@ -127,12 +127,12 @@ const steps = [
 ];
 
 // Triangle stack config per step index 0-3 (step 5 has no triangles)
-const STACK_COUNTS  = [3, 2, 3, 2];
+const STACK_COUNTS  = [3, 2, 1, 2];
 const STACK_COLORS  = [
-  ["#00e5ff", "#a855f7", "#e040fb"],
-  ["#e040fb", "#7c3aed"],
-  ["#a855f7", "#00e5ff", "#e040fb"],
-  ["#00e5ff", "#7c3aed"],
+  ["#ffffff", "#ffffff", "#ffffff"],
+  ["#ffffff", "#ffffff"],
+  ["#ffffff", "#ffffff", "#ffffff"],
+  ["#ffffff", "#ffffff"],
 ] as const;
 const STACK_ANIM    = ["9s", "12s", "7s", "10s"] as const;
 const STACK_TX      = [
@@ -178,20 +178,20 @@ export function HowItWorks() {
       const cLeft     = cRect.left - sRect.left;
       const cW        = container.offsetWidth;
 
-      const GAP       = 120; // px gap from step container edge
-      const TRI_GAP   = 25;  // additional px between triangles in a stack
-      const BASE_SIZE = 480; // doubled from previous sizes
-      const SIZE_STEP = 50;  // reduction per tri in stack
+      const GAP       = 120;
+      const TRI_GAP   = 25;
+      const BASE_SIZE = 480;
+      const SIZE_STEP = 50;
 
       const defs: TriDef[] = [];
 
-      for (let si = 0; si < 4; si++) { // steps 0-3 (step 4 has no triangles)
+      for (let si = 0; si < 4; si++) {
         const h3 = h3Refs.current[si];
         if (!h3) continue;
 
         const h3Rect  = h3.getBoundingClientRect();
         const tipY    = h3Rect.top - sRect.top;
-        const isLeft  = si % 2 === 0; // step on left → triangles on right
+        const isLeft  = si % 2 === 0;
         const count   = STACK_COUNTS[si];
         const colors  = STACK_COLORS[si];
 
@@ -200,13 +200,13 @@ export function HowItWorks() {
           const triY = tipY + ti * TRI_GAP;
 
           const cx = isLeft
-            ? cLeft + STEP_W + GAP + size / 2          // right side
-            : cLeft + (cW - STEP_W) - GAP - size / 2;  // left side
+            ? cLeft + STEP_W + GAP + size / 2
+            : cLeft + (cW - STEP_W) - GAP - size / 2;
 
           defs.push({
             cx, tipY: triY, size,
             color:   colors[Math.min(ti, colors.length - 1)],
-            opacity: 0.45 - ti * 0.04,
+            opacity: 0.85 - ti * 0.1,
             dur:     STACK_ANIM[si],
             tx:      STACK_TX[si],
             id:      `hiw-t-${si}-${ti}`,
@@ -219,7 +219,6 @@ export function HowItWorks() {
 
     const ro = new ResizeObserver(measure);
     if (containerRef.current) ro.observe(containerRef.current);
-    // Wait for fonts to settle before measuring — avoids FOUT-driven layout shift
     document.fonts.ready.then(measure);
     return () => { ro.disconnect(); };
   }, []);
@@ -236,7 +235,8 @@ export function HowItWorks() {
     pathRefs.current.forEach((pathEl, ci) => {
       if (!pathEl) return;
       const x0 = ci % 2 === 0 ? leftX  : rightX;
-      const x1 = ci % 2 === 0 ? rightX : leftX;
+      // ci=3 connects step 4 (right-aligned) → step 5 (centered)
+      const x1 = ci === 3 ? W / 2 : ci % 2 === 0 ? rightX : leftX;
       const h  = CONNECTOR_H;
       const d  = `M ${x0} 0 C ${x0} ${h * 0.55} ${x1} ${h * 0.45} ${x1} ${h}`;
       pathEl.setAttribute("d", d);
@@ -257,8 +257,8 @@ export function HowItWorks() {
       animatingRef.current = false;
       circleRefs.current.forEach((el) => {
         if (!el) return;
-        el.style.borderColor = "var(--color-outline-variant)";
-        el.style.color       = "var(--color-outline-variant)";
+        el.style.borderColor = "rgba(255,255,255,0.3)";
+        el.style.color       = "rgba(255,255,255,0.3)";
         el.classList.remove("circle-pop");
       });
       labelRefs.current.forEach((el) => {
@@ -280,7 +280,7 @@ export function HowItWorks() {
       dotRefs.current.forEach((connector) =>
         connector.forEach((dotEl) => {
           if (!dotEl) return;
-          dotEl.setAttribute("fill", "var(--color-outline-variant)");
+          dotEl.setAttribute("fill", "rgba(255,255,255,0.2)");
           dotEl.style.opacity = "0";
           dotEl.style.filter  = "";
         })
@@ -312,8 +312,8 @@ export function HowItWorks() {
             icon.style.opacity    = "1";
           }
           if (circle) {
-            circle.style.borderColor = "var(--color-brand-blue)";
-            circle.style.color       = "var(--color-brand-blue)";
+            circle.style.borderColor = "#ffffff";
+            circle.style.color       = "#ffffff";
             circle.classList.remove("circle-pop");
             void circle.offsetHeight;
             circle.classList.add("circle-pop");
@@ -335,9 +335,9 @@ export function HowItWorks() {
     const lightDot = (ci: number, di: number) => {
       const el = dotRefs.current[ci]?.[di];
       if (!el) return;
-      el.setAttribute("fill", "var(--color-brand-blue)");
+      el.setAttribute("fill", "#ffffff");
       el.style.opacity = "1";
-      el.style.filter  = "drop-shadow(0 0 5px rgba(74,108,247,0.65))";
+      el.style.filter  = "drop-shadow(0 0 5px rgba(255,255,255,0.65))";
     };
 
     const animate = () => {
@@ -379,7 +379,8 @@ export function HowItWorks() {
   return (
     <section
       ref={sectionRef as React.Ref<HTMLElement>}
-      className="relative overflow-hidden bg-[var(--color-surface-container-low)] px-4 pb-32 pt-24 md:px-16"
+      // pt-[340px]: 240px (bottom half of bridge cards) + 100px breathing room before h2
+      className="relative overflow-hidden bg-[var(--color-brand-blue)] px-4 pb-32 pt-[340px] md:px-16"
     >
       {/* Triangle overlay — rendered once positions are measured */}
       {triDefs.length > 0 && (
@@ -390,9 +391,10 @@ export function HowItWorks() {
         >
           <defs>
             {triDefs.map((tri) => (
-              <filter key={`f-${tri.id}`} id={`f-${tri.id}`} x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="6" result="blur" />
+              <filter key={`f-${tri.id}`} id={`f-${tri.id}`} x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="10" result="blur" />
                 <feMerge>
+                  <feMergeNode in="blur" />
                   <feMergeNode in="blur" />
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
@@ -420,19 +422,19 @@ export function HowItWorks() {
                   points={pts}
                   fill="none"
                   stroke={tri.color}
-                  strokeWidth="1.6"
+                  strokeWidth="5"
                   filter={`url(#f-${tri.id})`}
                 >
                   <animate
                     attributeName="opacity"
-                    values="0.7;1;0.7"
+                    values="0.8;1;0.8"
                     dur="4s"
                     repeatCount="indefinite"
                     calcMode="spline"
                     keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
                   />
                 </polygon>
-                <polygon points={pts} fill="none" stroke={tri.color} strokeWidth="0.9" opacity="0.9" />
+                <polygon points={pts} fill="none" stroke={tri.color} strokeWidth="2" opacity="1" />
               </g>
             );
           })}
@@ -440,7 +442,7 @@ export function HowItWorks() {
       )}
 
       <h2
-        className="relative z-10 mx-auto mb-16 max-w-[840px] text-center text-[36px] font-bold leading-[1.04] tracking-[-0.02em] text-[var(--color-on-surface)] sm:text-[48px] md:text-[60px] lg:text-[72px]"
+        className="relative z-10 mx-auto mb-16 max-w-[840px] text-center text-[36px] font-bold leading-[1.04] tracking-[-0.02em] text-white sm:text-[48px] md:text-[60px] lg:text-[72px]"
         style={{ fontFamily: "var(--font-league-spartan)", paddingTop: "0.12em", marginTop: "-0.12em" }}
       >
         <span className="block">From Operational</span>
@@ -452,7 +454,7 @@ export function HowItWorks() {
         {steps.map((step, idx) => (
           <React.Fragment key={step.number}>
 
-            <div className={`flex ${idx % 2 === 0 ? "justify-start" : "justify-end"}`}>
+            <div className={`flex ${idx === 4 ? "justify-center" : idx % 2 === 0 ? "justify-start" : "justify-end"}`}>
               <div style={{ width: STEP_W }} className="flex flex-col items-center text-center">
 
                 <div
@@ -460,8 +462,8 @@ export function HowItWorks() {
                   className="relative flex items-center justify-center rounded-full border-[3px]"
                   style={{
                     width: CIRCLE_W, height: CIRCLE_W,
-                    borderColor: "var(--color-outline-variant)",
-                    color:       "var(--color-outline-variant)",
+                    borderColor: "rgba(255,255,255,0.3)",
+                    color:       "rgba(255,255,255,0.3)",
                     transition:  "border-color 0.3s ease, color 0.3s ease",
                   }}
                 >
@@ -486,17 +488,17 @@ export function HowItWorks() {
                   className="mt-12"
                   style={{ opacity: 0 }}
                 >
-                  <div className="text-[30px] font-bold tracking-[0.14em] text-[var(--color-brand-blue)]">
+                  <div className="text-[30px] font-bold tracking-[0.14em] text-white">
                     STEP {step.number}
                   </div>
                   <h3
                     ref={(el) => { h3Refs.current[idx] = el; }}
-                    className="mt-2 text-[54px] font-bold leading-tight text-on-surface"
+                    className="mt-2 text-[54px] font-bold leading-tight text-white"
                     style={{ fontFamily: "var(--font-league-spartan)" }}
                   >
                     {step.title}
                   </h3>
-                  <p className="mt-4 text-[36px] leading-relaxed text-on-surface-variant">
+                  <p className="mt-4 text-[36px] leading-relaxed text-white/65">
                     {step.description}
                   </p>
                 </div>
@@ -509,7 +511,7 @@ export function HowItWorks() {
                 <path
                   ref={(el) => { trackRefs.current[idx] = el; }}
                   d="M 0 0"
-                  stroke="var(--color-outline-variant)"
+                  stroke="rgba(255,255,255,0.2)"
                   strokeWidth="2"
                   strokeDasharray="5 9"
                   fill="none"
@@ -526,7 +528,7 @@ export function HowItWorks() {
                     key={d}
                     ref={(el) => { dotRefs.current[idx][d] = el; }}
                     cx="0" cy="0" r="7"
-                    fill="var(--color-outline-variant)"
+                    fill="rgba(255,255,255,0.2)"
                     opacity="0"
                     style={{ transition: "opacity 0.2s, fill 0.2s" }}
                   />

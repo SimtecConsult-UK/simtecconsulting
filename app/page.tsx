@@ -1,4 +1,5 @@
 import { ApproachBand } from "./components/ApproachBand";
+import { BridgeCards } from "./components/BridgeCards";
 import { CtaBand } from "./components/CtaBand";
 import { FeatureBand } from "./components/FeatureBand";
 import { ImageBand } from "./components/ImageBand";
@@ -41,6 +42,7 @@ export default function Home() {
 
       <ImageBand />
       <ApproachBand />
+      <BridgeCards />
       <HowItWorks />
       <SocialProof />
       <Testimonials />
