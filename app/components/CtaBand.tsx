@@ -48,7 +48,7 @@ export function CtaBand() {
                 className="text-[40px] font-bold leading-[1.06] tracking-[-0.02em] text-white sm:text-[48px] md:text-[56px]"
                 style={{ fontFamily: "var(--font-league-spartan)" }}
               >
-                Free Operational Discovery Workshop
+                Free Operational Discovery Workshop.
               </h2>
 
               <p className="mt-5 text-[13px] font-semibold uppercase tracking-wider text-white/40">
