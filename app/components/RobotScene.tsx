@@ -15,12 +15,6 @@ export function RobotScene() {
   return (
     <div className="relative flex h-full w-full items-center justify-center">
       <style>{`
-        @keyframes rb-sway {
-          0%,100% { transform: translateY(0px)   rotate(-1.2deg); }
-          25%      { transform: translateY(-9px)  rotate(0.8deg);  }
-          50%      { transform: translateY(-18px) rotate(1.5deg);  }
-          75%      { transform: translateY(-9px)  rotate(-0.5deg); }
-        }
         @keyframes rb-glow {
           0%,100% {
             filter: drop-shadow(0 0 6px rgba(0,220,255,.5))
@@ -36,10 +30,6 @@ export function RobotScene() {
         @keyframes rb-ring {
           0%,100% { transform: scale(1);   opacity: .6; }
           50%      { transform: scale(1.1); opacity: 1;  }
-        }
-        @keyframes rb-shadow {
-          0%,100% { transform: translateX(-50%) scaleX(1);    opacity: .6; }
-          50%      { transform: translateX(-50%) scaleX(.75);  opacity: .3; }
         }
         @keyframes rb-float {
           0%   { transform: translateY(0) translateX(0);    opacity: 0;  }
@@ -66,7 +56,7 @@ export function RobotScene() {
           inset: -8px;
           border-radius: 50%;
           border: 2px solid rgba(0,220,255,.25);
-          animation: rb-play-ring 1.8s ease-out infinite;
+          animation: rb-play-ring 2.7s ease-out 0s infinite;
         }
       `}</style>
 
@@ -104,7 +94,7 @@ export function RobotScene() {
           style={{
             width: "340px",
             transformOrigin: "center bottom",
-            animation: "rb-sway 6s ease-in-out infinite, rb-glow 2.8s ease-in-out infinite",
+            animation: "rb-glow 2.8s ease-in-out infinite",
           }}
         />
 
@@ -140,7 +130,7 @@ export function RobotScene() {
             top: "38%", left: "34%",
             width: 42, height: 42,
             background: "rgba(0,220,255,.3)",
-            animation: "rb-play-pulse 1.8s ease-out infinite",
+            animation: "rb-play-pulse 2.7s ease-out 0s infinite",
             zIndex: 3,
           }}
         />
@@ -156,7 +146,6 @@ export function RobotScene() {
           background: "radial-gradient(ellipse, rgba(0,220,255,.25) 0%, transparent 70%)",
           borderRadius: "50%",
           filter: "blur(4px)",
-          animation: "rb-shadow 3s ease-in-out infinite",
         }}
       />
     </div>
