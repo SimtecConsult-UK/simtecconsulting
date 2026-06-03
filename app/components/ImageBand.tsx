@@ -354,7 +354,7 @@ export function ImageBand() {
                         color: "rgba(255,255,255,0.68)",
                       }}
                     >
-                      <span style={{ color: "#4a6cf7", flexShrink: 0, marginTop: 2, fontSize: 9 }}>✦</span>
+                      <span style={{ color: "#6eeada", flexShrink: 0, marginTop: 2, fontSize: 9 }}>✦</span>
                       {item}
                     </li>
                   ))}

@@ -63,7 +63,7 @@ export function ProductMock() {
           className="h-1.5 w-full"
           style={{
             background:
-              "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #4a6cf7 100%)",
+              "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #6eeada 100%)",
           }}
         />
         <div className="flex items-center gap-3 border-b border-outline-variant px-4 py-3">

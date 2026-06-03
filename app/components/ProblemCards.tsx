@@ -106,7 +106,7 @@ export function ProblemCards() {
                     ? {
                         fontFamily: "var(--font-league-spartan)",
                         fontSize: "clamp(26px, 3vw, 52px)",
-                        backgroundImage: "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #4a6cf7 100%)",
+                        backgroundImage: "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #6eeada 100%)",
                         backgroundClip: "text",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
