@@ -217,10 +217,11 @@ export function HowItWorks() {
       setTriDefs(defs);
     };
 
-    const timer = setTimeout(measure, 160);
     const ro = new ResizeObserver(measure);
     if (containerRef.current) ro.observe(containerRef.current);
-    return () => { clearTimeout(timer); ro.disconnect(); };
+    // Wait for fonts to settle before measuring — avoids FOUT-driven layout shift
+    document.fonts.ready.then(measure);
+    return () => { ro.disconnect(); };
   }, []);
 
   // ── Step animation ───────────────────────────────────────────────────────
@@ -378,7 +379,7 @@ export function HowItWorks() {
   return (
     <section
       ref={sectionRef as React.Ref<HTMLElement>}
-      className="relative bg-[var(--color-surface-container-low)] px-4 pb-32 pt-24 md:px-16"
+      className="relative overflow-hidden bg-[var(--color-surface-container-low)] px-4 pb-32 pt-24 md:px-16"
     >
       {/* Triangle overlay — rendered once positions are measured */}
       {triDefs.length > 0 && (
