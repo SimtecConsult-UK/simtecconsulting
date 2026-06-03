@@ -19,6 +19,8 @@ export function FeatureBand() {
             style={{
               backgroundImage:
                 "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #4a6cf7 100%)",
+              paddingTop: "0.12em",
+              marginTop: "-0.12em",
             }}
           >
             Operational Systems

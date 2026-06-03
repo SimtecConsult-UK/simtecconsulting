@@ -6,6 +6,11 @@ export function Hero() {
       className="relative flex-1 overflow-hidden flex flex-col items-center justify-center"
       style={{ paddingTop: "80px" }}
     >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 40%, rgba(255,255,255,0) 75%)" }}
+      />
       <NeonTriangles />
 
       <div className="relative mx-auto max-w-[var(--container-content)] w-full px-4 py-10 md:px-16">
@@ -13,11 +18,13 @@ export function Hero() {
           className="mx-auto max-w-[840px] text-center text-[36px] font-bold leading-[1.04] tracking-[-0.02em] sm:text-[48px] md:text-[60px] lg:text-[72px]"
           style={{
             fontFamily: "var(--font-league-spartan)",
-            backgroundImage: "linear-gradient(180deg, #ffffff 0%, #e8ecff 55%, #c8d0ff 100%)",
+            backgroundImage: "linear-gradient(180deg, #ffffff 0%, #e3eaff 50%, #c7d4ff 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
             filter: "drop-shadow(0 0 40px rgba(255,255,255,0.35))",
+            paddingTop: "0.12em",
+            marginTop: "-0.12em",
           }}
         >
           <span className="block whitespace-nowrap">Operational Systems</span>
