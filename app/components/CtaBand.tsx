@@ -25,12 +25,12 @@ export function CtaBand() {
         {/* Wrapper — relative so the robot can escape the card */}
         <div className="relative">
 
-          {/* Blue card */}
+          {/* Teal card */}
           <div
             ref={cardRef}
             className="overflow-hidden rounded-3xl"
             style={{
-              background: "linear-gradient(135deg, #3535d8 0%, #5a4af2 100%)",
+              background: "#6eeada",
               minHeight: "500px",
               opacity: visible ? 1 : 0,
               transform: visible ? "scale(1) translateY(0)" : "scale(0.94) translateY(32px)",
@@ -40,18 +40,18 @@ export function CtaBand() {
             {/* Left text */}
             <div className="flex h-full flex-col justify-center px-10 py-16 md:px-16 md:py-20 lg:max-w-[56%]">
 
-              <p className="mb-4 text-[12px] font-bold uppercase tracking-[0.2em] text-white/50">
+              <p className="mb-4 text-[12px] font-bold uppercase tracking-[0.2em]" style={{ color: "rgba(0,0,0,0.45)" }}>
                 Get started
               </p>
 
               <h2
-                className="text-[40px] font-bold leading-[1.06] tracking-[-0.02em] text-white sm:text-[48px] md:text-[56px]"
-                style={{ fontFamily: "var(--font-league-spartan)" }}
+                className="text-[40px] font-bold leading-[1.06] tracking-[-0.02em] sm:text-[48px] md:text-[56px]"
+                style={{ fontFamily: "var(--font-league-spartan)", color: "#0c2421" }}
               >
                 Free Operational Discovery Workshop.
               </h2>
 
-              <p className="mt-5 text-[13px] font-semibold uppercase tracking-wider text-white/40">
+              <p className="mt-5 text-[13px] font-semibold uppercase tracking-wider" style={{ color: "rgba(0,0,0,0.45)" }}>
                 Workshop outputs include:
               </p>
               <ul className="mt-3 space-y-1.5">
@@ -62,8 +62,8 @@ export function CtaBand() {
                   "Initial system recommendations",
                   "High-level operational system proposal",
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-2.5 text-[15px] text-white/75">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/50" />
+                  <li key={item} className="flex items-center gap-2.5 text-[15px]" style={{ color: "rgba(0,0,0,0.7)" }}>
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "rgba(0,0,0,0.3)" }} />
                     {item}
                   </li>
                 ))}
@@ -72,15 +72,15 @@ export function CtaBand() {
               <div className="mt-8">
                 <a
                   href="#"
-                  className="inline-flex items-center rounded-full px-7 py-3.5 text-[15px] font-semibold text-white transition-opacity hover:opacity-80"
-                  style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)" }}
+                  className="inline-flex items-center rounded-full px-7 py-3.5 text-[15px] font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: "rgba(0,0,0,0.18)", backdropFilter: "blur(8px)", color: "#0c2421" }}
                 >
                   Book a Workshop
                   <svg className="ml-2 h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 8h10M9 4l4 4-4 4" />
                   </svg>
                 </a>
-                <p className="mt-3 text-[13px] text-white/40">
+                <p className="mt-3 text-[13px]" style={{ color: "rgba(0,0,0,0.35)" }}>
                   *With no obligation to proceed
                 </p>
               </div>

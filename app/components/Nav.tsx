@@ -44,7 +44,7 @@ export function Nav() {
         </ul>
         <a
           href="#contact"
-          className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand-blue)] px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#5d7dfa]"
+          className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand-blue)] px-6 py-3 text-[15px] font-semibold text-[#0c2421] transition-colors hover:bg-[#85f0e4]"
         >
           Book a Workshop
         </a>

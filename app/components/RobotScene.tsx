@@ -114,18 +114,6 @@ export function RobotScene() {
         />
       </div>
 
-      {/* Ground shadow */}
-      <div
-        className="pointer-events-none absolute"
-        style={{
-          bottom: -10, left: "50%",
-          transform: "translateX(-50%)",
-          width: 220, height: 28,
-          background: "radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%)",
-          borderRadius: "50%",
-          filter: "blur(6px)",
-        }}
-      />
     </div>
   );
 }

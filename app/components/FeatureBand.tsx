@@ -18,7 +18,7 @@ export function FeatureBand() {
             className="block whitespace-nowrap bg-clip-text text-transparent"
             style={{
               backgroundImage:
-                "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #4a6cf7 100%)",
+                "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #6eeada 100%)",
               paddingTop: "0.12em",
               marginTop: "-0.12em",
             }}

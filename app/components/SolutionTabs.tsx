@@ -65,7 +65,7 @@ const solutions = [
       "Issue reporting",
       "Live operational reporting",
     ],
-    color: "#4a6cf7",
+    color: "#6eeada",
     icon: (
       <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7">
         <rect x="7" y="2" width="14" height="24" rx="3" />
