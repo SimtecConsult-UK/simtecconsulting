@@ -137,6 +137,8 @@ const STACK_COLORS  = [
 const STACK_ANIM      = ["9s", "12s", "7s", "10s"] as const;
 const STACK_ROTATIONS: Record<number, number[]> = {
   1: [-6, 3],
+  2: [5],
+  3: [-5, 2],
 };
 const STACK_TX      = [
   "0,0; 6,-16; -4,9; 0,0",
@@ -145,11 +147,30 @@ const STACK_TX      = [
   "0,0; -6,12; 4,-9; 0,0",
 ] as const;
 
+function rotatePts(cx: number, tipY: number, size: number, deg: number): string {
+  const h   = size * 0.87;
+  const cy  = tipY + h * (2 / 3);
+  const rad = (deg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const rot = ([x, y]: number[]) => [
+    cx + (x - cx) * cos - (y - cy) * sin,
+    cy + (x - cx) * sin + (y - cy) * cos,
+  ];
+  const verts = [
+    [cx, tipY],
+    [cx - size / 2, tipY + h],
+    [cx + size / 2, tipY + h],
+  ].map(rot);
+  return verts.map(([x, y]) => `${x},${y}`).join(' ');
+}
+
 interface TriDef {
   cx: number; tipY: number; size: number;
   color: string; opacity: number; dur: string;
   tx: string; id: string;
   rotation?: number;
+  pts?: string;
 }
 
 export function HowItWorks() {
@@ -210,12 +231,12 @@ export function HowItWorks() {
           scattered.forEach((s, ti) => {
             defs.push({
               cx: s.cx, tipY: s.tipY, size: s.size,
-              color:    colors[Math.min(ti, colors.length - 1)],
-              opacity:  0.85 - ti * 0.1,
-              dur:      s.dur,
-              tx:       s.tx,
-              id:       `hiw-t-0-${ti}`,
-              rotation: s.rotation,
+              color:   colors[Math.min(ti, colors.length - 1)],
+              opacity: 0.85 - ti * 0.1,
+              dur:     s.dur,
+              tx:      s.tx,
+              id:      `hiw-t-0-${ti}`,
+              pts:     rotatePts(s.cx, s.tipY, s.size, s.rotation),
             });
           });
           continue;
@@ -229,14 +250,15 @@ export function HowItWorks() {
             ? cLeft + STEP_W + GAP + size / 2
             : cLeft + (cW - STEP_W) - GAP - size / 2;
 
+          const rot = STACK_ROTATIONS[si]?.[ti];
           defs.push({
             cx, tipY: triY, size,
-            color:    colors[Math.min(ti, colors.length - 1)],
-            opacity:  0.85 - ti * 0.1,
-            dur:      STACK_ANIM[si],
-            tx:       STACK_TX[si],
-            id:       `hiw-t-${si}-${ti}`,
-            rotation: STACK_ROTATIONS[si]?.[ti],
+            color:   colors[Math.min(ti, colors.length - 1)],
+            opacity: 0.85 - ti * 0.1,
+            dur:     STACK_ANIM[si],
+            tx:      STACK_TX[si],
+            id:      `hiw-t-${si}-${ti}`,
+            pts:     rot !== undefined ? rotatePts(cx, triY, size, rot) : undefined,
           });
         }
       }
@@ -418,11 +440,9 @@ export function HowItWorks() {
         >
           <defs>
             {triDefs.map((tri) => (
-              <filter key={`f-${tri.id}`} id={`f-${tri.id}`} x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="10" result="blur" />
+              <filter key={`f-${tri.id}`} id={`f-${tri.id}`} x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
                 <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="blur" />
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
@@ -431,13 +451,9 @@ export function HowItWorks() {
           </defs>
 
           {triDefs.map((tri) => {
-            const h        = tri.size * 0.87;
-            const pts      = `${tri.cx},${tri.tipY} ${tri.cx - tri.size / 2},${tri.tipY + h} ${tri.cx + tri.size / 2},${tri.tipY + h}`;
-            const rotateCx = tri.cx;
-            const rotateCy = tri.tipY + h * (2 / 3);
-            const rotateAttr = tri.rotation
-              ? `rotate(${tri.rotation},${rotateCx},${rotateCy})`
-              : undefined;
+            const h   = tri.size * 0.87;
+            const pts = tri.pts
+              ?? `${tri.cx},${tri.tipY} ${tri.cx - tri.size / 2},${tri.tipY + h} ${tri.cx + tri.size / 2},${tri.tipY + h}`;
             return (
               <g key={tri.id} opacity={tri.opacity}>
                 <animateTransform
@@ -450,7 +466,6 @@ export function HowItWorks() {
                   dur={tri.dur}
                   repeatCount="indefinite"
                 />
-                <g transform={rotateAttr}>
                 <polygon
                   points={pts}
                   fill="none"
@@ -468,7 +483,6 @@ export function HowItWorks() {
                   />
                 </polygon>
                 <polygon points={pts} fill="none" stroke={tri.color} strokeWidth="2" opacity="1" />
-                </g>
               </g>
             );
           })}
