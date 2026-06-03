@@ -11,7 +11,15 @@ export function Footer() {
             Construction management software that helps teams deliver
             projects faster, safer, and on budget.
           </p>
-          <div className="mt-8 flex items-center gap-[50px]">
+          <div className="mt-0 flex items-center gap-[50px]">
+            <Image
+              src="/footer-logo-1.jpg"
+              alt="Cyber Essentials Certified"
+              width={100}
+              height={100}
+              className="w-[100px] h-auto object-contain"
+              style={{ filter: "invert(1) grayscale(1)", mixBlendMode: "screen", marginLeft: "-22px" }}
+            />
             <Image
               src="/footer-logo-2.webp"
               alt="Constructing Excellence in Wales"
@@ -20,18 +28,10 @@ export function Footer() {
               className="w-[300px] h-auto object-contain"
               style={{ filter: "invert(1) grayscale(1)", mixBlendMode: "screen" }}
             />
-            <Image
-              src="/footer-logo-1.jpg"
-              alt="Cyber Essentials Certified"
-              width={100}
-              height={100}
-              className="w-[100px] h-auto object-contain"
-              style={{ filter: "invert(1) grayscale(1)", mixBlendMode: "screen" }}
-            />
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-8 text-xs text-white/60 sm:flex-row sm:items-center">
+        <div className="mt-[14px] flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-8 text-xs text-white/60 sm:flex-row sm:items-center">
           <span>&copy; {new Date().getFullYear()} Simtec, Inc.</span>
           <div className="flex gap-6">
             <a href="#" className="hover:text-white">

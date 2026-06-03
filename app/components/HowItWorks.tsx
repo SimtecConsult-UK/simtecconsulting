@@ -440,10 +440,12 @@ export function HowItWorks() {
       )}
 
       <h2
-        className="relative z-10 mx-auto mb-16 max-w-xl text-center text-[22px] font-bold leading-snug tracking-[-0.01em] text-[var(--color-on-surface)] md:text-[28px]"
-        style={{ fontFamily: "var(--font-league-spartan)" }}
+        className="relative z-10 mx-auto mb-16 max-w-[840px] text-center text-[36px] font-bold leading-[1.04] tracking-[-0.02em] text-[var(--color-on-surface)] sm:text-[48px] md:text-[60px] lg:text-[72px]"
+        style={{ fontFamily: "var(--font-league-spartan)", paddingTop: "0.12em", marginTop: "-0.12em" }}
       >
-        From Operational Challenge to Working System.
+        <span className="block">From Operational</span>
+        <span className="block">Challenge to</span>
+        <span className="block">Working System.</span>
       </h2>
 
       <div ref={containerRef} className="relative z-10 mx-auto max-w-5xl">
