@@ -1,25 +1,23 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import React from "react";
-import { HowItWorksTriangles } from "./HowItWorksTriangles";
 
 const DOT_COUNT               = 12;
-const DOT_INTERVAL_MS         = 60;   // 2× speed
-const CONNECTOR_MS            = DOT_COUNT * DOT_INTERVAL_MS; // 720 ms
-const CONSTRUCTION_MS         = 1000; // 2× speed
-const ICON_FADE_MS            = 400;  // cross-fade construction → icon
-const POST_CONSTRUCTION_PAUSE = 400;  // breathing room before connector starts
-const UNLOCK_PAUSE_MS         = 350;  // gap after connector before next step
+const DOT_INTERVAL_MS         = 60;
+const CONNECTOR_MS            = DOT_COUNT * DOT_INTERVAL_MS;
+const CONSTRUCTION_MS         = 1000;
+const ICON_FADE_MS            = 400;
+const POST_CONSTRUCTION_PAUSE = 400;
+const UNLOCK_PAUSE_MS         = 350;
 const CYCLE_MS =
   CONSTRUCTION_MS + ICON_FADE_MS + POST_CONSTRUCTION_PAUSE + CONNECTOR_MS + UNLOCK_PAUSE_MS;
 
-const CONNECTOR_H        = 260; // px
-const STEP_W             = 576; // 2× previous
-const CIRCLE_W           = 240; // 2× previous
-const circleCenterOffset = STEP_W / 2; // 144 px from the aligned edge
+const CONNECTOR_H        = 260;
+const STEP_W             = 576;
+const CIRCLE_W           = 240;
+const circleCenterOffset = STEP_W / 2;
 
-/* ── tiny construction SVG ────────────────────────────────────────────────── */
 function ConstructionSVG() {
   return (
     <svg
@@ -29,7 +27,6 @@ function ConstructionSVG() {
       strokeLinejoin="round"
       className="h-[168px] w-[168px]"
     >
-      {/* Fence — appears first */}
       <g className="c-fence" stroke="#f97316" strokeWidth="1.5">
         <line x1="3"  y1="69" x2="77" y2="69" />
         <line x1="3"  y1="73" x2="77" y2="73" />
@@ -37,54 +34,23 @@ function ConstructionSVG() {
           <line key={x} x1={x} y1="65" x2={x} y2="77" />
         ))}
       </g>
-
-      {/* Crane — appears second */}
       <g className="c-crane-group" stroke="#f59e0b" strokeWidth="1.5">
-        {/* Vertical tower */}
         <rect x="52" y="24" width="5" height="41" rx="1" fill="#fefce8" />
-        {/* Horizontal boom */}
         <line x1="36" y1="20" x2="72" y2="20" />
-        {/* Counterweight block */}
         <rect x="36" y="16" width="8" height="6" rx="1" fill="#fefce8" />
-        {/* Trolley */}
         <rect x="62" y="18" width="6" height="4" rx="1" fill="#fefce8" />
       </g>
-
-      {/* Cable — drawn on */}
-      <line
-        className="c-cable"
-        x1="65" y1="22" x2="65" y2="44"
-        stroke="#f59e0b" strokeWidth="1.3"
-      />
-
-      {/* Building — three floors rise from bottom to top */}
-      <rect
-        className="c-block-1"
-        x="4" y="45" width="44" height="20" rx="2"
-        fill="#dde5f9" stroke="#8a9fd4" strokeWidth="1.2"
-      />
-      <rect
-        className="c-block-2"
-        x="6" y="29" width="40" height="16" rx="2"
-        fill="#dde5f9" stroke="#8a9fd4" strokeWidth="1.2"
-      />
-      <rect
-        className="c-block-3"
-        x="8" y="16" width="36" height="13" rx="2"
-        fill="#dde5f9" stroke="#8a9fd4" strokeWidth="1.2"
-      />
-
-      {/* Windows — fade in last */}
+      <line className="c-cable" x1="65" y1="22" x2="65" y2="44" stroke="#f59e0b" strokeWidth="1.3" />
+      <rect className="c-block-1" x="4" y="45" width="44" height="20" rx="2" fill="#dde5f9" stroke="#8a9fd4" strokeWidth="1.2" />
+      <rect className="c-block-2" x="6" y="29" width="40" height="16" rx="2" fill="#dde5f9" stroke="#8a9fd4" strokeWidth="1.2" />
+      <rect className="c-block-3" x="8" y="16" width="36" height="13" rx="2" fill="#dde5f9" stroke="#8a9fd4" strokeWidth="1.2" />
       <g className="c-windows" fill="#4568f3" opacity="0.5">
-        {/* Floor 1 */}
         <rect x="9"  y="49" width="7" height="10" rx="1" />
         <rect x="21" y="49" width="7" height="10" rx="1" />
         <rect x="33" y="49" width="7" height="10" rx="1" />
-        {/* Floor 2 */}
         <rect x="11" y="33" width="6" height="8" rx="1" />
         <rect x="21" y="33" width="6" height="8" rx="1" />
         <rect x="31" y="33" width="6" height="8" rx="1" />
-        {/* Floor 3 */}
         <rect x="13" y="19" width="5" height="7" rx="1" />
         <rect x="22" y="19" width="5" height="7" rx="1" />
         <rect x="31" y="19" width="5" height="7" rx="1" />
@@ -93,13 +59,11 @@ function ConstructionSVG() {
   );
 }
 
-/* ── step definitions ─────────────────────────────────────────────────────── */
 const steps = [
   {
     number: "01", title: "Discovery & Operational Design",
     description: "We work with stakeholders to understand workflows, inefficiencies and operational pressures.",
     icon: (
-      // Clipboard with magnifying glass — investigation / discovery
       <svg viewBox="0 0 40 40" className="h-[108px] w-[108px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="9" y="9" width="22" height="27" rx="2" />
         <path d="M15 9V7a2 2 0 014 0v2" />
@@ -114,7 +78,6 @@ const steps = [
     number: "02", title: "Workflow Structuring",
     description: "Operational processes are mapped, prioritised and standardised for digitisation.",
     icon: (
-      // Flowchart: top box branches into two — process mapping
       <svg viewBox="0 0 40 40" className="h-[108px] w-[108px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="13" y="3" width="14" height="9" rx="2" />
         <path d="M20 12v5M20 17l-8 5M20 17l8 5" />
@@ -127,7 +90,6 @@ const steps = [
     number: "03", title: "System Design & Delivery",
     description: "Reusable components and targeted custom development are combined to create a tailored operational system.",
     icon: (
-      // Monitor with code brackets — building the system
       <svg viewBox="0 0 40 40" className="h-[108px] w-[108px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="4" y="6" width="32" height="22" rx="3" />
         <path d="M4 22h32" />
@@ -140,7 +102,6 @@ const steps = [
     number: "04", title: "Deployment & Adoption",
     description: "Systems are rolled out across teams, projects and operational workflows.",
     icon: (
-      // Rocket launching — rollout / go-live
       <svg viewBox="0 0 40 40" className="h-[108px] w-[108px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 4s-9 5-9 16h18C29 9 20 4 20 4z" />
         <circle cx="20" cy="15" r="3" />
@@ -153,7 +114,6 @@ const steps = [
     number: "05", title: "Hosting, Support & Improvement",
     description: "Simtec continues to host, support and evolve systems over time.",
     icon: (
-      // Server racks + circular arrows — ongoing hosting & iteration
       <svg viewBox="0 0 40 40" className="h-[108px] w-[108px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="5" y="7" width="30" height="8" rx="2" />
         <rect x="5" y="19" width="30" height="8" rx="2" />
@@ -166,11 +126,34 @@ const steps = [
   },
 ];
 
-/* ── component ────────────────────────────────────────────────────────────── */
+// Triangle stack config per step index 0-3 (step 5 has no triangles)
+const STACK_COUNTS  = [3, 2, 3, 2];
+const STACK_COLORS  = [
+  ["#00e5ff", "#a855f7", "#e040fb"],
+  ["#e040fb", "#7c3aed"],
+  ["#a855f7", "#00e5ff", "#e040fb"],
+  ["#00e5ff", "#7c3aed"],
+] as const;
+const STACK_ANIM    = ["9s", "12s", "7s", "10s"] as const;
+const STACK_TX      = [
+  "0,0; 6,-16; -4,9; 0,0",
+  "0,0; -5,13; 4,-10; 0,0",
+  "0,0; 5,-14; -3,8; 0,0",
+  "0,0; -6,12; 4,-9; 0,0",
+] as const;
+
+interface TriDef {
+  cx: number; tipY: number; size: number;
+  color: string; opacity: number; dur: string;
+  tx: string; id: string;
+}
+
 export function HowItWorks() {
+  const sectionRef       = useRef<HTMLElement>(null);
   const containerRef     = useRef<HTMLDivElement>(null);
   const circleRefs       = useRef<(HTMLDivElement | null)[]>([]);
   const labelRefs        = useRef<(HTMLDivElement | null)[]>([]);
+  const h3Refs           = useRef<(HTMLHeadingElement | null)[]>([]);
   const constructionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const iconRefs         = useRef<(HTMLDivElement | null)[]>([]);
   const trackRefs        = useRef<(SVGPathElement | null)[]>([]);
@@ -181,6 +164,66 @@ export function HowItWorks() {
   const timersRef    = useRef<ReturnType<typeof setTimeout>[]>([]);
   const animatingRef = useRef(false);
 
+  const [triDefs, setTriDefs] = useState<TriDef[]>([]);
+
+  // ── Measure triangle positions relative to section ──────────────────────
+  useEffect(() => {
+    const measure = () => {
+      const section   = sectionRef.current;
+      const container = containerRef.current;
+      if (!section || !container) return;
+
+      const sRect     = section.getBoundingClientRect();
+      const cRect     = container.getBoundingClientRect();
+      const cLeft     = cRect.left - sRect.left;
+      const cW        = container.offsetWidth;
+
+      const GAP       = 120; // px gap from step container edge
+      const TRI_GAP   = 25;  // additional px between triangles in a stack
+      const BASE_SIZE = 480; // doubled from previous sizes
+      const SIZE_STEP = 50;  // reduction per tri in stack
+
+      const defs: TriDef[] = [];
+
+      for (let si = 0; si < 4; si++) { // steps 0-3 (step 4 has no triangles)
+        const h3 = h3Refs.current[si];
+        if (!h3) continue;
+
+        const h3Rect  = h3.getBoundingClientRect();
+        const tipY    = h3Rect.top - sRect.top;
+        const isLeft  = si % 2 === 0; // step on left → triangles on right
+        const count   = STACK_COUNTS[si];
+        const colors  = STACK_COLORS[si];
+
+        for (let ti = 0; ti < count; ti++) {
+          const size = BASE_SIZE - ti * SIZE_STEP;
+          const triY = tipY + ti * TRI_GAP;
+
+          const cx = isLeft
+            ? cLeft + STEP_W + GAP + size / 2          // right side
+            : cLeft + (cW - STEP_W) - GAP - size / 2;  // left side
+
+          defs.push({
+            cx, tipY: triY, size,
+            color:   colors[Math.min(ti, colors.length - 1)],
+            opacity: 0.45 - ti * 0.04,
+            dur:     STACK_ANIM[si],
+            tx:      STACK_TX[si],
+            id:      `hiw-t-${si}-${ti}`,
+          });
+        }
+      }
+
+      setTriDefs(defs);
+    };
+
+    const timer = setTimeout(measure, 160);
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => { clearTimeout(timer); ro.disconnect(); };
+  }, []);
+
+  // ── Step animation ───────────────────────────────────────────────────────
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -189,7 +232,6 @@ export function HowItWorks() {
     const leftX  = circleCenterOffset;
     const rightX = W - circleCenterOffset;
 
-    // Build bezier paths and pre-position dots along each connector
     pathRefs.current.forEach((pathEl, ci) => {
       if (!pathEl) return;
       const x0 = ci % 2 === 0 ? leftX  : rightX;
@@ -208,12 +250,10 @@ export function HowItWorks() {
       });
     });
 
-    /* ── reset everything ───────────────────────────────────────────────── */
     const reset = () => {
       timersRef.current.forEach(clearTimeout);
       timersRef.current = [];
       animatingRef.current = false;
-
       circleRefs.current.forEach((el) => {
         if (!el) return;
         el.style.borderColor = "var(--color-outline-variant)";
@@ -246,23 +286,20 @@ export function HowItWorks() {
       );
     };
 
-    /* ── unlock one step (construction → icon → label) ──────────────────── */
     const unlockStep = (i: number) => {
       const circle       = circleRefs.current[i];
       const construction = constructionRefs.current[i];
       const icon         = iconRefs.current[i];
       const label        = labelRefs.current[i];
 
-      // Show the construction wrapper and (re)start the CSS animation
       if (construction) {
         construction.style.transition = "";
         construction.style.opacity    = "1";
         construction.classList.remove("is-constructing");
-        void construction.offsetHeight; // force reflow so animation restarts cleanly
+        void construction.offsetHeight;
         construction.classList.add("is-constructing");
       }
 
-      // After construction completes: cross-fade to icon, pop circle, reveal label
       timersRef.current.push(
         setTimeout(() => {
           if (construction) {
@@ -280,7 +317,6 @@ export function HowItWorks() {
             void circle.offsetHeight;
             circle.classList.add("circle-pop");
           }
-          // Reveal label text once icon is visible
           timersRef.current.push(
             setTimeout(() => {
               if (label) {
@@ -295,7 +331,6 @@ export function HowItWorks() {
       );
     };
 
-    /* ── light up one connector dot ─────────────────────────────────────── */
     const lightDot = (ci: number, di: number) => {
       const el = dotRefs.current[ci]?.[di];
       if (!el) return;
@@ -304,25 +339,18 @@ export function HowItWorks() {
       el.style.filter  = "drop-shadow(0 0 5px rgba(74,108,247,0.65))";
     };
 
-    /* ── main animation sequence ─────────────────────────────────────────── */
     const animate = () => {
       if (animatingRef.current) return;
       animatingRef.current = true;
-
-      unlockStep(0); // step 0 construction starts immediately
-
+      unlockStep(0);
       for (let i = 0; i < steps.length - 1; i++) {
-        // Connector dots start after: construction + icon fade + breathing room
         const connectorStart =
           i * CYCLE_MS + CONSTRUCTION_MS + ICON_FADE_MS + POST_CONSTRUCTION_PAUSE;
-
         for (let d = 0; d < DOT_COUNT; d++) {
           timersRef.current.push(
             setTimeout(() => lightDot(i, d), connectorStart + d * DOT_INTERVAL_MS)
           );
         }
-
-        // Next step construction starts at the top of the next cycle
         timersRef.current.push(
           setTimeout(() => unlockStep(i + 1), (i + 1) * CYCLE_MS)
         );
@@ -334,7 +362,6 @@ export function HowItWorks() {
         if (entry.isIntersecting) {
           animate();
         } else if (entry.boundingClientRect.top > 0) {
-          // Section is below the viewport — user scrolled back up past it
           reset();
         }
       },
@@ -349,23 +376,82 @@ export function HowItWorks() {
   }, []);
 
   return (
-    <section className="relative bg-[var(--color-surface-container-low)] px-4 pb-32 pt-24 md:px-16">
-      <HowItWorksTriangles />
+    <section
+      ref={sectionRef as React.Ref<HTMLElement>}
+      className="relative bg-[var(--color-surface-container-low)] px-4 pb-32 pt-24 md:px-16"
+    >
+      {/* Triangle overlay — rendered once positions are measured */}
+      {triDefs.length > 0 && (
+        <svg
+          aria-hidden
+          className="pointer-events-none absolute inset-0 overflow-visible"
+          style={{ width: "100%", height: "100%", zIndex: 0 }}
+        >
+          <defs>
+            {triDefs.map((tri) => (
+              <filter key={`f-${tri.id}`} id={`f-${tri.id}`} x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            ))}
+          </defs>
+
+          {triDefs.map((tri) => {
+            const h   = tri.size * 0.87;
+            const pts = `${tri.cx},${tri.tipY} ${tri.cx - tri.size / 2},${tri.tipY + h} ${tri.cx + tri.size / 2},${tri.tipY + h}`;
+            return (
+              <g key={tri.id} opacity={tri.opacity}>
+                <animateTransform
+                  attributeName="transform"
+                  type="translate"
+                  values={tri.tx}
+                  keyTimes="0;0.33;0.66;1"
+                  calcMode="spline"
+                  keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
+                  dur={tri.dur}
+                  repeatCount="indefinite"
+                />
+                <polygon
+                  points={pts}
+                  fill="none"
+                  stroke={tri.color}
+                  strokeWidth="1.6"
+                  filter={`url(#f-${tri.id})`}
+                >
+                  <animate
+                    attributeName="opacity"
+                    values="0.7;1;0.7"
+                    dur="4s"
+                    repeatCount="indefinite"
+                    calcMode="spline"
+                    keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
+                  />
+                </polygon>
+                <polygon points={pts} fill="none" stroke={tri.color} strokeWidth="0.9" opacity="0.9" />
+              </g>
+            );
+          })}
+        </svg>
+      )}
+
       <h2
         className="relative z-10 mx-auto mb-16 max-w-xl text-center text-[22px] font-bold leading-snug tracking-[-0.01em] text-[var(--color-on-surface)] md:text-[28px]"
         style={{ fontFamily: "var(--font-league-spartan)" }}
       >
-        From Operational Challenge to Working System
+        From Operational Challenge to Working System.
       </h2>
+
       <div ref={containerRef} className="relative z-10 mx-auto max-w-5xl">
         {steps.map((step, idx) => (
           <React.Fragment key={step.number}>
 
-            {/* Step node — alternates left / right */}
             <div className={`flex ${idx % 2 === 0 ? "justify-start" : "justify-end"}`}>
               <div style={{ width: STEP_W }} className="flex flex-col items-center text-center">
 
-                {/* Circle */}
                 <div
                   ref={(el) => { circleRefs.current[idx] = el; }}
                   className="relative flex items-center justify-center rounded-full border-[3px]"
@@ -376,7 +462,6 @@ export function HowItWorks() {
                     transition:  "border-color 0.3s ease, color 0.3s ease",
                   }}
                 >
-                  {/* Construction animation layer */}
                   <div
                     ref={(el) => { constructionRefs.current[idx] = el; }}
                     className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full"
@@ -384,8 +469,6 @@ export function HowItWorks() {
                   >
                     <ConstructionSVG />
                   </div>
-
-                  {/* Step icon layer — revealed after construction completes */}
                   <div
                     ref={(el) => { iconRefs.current[idx] = el; }}
                     className="absolute inset-0 flex items-center justify-center"
@@ -395,7 +478,6 @@ export function HowItWorks() {
                   </div>
                 </div>
 
-                {/* Label */}
                 <div
                   ref={(el) => { labelRefs.current[idx] = el; }}
                   className="mt-12"
@@ -405,6 +487,7 @@ export function HowItWorks() {
                     STEP {step.number}
                   </div>
                   <h3
+                    ref={(el) => { h3Refs.current[idx] = el; }}
                     className="mt-2 text-[54px] font-bold leading-tight text-on-surface"
                     style={{ fontFamily: "var(--font-league-spartan)" }}
                   >
@@ -418,10 +501,8 @@ export function HowItWorks() {
               </div>
             </div>
 
-            {/* Curved SVG connector — raw pixel coordinates, no viewBox */}
             {idx < steps.length - 1 && (
               <svg width="100%" height={CONNECTOR_H} style={{ display: "block", overflow: "visible" }}>
-                {/* Visible dashed track */}
                 <path
                   ref={(el) => { trackRefs.current[idx] = el; }}
                   d="M 0 0"
@@ -431,14 +512,12 @@ export function HowItWorks() {
                   fill="none"
                   opacity="0.35"
                 />
-                {/* Invisible path for getPointAtLength */}
                 <path
                   ref={(el) => { pathRefs.current[idx] = el; }}
                   d="M 0 0"
                   fill="none"
                   stroke="none"
                 />
-                {/* Animated dots */}
                 {Array.from({ length: DOT_COUNT }).map((_, d) => (
                   <circle
                     key={d}

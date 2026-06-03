@@ -4,225 +4,185 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 const CASE_STUDIES = [
-  `> LOADING SIMTEC CASE STUDY DATABASE...
-
-CLIENT:  Collins Earthworks
-PROJECT: Streamlining Compliance
-         & Carbon Reporting
-──────────────────────────────────────────
-
-Collins Earthworks needed a digital system
-to bring structure and consistency to testing
-workflows and carbon tracking. Manual processes
-were time-consuming, difficult to audit and
-increasingly risky from both a compliance and
-operational perspective.
-
-WHAT SIMTEC DELIVERED:
-  [*] Digital testing workflows
-  [*] CAD integration
-  [*] Carbon analytics platform
-  [*] Automated reporting
-  [*] Dashboards & operational visibility
-  [*] Audit-ready reporting
-
-BUSINESS IMPACT:
-  [+] Faster, more consistent reporting
-  [+] Improved compliance visibility
-  [+] Reduced manual administration
-  [+] Better operational transparency
-  [+] Used as a work-winning differentiator`,
-
-  `> LOADING SIMTEC CASE STUDY DATABASE...
-
-CLIENT:  Geotechnical Engineering Ltd
-PROJECT: Eliminating Site Admin Overtime
-         Through Real-Time Reporting
-──────────────────────────────────────────
-
-Geotechnical Engineering Ltd needed to reduce
-operational admin burden and eliminate excessive
-overtime caused by manual reporting processes.
-
-WHAT SIMTEC DELIVERED:
-  [*] Mobile site diary application
-  [*] Real-time reporting workflows
-  [*] SharePoint integration
-  [*] Site tracking tools
-  [*] Delivery & issue logging
-
-BUSINESS IMPACT:
-  [+] ~10% time saving across the business
-  [+] Overtime admin virtually eliminated
-  [+] Improved management visibility
-  [+] Faster operational reporting
-  [+] Reduced manual administration`,
-
-  `> LOADING SIMTEC CASE STUDY DATABASE...
-
-CLIENT:  Vertase FLI
-PROJECT: Standardising Materials Management
-         Across Complex Projects
-──────────────────────────────────────────
-
-Vertase FLI required a more structured and
-scalable approach to materials management,
-compliance reporting and operational
-visibility across projects.
-
-WHAT SIMTEC DELIVERED:
-  [*] Centralised materials management system
-  [*] Live materials tracking
-  [*] Automated testing imports
-  [*] Compliance dashboards
-  [*] Reporting automation
-  [*] Carbon tracking capability
-
-BUSINESS IMPACT:
-  [+] Reduced administrative workload
-  [+] Improved auditability and compliance
-  [+] Better project consistency
-  [+] Reduced dependency on manual processes
-  [+] Stronger competitive positioning`,
+  {
+    client: "Collins Earthworks",
+    project: "Streamlining Compliance & Carbon Reporting",
+    description:
+      "Collins Earthworks needed a digital system to bring structure and consistency to testing workflows and carbon tracking. Manual processes were time-consuming, difficult to audit and increasingly risky from both a compliance and operational perspective.",
+    delivered: [
+      "Digital testing workflows",
+      "CAD integration",
+      "Carbon analytics platform",
+      "Automated reporting",
+      "Dashboards & operational visibility",
+      "Audit-ready reporting",
+    ],
+    impact: [
+      "Faster, more consistent reporting",
+      "Improved compliance visibility",
+      "Reduced manual administration",
+      "Better operational transparency",
+      "Used as a work-winning differentiator",
+    ],
+  },
+  {
+    client: "Geotechnical Engineering Ltd",
+    project: "Eliminating Site Admin Overtime Through Real-Time Reporting",
+    description:
+      "Geotechnical Engineering Ltd needed to reduce operational admin burden and eliminate excessive overtime caused by manual reporting processes.",
+    delivered: [
+      "Mobile site diary application",
+      "Real-time reporting workflows",
+      "SharePoint integration",
+      "Site tracking tools",
+      "Delivery & issue logging",
+    ],
+    impact: [
+      "~10% time saving across the business",
+      "Overtime admin virtually eliminated",
+      "Improved management visibility",
+      "Faster operational reporting",
+      "Reduced manual administration",
+    ],
+  },
+  {
+    client: "Vertase FLI",
+    project: "Standardising Materials Management Across Complex Projects",
+    description:
+      "Vertase FLI required a more structured and scalable approach to materials management, compliance reporting and operational visibility across projects.",
+    delivered: [
+      "Centralised materials management system",
+      "Live materials tracking",
+      "Automated testing imports",
+      "Compliance dashboards",
+      "Reporting automation",
+      "Carbon tracking capability",
+    ],
+    impact: [
+      "Reduced administrative workload",
+      "Improved auditability and compliance",
+      "Better project consistency",
+      "Reduced dependency on manual processes",
+      "Stronger competitive positioning",
+    ],
+  },
 ];
-
-const TYPING_SPEED_MS = 22;
 
 type Pos = { x: number; y: number };
 
-const navBtnStyle: React.CSSProperties = {
-  background: "transparent",
-  border: "1px solid rgba(0,255,65,0.35)",
-  color: "#00ff41",
-  fontFamily: "'Courier New', Courier, monospace",
-  fontSize: 13,
-  lineHeight: 1,
-  padding: "2px 7px",
-  cursor: "pointer",
-  textShadow: "0 0 6px rgba(0,255,65,0.5)",
-  transition: "border-color 0.15s, background 0.15s",
-};
+// Default position offsets relative to center, per window index
+const WINDOW_TRANSFORMS = [
+  "translate(-50%, -50%)",                                 // 0: center (front)
+  "translate(calc(-50% - 250px), calc(-50% + 50px))",     // 1: left, 50px lower
+  "translate(calc(-50% + 250px), calc(-50% - 75px))",     // 2: right, 75px higher
+];
 
 export function ImageBand() {
-  const [displayed, setDisplayed] = useState("");
-  const [studyIdx, setStudyIdx] = useState(0);
-  const [isDone, setIsDone] = useState(false);
-
-  // Drag state — null means "use CSS centering"
-  const [dragPos, setDragPos] = useState<Pos | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragOrigin = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
-  const windowRef = useRef<HTMLDivElement>(null);
+  // stackOrder: indices from back (0) to front (last)
+  const [stackOrder, setStackOrder] = useState([1, 2, 0]); // window 0 starts in front
+  const [dragPositions, setDragPositions] = useState<(Pos | null)[]>([null, null, null]);
+  const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
+  const dragOrigin = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0, winIdx: 0 });
+  const windowRefs = useRef<(HTMLDivElement | null)[]>([null, null, null]);
   const sectionRef = useRef<HTMLElement>(null);
 
-  const charIdx = useRef(0);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const bodyRef = useRef<HTMLDivElement>(null);
+  const getZIndex = (idx: number) => stackOrder.indexOf(idx) + 1;
+  const isFront = (idx: number) => stackOrder[stackOrder.length - 1] === idx;
 
-  const goTo = (idx: number) => setStudyIdx((idx + CASE_STUDIES.length) % CASE_STUDIES.length);
-  const goPrev = () => goTo(studyIdx - 1);
-  const goNext = () => goTo(studyIdx + 1);
+  const bringToFront = (idx: number) => {
+    setStackOrder((prev) => [...prev.filter((x) => x !== idx), idx]);
+  };
 
-  // Typewriter
-  useEffect(() => {
-    const full = CASE_STUDIES[studyIdx];
-    charIdx.current = 0;
-    setDisplayed("");
-    setIsDone(false);
-
-    const tick = () => {
-      if (charIdx.current < full.length) {
-        charIdx.current++;
-        setDisplayed(full.slice(0, charIdx.current));
-        timer.current = setTimeout(tick, TYPING_SPEED_MS);
-      } else {
-        setIsDone(true);
-      }
-    };
-
-    timer.current = setTimeout(tick, 500);
-    return () => { if (timer.current) clearTimeout(timer.current); };
-  }, [studyIdx]);
-
-  // Auto-scroll terminal body
-  useEffect(() => {
-    if (bodyRef.current) {
-      bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
-    }
-  }, [displayed, isDone]);
-
-  // Start drag from title bar
-  const handleTitleMouseDown = (e: React.MouseEvent) => {
+  const handleTitleMouseDown = (e: React.MouseEvent, idx: number) => {
     e.preventDefault();
-    const win = windowRef.current;
+    bringToFront(idx);
+
+    const win = windowRefs.current[idx];
     const section = sectionRef.current;
     if (!win || !section) return;
 
     let startX: number, startY: number;
-    if (dragPos === null) {
+    const cur = dragPositions[idx];
+    if (cur === null) {
       const sRect = section.getBoundingClientRect();
       const wRect = win.getBoundingClientRect();
       startX = wRect.left - sRect.left;
       startY = wRect.top - sRect.top;
-      setDragPos({ x: startX, y: startY });
+      setDragPositions((prev) => {
+        const next = [...prev] as (Pos | null)[];
+        next[idx] = { x: startX, y: startY };
+        return next;
+      });
     } else {
-      startX = dragPos.x;
-      startY = dragPos.y;
+      startX = cur.x;
+      startY = cur.y;
     }
 
-    dragOrigin.current = { mouseX: e.clientX, mouseY: e.clientY, posX: startX, posY: startY };
-    setIsDragging(true);
+    dragOrigin.current = { mouseX: e.clientX, mouseY: e.clientY, posX: startX, posY: startY, winIdx: idx };
+    setDraggingIdx(idx);
   };
 
-  // Toggle body class during drag — CSS handles cursor globally
   useEffect(() => {
-    if (isDragging) {
-      document.body.classList.add("is-dragging");
-    } else {
-      document.body.classList.remove("is-dragging");
-    }
-    return () => { document.body.classList.remove("is-dragging"); };
-  }, [isDragging]);
-
-  // Mouse move / up listeners
-  useEffect(() => {
-    if (!isDragging) return;
-
+    if (draggingIdx === null) return;
     const onMove = (e: MouseEvent) => {
-      const dx = e.clientX - dragOrigin.current.mouseX;
-      const dy = e.clientY - dragOrigin.current.mouseY;
+      const { mouseX, mouseY, posX, posY, winIdx } = dragOrigin.current;
+      const dx = e.clientX - mouseX;
+      const dy = e.clientY - mouseY;
       const section = sectionRef.current;
-      const win = windowRef.current;
+      const win = windowRefs.current[winIdx];
       if (!section || !win) return;
       const maxX = section.offsetWidth - win.offsetWidth;
       const maxY = section.offsetHeight - win.offsetHeight;
-      setDragPos({
-        x: Math.max(0, Math.min(maxX, dragOrigin.current.posX + dx)),
-        y: Math.max(0, Math.min(maxY, dragOrigin.current.posY + dy)),
+      setDragPositions((prev) => {
+        const next = [...prev] as (Pos | null)[];
+        next[winIdx] = {
+          x: Math.max(0, Math.min(maxX, posX + dx)),
+          y: Math.max(0, Math.min(maxY, posY + dy)),
+        };
+        return next;
       });
     };
-
-    const onUp = () => setIsDragging(false);
-
+    const onUp = () => setDraggingIdx(null);
     document.addEventListener("mousemove", onMove);
     document.addEventListener("mouseup", onUp);
     return () => {
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
     };
-  }, [isDragging]);
+  }, [draggingIdx]);
 
-  const windowPositionStyle: React.CSSProperties =
-    dragPos !== null
-      ? { position: "absolute", left: dragPos.x, top: dragPos.y }
-      : { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)" };
+  useEffect(() => {
+    document.body.classList.toggle("is-dragging", draggingIdx !== null);
+    return () => document.body.classList.remove("is-dragging");
+  }, [draggingIdx]);
+
+  const getWindowStyle = (idx: number): React.CSSProperties => {
+    const pos = dragPositions[idx];
+    const z = getZIndex(idx);
+    const front = isFront(idx);
+    const base: React.CSSProperties = {
+      zIndex: z,
+      width: "min(620px, calc(100vw - 64px))",
+      opacity: front ? 1 : 0.82,
+      transition: draggingIdx === idx ? "none" : "opacity 0.2s",
+    };
+    if (pos !== null) {
+      return { ...base, position: "absolute", left: pos.x, top: pos.y };
+    }
+    return {
+      ...base,
+      position: "absolute",
+      left: "50%",
+      top: "50%",
+      transform: WINDOW_TRANSFORMS[idx],
+    };
+  };
 
   return (
     <section
       ref={sectionRef as React.Ref<HTMLElement>}
       className="relative h-screen overflow-hidden"
     >
-      {/* Background image */}
       <Image
         src="/image-section.jpg"
         alt="Construction site"
@@ -230,173 +190,203 @@ export function ImageBand() {
         className="object-cover object-center"
         priority
       />
-
-      {/* Dark overlay */}
       <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.65)" }} />
 
-      {/* Terminal window */}
-      <div
-        ref={windowRef}
-        style={{
-          ...windowPositionStyle,
-          width: "min(680px, calc(100vw - 64px))",
-          zIndex: 10,
-        }}
-      >
-        {/* Title bar — drag handle */}
+      {CASE_STUDIES.map((study, idx) => (
         <div
-          onMouseDown={handleTitleMouseDown}
-          className="terminal-title-bar"
-          style={{
-            background: "rgba(10, 10, 10, 0.4)",
-            border: "2px solid #00ff41",
-            borderBottom: "1px solid #00aa28",
-            padding: "7px 16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            fontFamily: "'Courier New', Courier, monospace",
-            backdropFilter: "blur(6px)",
-            userSelect: "none",
-          }}
+          key={idx}
+          ref={(el) => { windowRefs.current[idx] = el; }}
+          style={getWindowStyle(idx)}
+          onClick={() => { if (!isFront(idx)) bringToFront(idx); }}
         >
-          {/* Dots */}
-          <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
-            {([0.3, 0.5, 1] as const).map((o, i) => (
-              <span
-                key={i}
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: "#00ff41",
-                  display: "inline-block",
-                  opacity: o,
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Title */}
-          <span
-            style={{
-              color: "#00ff41",
-              fontSize: 11,
-              letterSpacing: "0.14em",
-              opacity: 0.85,
-              textTransform: "uppercase",
-            }}
-          >
-            SIMTEC TERMINAL — CASE STUDIES
-          </span>
-
-          {/* Navigation arrows — stop propagation so they don't trigger drag */}
+          {/* Title bar */}
           <div
-            style={{ display: "flex", alignItems: "center", gap: 4 }}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <span style={{ color: "#00ff41", fontSize: 10, opacity: 0.5, marginRight: 4, letterSpacing: "0.06em" }}>
-              {studyIdx + 1}/{CASE_STUDIES.length}
-            </span>
-            <button
-              style={navBtnStyle}
-              onClick={goPrev}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#00ff41";
-                e.currentTarget.style.background = "rgba(0,255,65,0.1)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(0,255,65,0.35)";
-                e.currentTarget.style.background = "transparent";
-              }}
-            >
-              {"<"}
-            </button>
-            <button
-              style={navBtnStyle}
-              onClick={goNext}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#00ff41";
-                e.currentTarget.style.background = "rgba(0,255,65,0.1)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(0,255,65,0.35)";
-                e.currentTarget.style.background = "transparent";
-              }}
-            >
-              {">"}
-            </button>
-          </div>
-        </div>
-
-        {/* Terminal body */}
-        <div
-          ref={bodyRef}
-          className={`terminal-scrollarea${isDone ? " terminal-scrollbar-on" : ""}`}
-          style={{
-            background: "rgba(5, 5, 5, 0.4)",
-            backdropFilter: "blur(6px)",
-            border: "2px solid #00ff41",
-            borderTop: "none",
-            padding: "28px 32px 32px",
-            height: 480,
-            overflowY: "auto",
-            fontFamily: "'Courier New', Courier, monospace",
-            fontSize: 14,
-            lineHeight: 1.8,
-            color: "#00ff41",
-            textShadow: "0 0 10px rgba(0, 255, 65, 0.55)",
-            backgroundImage:
-              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.012) 2px, rgba(0,255,65,0.012) 4px)",
-          }}
-        >
-          <pre
+            onMouseDown={(e) => handleTitleMouseDown(e, idx)}
             style={{
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-              margin: 0,
-              fontFamily: "inherit",
-              fontSize: "inherit",
+              background: "rgba(255,255,255,0.06)",
+              backdropFilter: "blur(24px) saturate(1.6)",
+              WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+              border: "1px solid rgba(255,255,255,0.13)",
+              borderBottom: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: "12px 12px 0 0",
+              padding: "11px 16px",
+              display: "flex",
+              alignItems: "center",
+              userSelect: "none",
+              cursor: "grab",
+              position: "relative",
             }}
           >
-            {displayed}
-            {!isDone && <span className="terminal-cursor">█</span>}
-          </pre>
+            {/* Traffic lights */}
+            <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
+              {(["#ff5f57", "#febc2e", "#28c840"] as const).map((color, i) => (
+                <span
+                  key={i}
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    background: color,
+                    display: "inline-block",
+                    opacity: isFront(idx) ? 1 : 0.3,
+                  }}
+                />
+              ))}
+            </div>
 
-          {isDone && (
-            <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 12 }}>
-              <span className="terminal-cursor">█</span>
-              <button
-                onClick={goNext}
+            {/* Centered title */}
+            <span
+              style={{
+                position: "absolute",
+                left: "50%",
+                transform: "translateX(-50%)",
+                color: "rgba(255,255,255,0.6)",
+                fontSize: 13,
+                fontWeight: 500,
+                letterSpacing: "0.02em",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {study.client}
+            </span>
+          </div>
+
+          {/* Window body */}
+          <div
+            style={{
+              background: "rgba(8,10,26,0.45)",
+              backdropFilter: "blur(28px) saturate(1.5)",
+              WebkitBackdropFilter: "blur(28px) saturate(1.5)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderTop: "none",
+              borderRadius: "0 0 12px 12px",
+              padding: "22px 26px 26px",
+              height: 460,
+              overflowY: "auto",
+              scrollbarWidth: "thin",
+              scrollbarColor: "rgba(255,255,255,0.15) transparent",
+            }}
+          >
+            {/* Header */}
+            <div style={{ marginBottom: 14 }}>
+              <div
                 style={{
-                  background: "transparent",
-                  border: "1px solid #00ff41",
-                  color: "#00ff41",
-                  fontFamily: "'Courier New', Courier, monospace",
-                  fontSize: 12,
-                  letterSpacing: "0.12em",
-                  padding: "5px 18px",
-                  cursor: "pointer",
-                  textShadow: "0 0 8px rgba(0,255,65,0.7)",
-                  boxShadow: "0 0 10px rgba(0,255,65,0.2)",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  color: "rgba(255,255,255,0.3)",
                   textTransform: "uppercase",
-                  transition: "background 0.15s, box-shadow 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(0,255,65,0.12)";
-                  e.currentTarget.style.boxShadow = "0 0 14px rgba(0,255,65,0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.boxShadow = "0 0 10px rgba(0,255,65,0.2)";
+                  marginBottom: 6,
                 }}
               >
-                SEE NEXT CASE STUDY
-              </button>
+                Case Study
+              </div>
+              <h3
+                style={{
+                  fontSize: 17,
+                  fontWeight: 700,
+                  lineHeight: 1.3,
+                  color: "#fff",
+                  margin: 0,
+                  fontFamily: "var(--font-league-spartan)",
+                }}
+              >
+                {study.project}
+              </h3>
             </div>
-          )}
+
+            <div
+              style={{
+                width: "100%",
+                height: 1,
+                background: "rgba(255,255,255,0.07)",
+                margin: "14px 0",
+              }}
+            />
+
+            <p
+              style={{
+                fontSize: 13.5,
+                lineHeight: 1.7,
+                color: "rgba(255,255,255,0.55)",
+                marginBottom: 18,
+              }}
+            >
+              {study.description}
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 14px" }}>
+              {/* Delivered */}
+              <div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.14em",
+                    color: "rgba(255,255,255,0.28)",
+                    textTransform: "uppercase",
+                    marginBottom: 9,
+                  }}
+                >
+                  What Simtec Delivered
+                </div>
+                <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 5 }}>
+                  {study.delivered.map((item, i) => (
+                    <li
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 7,
+                        fontSize: 12.5,
+                        lineHeight: 1.5,
+                        color: "rgba(255,255,255,0.68)",
+                      }}
+                    >
+                      <span style={{ color: "#4a6cf7", flexShrink: 0, marginTop: 2, fontSize: 9 }}>✦</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Impact */}
+              <div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.14em",
+                    color: "rgba(255,255,255,0.28)",
+                    textTransform: "uppercase",
+                    marginBottom: 9,
+                  }}
+                >
+                  Business Impact
+                </div>
+                <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 5 }}>
+                  {study.impact.map((item, i) => (
+                    <li
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 7,
+                        fontSize: 12.5,
+                        lineHeight: 1.5,
+                        color: "rgba(255,255,255,0.68)",
+                      }}
+                    >
+                      <span style={{ color: "#3dd68c", flexShrink: 0, marginTop: 2, fontSize: 11, fontWeight: 700 }}>+</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      ))}
     </section>
   );
 }

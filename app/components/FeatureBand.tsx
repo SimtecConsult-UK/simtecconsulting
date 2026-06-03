@@ -15,7 +15,7 @@ export function FeatureBand() {
           style={{ fontFamily: "var(--font-league-spartan)" }}
         >
           <span
-            className="bg-clip-text text-transparent"
+            className="block whitespace-nowrap bg-clip-text text-transparent"
             style={{
               backgroundImage:
                 "linear-gradient(90deg, #ff5db3 0%, #b04df0 50%, #4a6cf7 100%)",
@@ -23,10 +23,8 @@ export function FeatureBand() {
           >
             Operational Systems
           </span>
-          <br />
-          <span className="text-on-surface">Built for Real</span>
-          <br />
-          <span className="whitespace-nowrap text-on-surface">Construction Workflows</span>
+          <span className="block text-on-surface">Built for Real</span>
+          <span className="block whitespace-nowrap text-on-surface">Construction Work.</span>
         </h2>
 
         {/* Solution tabs */}

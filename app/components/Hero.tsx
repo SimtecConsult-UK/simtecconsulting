@@ -10,10 +10,19 @@ export function Hero() {
 
       <div className="relative mx-auto max-w-[var(--container-content)] w-full px-4 py-10 md:px-16">
         <h1
-          className="mx-auto max-w-[840px] text-center text-[36px] font-bold leading-[1.04] tracking-[-0.02em] text-white sm:text-[48px] md:text-[60px] lg:text-[72px]"
-          style={{ fontFamily: "var(--font-league-spartan)" }}
+          className="mx-auto max-w-[840px] text-center text-[36px] font-bold leading-[1.04] tracking-[-0.02em] sm:text-[48px] md:text-[60px] lg:text-[72px]"
+          style={{
+            fontFamily: "var(--font-league-spartan)",
+            backgroundImage: "linear-gradient(180deg, #ffffff 0%, #e8ecff 55%, #c8d0ff 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            filter: "drop-shadow(0 0 40px rgba(255,255,255,0.35))",
+          }}
         >
-          Operational Systems for Construction Companies
+          <span className="block whitespace-nowrap">Operational Systems</span>
+          <span className="block">Built for Real</span>
+          <span className="block">Construction Work.</span>
         </h1>
 
         <div className="mt-12 flex justify-center md:mt-16">
