@@ -5,81 +5,30 @@ import { RobotScene } from "./RobotScene";
 
 export function ApproachBand() {
   const imgRef = useRef<HTMLImageElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const imgEl = imgRef.current;
-    const canvas = canvasRef.current;
-    if (!imgEl || !canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!imgEl) return;
 
-    let rafId: number;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          imgEl.style.opacity = "1";
+          imgEl.style.transform = "translateY(0)";
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(imgEl);
 
-    const syncSize = () => {
-      canvas.width = imgEl.offsetWidth;
-      canvas.height = imgEl.offsetHeight;
-    };
-
-    const drawPixelated = (pixelSize: number, alpha: number) => {
-      const { width: w, height: h } = canvas;
-      ctx.clearRect(0, 0, w, h);
-      if (alpha <= 0 || w === 0 || h === 0) return;
-      const pw = Math.max(1, Math.floor(w / pixelSize));
-      const ph = Math.max(1, Math.floor(h / pixelSize));
-      const off = document.createElement("canvas");
-      off.width = pw;
-      off.height = ph;
-      off.getContext("2d")!.drawImage(imgEl, 0, 0, pw, ph);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(off, 0, 0, w, h);
-      ctx.restore();
-    };
-
-    const startAnimation = () => {
-      const duration = 1400;
-      const start = performance.now();
-      const animate = (now: number) => {
-        const t = Math.min((now - start) / duration, 1);
-        const eased = 1 - Math.pow(1 - t, 3);
-        drawPixelated(Math.max(1, Math.round(48 * (1 - eased))), 1 - eased);
-        if (t < 1) rafId = requestAnimationFrame(animate);
-      };
-      rafId = requestAnimationFrame(animate);
-    };
-
-    const init = () => {
-      syncSize();
-      drawPixelated(48, 1);
-
-      const ro = new ResizeObserver(() => { syncSize(); drawPixelated(48, 1); });
-      ro.observe(imgEl);
-
-      const observer = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) { observer.disconnect(); startAnimation(); } },
-        { threshold: 0.15 }
-      );
-      observer.observe(canvas);
-
-      return () => { ro.disconnect(); observer.disconnect(); };
-    };
-
-    let cleanup: (() => void) | undefined;
-    if (imgEl.complete) {
-      cleanup = init();
-    } else {
-      imgEl.onload = () => { cleanup = init(); };
-    }
-
-    return () => { cancelAnimationFrame(rafId); cleanup?.(); };
+    return () => observer.disconnect();
   }, []);
 
   return (
     <section
       className="flex min-h-screen flex-col items-center justify-between px-4 pb-16 pt-24 md:px-16"
-      style={{ background: "#edeaf8" }}
+      style={{ background: "#d9c6ff" }}
     >
       <h2
         className="mx-auto max-w-[760px] text-center text-[42px] font-bold leading-[1.06] tracking-[-0.02em] text-[#1a1530] sm:text-[54px] md:text-[66px]"
@@ -90,17 +39,46 @@ export function ApproachBand() {
 
       <div className="mx-auto flex w-full max-w-[680px] flex-col items-center gap-8 md:flex-row md:items-end md:gap-12">
 
-        {/* Image + pixelated canvas overlay */}
         <div className="relative flex-1">
+          <style>{`
+            @keyframes ap-pulse {
+              0%   { transform: scale(.8); opacity: .8; }
+              60%  { transform: scale(1.6); opacity: 0; }
+              100% { transform: scale(.8); opacity: 0;  }
+            }
+            @keyframes ap-ring {
+              0%   { transform: scale(1);   opacity: .6; }
+              100% { transform: scale(1.8); opacity: 0;  }
+            }
+            .ap-pulse::after {
+              content: '';
+              position: absolute;
+              inset: -8px;
+              border-radius: 50%;
+              border: 2px solid rgba(0,220,255,.25);
+              animation: ap-ring 2.7s ease-out 0s infinite;
+            }
+          `}</style>
           <img
             ref={imgRef}
-            src="/mockupipad2.png"
+            src="/mockup2.png"
             alt="Before building systems, we understand your workflows"
             className="w-full"
+            style={{
+              opacity: 0,
+              transform: "translateY(24px)",
+              transition: "opacity 0.8s ease, transform 0.8s ease",
+            }}
           />
-          <canvas
-            ref={canvasRef}
-            className="pointer-events-none absolute inset-0 h-full w-full"
+          {/* Bleep pulse — positioned over the screen area of the mockup */}
+          <div
+            className="ap-pulse pointer-events-none absolute rounded-full"
+            style={{
+              bottom: "8%", right: "14%",
+              width: 42, height: 42,
+              background: "rgba(0,220,255,.3)",
+              animation: "ap-pulse 2.7s ease-out 0s infinite",
+            }}
           />
         </div>
 
