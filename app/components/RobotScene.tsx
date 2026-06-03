@@ -15,18 +15,6 @@ export function RobotScene() {
   return (
     <div className="relative flex h-full w-full items-center justify-center">
       <style>{`
-        @keyframes rb-glow {
-          0%,100% {
-            filter: drop-shadow(0 0 6px rgba(0,220,255,.5))
-                    drop-shadow(0 0 16px rgba(0,220,255,.25))
-                    drop-shadow(0 0 3px rgba(255,60,190,.4));
-          }
-          50% {
-            filter: drop-shadow(0 0 12px rgba(0,220,255,.8))
-                    drop-shadow(0 0 30px rgba(0,220,255,.4))
-                    drop-shadow(0 0 8px rgba(255,60,190,.7));
-          }
-        }
         @keyframes rb-ring {
           0%,100% { transform: scale(1);   opacity: .6; }
           50%      { transform: scale(1.1); opacity: 1;  }
@@ -60,16 +48,6 @@ export function RobotScene() {
         }
       `}</style>
 
-      {/* Ambient glow ring */}
-      <div
-        className="pointer-events-none absolute rounded-full"
-        style={{
-          width: "320px", height: "320px",
-          background: "radial-gradient(ellipse at center, rgba(0,220,255,.06) 0%, rgba(255,60,190,.04) 40%, transparent 70%)",
-          animation: "rb-ring 2.8s ease-in-out infinite",
-        }}
-      />
-
       {/* Floating particles */}
       {particles.map((p, i) => (
         <div
@@ -94,7 +72,7 @@ export function RobotScene() {
           style={{
             width: "340px",
             transformOrigin: "center bottom",
-            animation: "rb-glow 2.8s ease-in-out infinite",
+            filter: "drop-shadow(0 20px 48px rgba(0,0,0,0.55)) drop-shadow(0 6px 16px rgba(0,0,0,0.35))",
           }}
         />
 
@@ -142,10 +120,10 @@ export function RobotScene() {
         style={{
           bottom: -10, left: "50%",
           transform: "translateX(-50%)",
-          width: 200, height: 30,
-          background: "radial-gradient(ellipse, rgba(0,220,255,.25) 0%, transparent 70%)",
+          width: 220, height: 28,
+          background: "radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%)",
           borderRadius: "50%",
-          filter: "blur(4px)",
+          filter: "blur(6px)",
         }}
       />
     </div>

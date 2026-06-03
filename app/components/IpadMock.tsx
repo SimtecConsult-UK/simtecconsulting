@@ -1,8 +1,29 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
+const slides = [
+  "WE SCOPE OUT\nOPERATIONAL\nWORKFLOWS",
+  "WE IDENTIFY\nINEFFICIENCIES",
+  "WE STRUCTURE\nPROCESSES",
+  "WE ALIGN THE\nSTAKEHOLDERS",
+  "WE DEFINE\nPRACTICAL OPS\nREQUIREMENTS",
+];
+
+const BLEEP_MS = 2700;
+
 export function IpadMock() {
+  const [slide, setSlide] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSlide(s => (s + 1) % slides.length);
+    }, BLEEP_MS);
+    return () => clearInterval(id);
+  }, []);
+
   return (
-    <div style={{ width: "100%", maxWidth: "270px", margin: "0 auto" }}>
+    <div style={{ width: "270px", margin: "0 auto" }}>
       <style>{`
         @keyframes ap-pulse {
           0%   { transform: scale(.8); opacity: .8; }
@@ -12,6 +33,10 @@ export function IpadMock() {
         @keyframes ap-ring {
           0%   { transform: scale(1);   opacity: .6; }
           100% { transform: scale(1.8); opacity: 0;  }
+        }
+        @keyframes ap-slide-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
         .ap-pulse::after {
           content: '';
@@ -23,7 +48,7 @@ export function IpadMock() {
         }
       `}</style>
 
-      {/* iPad shell */}
+      {/* Device shell */}
       <div
         style={{
           background: "linear-gradient(160deg, #3a3a3c 0%, #1c1c1e 100%)",
@@ -61,9 +86,16 @@ export function IpadMock() {
         />
 
         {/* Screen */}
-        <div style={{ borderRadius: "12px", overflow: "hidden", background: "#0d0d10" }}>
+        <div style={{
+          borderRadius: "12px",
+          overflow: "hidden",
+          background: "#0d0d10",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "290px",
+        }}>
 
-          {/* iOS status bar — dark mode */}
+          {/* iOS status bar */}
           <div
             style={{
               background: "rgba(18,18,22,0.95)",
@@ -71,6 +103,7 @@ export function IpadMock() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              flexShrink: 0,
             }}
           >
             <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.85)", fontFamily: "-apple-system, sans-serif" }}>
@@ -91,10 +124,14 @@ export function IpadMock() {
             </div>
           </div>
 
-          {/* Window area */}
-          <div style={{ padding: "12px 10px 14px" }}>
-
-            {/* macOS-style frosted glass window — mirrors ImageBand style */}
+          {/* Vertically centered content */}
+          <div style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            padding: "12px 10px 14px",
+          }}>
             <div
               style={{
                 background: "rgba(8,10,26,0.55)",
@@ -106,38 +143,9 @@ export function IpadMock() {
                 boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
               }}
             >
-              {/* Title bar */}
-              <div
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  backdropFilter: "blur(24px) saturate(1.6)",
-                  WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-                  padding: "9px 12px",
-                  display: "flex",
-                  alignItems: "center",
-                  borderBottom: "1px solid rgba(255,255,255,0.07)",
-                  position: "relative",
-                }}
-              >
-                <div style={{ display: "flex", gap: 5 }}>
-                  {(["#ff5f57", "#febc2e", "#28c840"] as const).map((c, i) => (
-                    <span key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: c, display: "inline-block" }} />
-                  ))}
-                </div>
-                <span
-                  style={{
-                    position: "absolute", left: "50%", transform: "translateX(-50%)",
-                    fontSize: 9.5, fontWeight: 500, color: "rgba(255,255,255,0.5)",
-                    whiteSpace: "nowrap",
-                    fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
-                  }}
-                >
-                  Simtec Platform
-                </span>
-              </div>
-
-              {/* Body */}
               <div style={{ padding: "16px 14px 18px", position: "relative" }}>
+
+                {/* Label */}
                 <div
                   style={{
                     fontSize: 8.5, fontWeight: 700, letterSpacing: "0.13em",
@@ -148,17 +156,37 @@ export function IpadMock() {
                 >
                   Before building systems
                 </div>
+
+                {/* Sliding main text — key change triggers CSS entrance */}
                 <h3
+                  key={slide}
                   style={{
                     fontSize: 18, fontWeight: 800, lineHeight: 1.1,
-                    color: "#ffffff", margin: "0 0 14px",
+                    color: "#ffffff", margin: "0 0 10px",
                     textTransform: "uppercase", letterSpacing: "-0.02em",
                     fontFamily: "var(--font-league-spartan)",
+                    whiteSpace: "pre-line",
+                    width: "100%",
+                    height: "62px",
+                    overflow: "hidden",
+                    animation: "ap-slide-in 0.35s ease forwards",
                   }}
                 >
-                  We scope out operational workflows
+                  {slides[slide]}
                 </h3>
+
+                {/* iOS-style navigation arrows */}
+                <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M9 11L5 7L9 3" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M5 11L9 7L5 3" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+
                 <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.07)", marginBottom: 12 }} />
+
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo.png" alt="simtec" style={{ height: 13, opacity: 0.45 }} />
 
@@ -166,8 +194,8 @@ export function IpadMock() {
                 <div
                   className="ap-pulse pointer-events-none absolute rounded-full"
                   style={{
-                    bottom: "16px",
-                    right: "14%",
+                    bottom: "46px",
+                    left: "30px",
                     width: 34,
                     height: 34,
                     background: "rgba(0,220,255,.3)",
@@ -176,7 +204,6 @@ export function IpadMock() {
                 />
               </div>
             </div>
-
           </div>
         </div>
 
