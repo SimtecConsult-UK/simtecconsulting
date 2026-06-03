@@ -28,7 +28,7 @@ export function ApproachBand() {
 
   return (
     <section
-      className="flex min-h-screen flex-col items-center gap-[8vh] px-4 py-[8vh] md:px-16"
+      className="flex min-h-screen flex-col items-center gap-[8vh] px-4 pb-[340px] pt-[8vh] md:px-16"
       style={{ background: "#d9c6ff" }}
     >
       <h2
