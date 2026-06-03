@@ -3,11 +3,11 @@ import { Logo } from "./Logo";
 
 export function Footer() {
   return (
-    <footer className="px-4 py-16 text-white md:px-16 md:py-24" style={{ background: "#111937" }}>
+    <footer className="px-4 py-16 text-black md:px-16 md:py-24" style={{ background: "#f8f1fe" }}>
       <div className="mx-auto max-w-[var(--container-content)]">
         <div>
-          <Logo white />
-          <p className="mt-6 max-w-xs text-sm text-white/70">
+          <Logo />
+          <p className="mt-6 max-w-xs text-sm text-black/60">
             Construction management software that helps teams deliver
             projects faster, safer, and on budget.
           </p>
@@ -18,7 +18,7 @@ export function Footer() {
               width={100}
               height={100}
               className="w-[100px] h-auto object-contain"
-              style={{ filter: "invert(1) grayscale(1)", mixBlendMode: "screen", marginLeft: "-22px" }}
+              style={{ filter: "grayscale(1)", mixBlendMode: "multiply", marginLeft: "-22px" }}
             />
             <Image
               src="/footer-logo-2.webp"
@@ -26,21 +26,21 @@ export function Footer() {
               width={300}
               height={300}
               className="w-[300px] h-auto object-contain"
-              style={{ filter: "invert(1) grayscale(1)", mixBlendMode: "screen" }}
+              style={{ filter: "grayscale(1)", mixBlendMode: "multiply" }}
             />
           </div>
         </div>
 
-        <div className="mt-[14px] flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-8 text-xs text-white/60 sm:flex-row sm:items-center">
+        <div className="mt-[14px] flex flex-col items-start justify-between gap-4 border-t border-black/10 pt-8 text-xs text-black/50 sm:flex-row sm:items-center">
           <span>&copy; {new Date().getFullYear()} Simtec, Inc.</span>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-white">
+            <a href="#" className="hover:text-black">
               Privacy
             </a>
-            <a href="#" className="hover:text-white">
+            <a href="#" className="hover:text-black">
               Terms
             </a>
-            <a href="#" className="hover:text-white">
+            <a href="#" className="hover:text-black">
               Cookies
             </a>
           </div>
