@@ -93,6 +93,14 @@ export function ImageBand() {
     setStackOrder((prev) => [...prev.filter((x) => x !== idx), idx]);
   };
 
+  const resetPosition = (idx: number) => {
+    setDragPositions((prev) => {
+      const next = [...prev] as (Pos | null)[];
+      next[idx] = null;
+      return next;
+    });
+  };
+
   const handleTitleMouseDown = (e: React.MouseEvent, idx: number) => {
     e.preventDefault();
     bringToFront(idx);
@@ -126,6 +134,8 @@ export function ImageBand() {
     if (draggingIdx === null) return;
     const onMove = (e: MouseEvent) => {
       const { mouseX, mouseY, posX, posY, winIdx } = dragOrigin.current;
+      // Guard: discard if dragOrigin was already updated for a newer drag
+      if (winIdx !== draggingIdx) return;
       const dx = e.clientX - mouseX;
       const dy = e.clientY - mouseY;
       const section = sectionRef.current;
@@ -199,9 +209,10 @@ export function ImageBand() {
           style={getWindowStyle(idx)}
           onClick={() => { if (!isFront(idx)) bringToFront(idx); }}
         >
-          {/* Title bar */}
+          {/* Title bar — drag on mousedown, double-click resets to default position */}
           <div
             onMouseDown={(e) => handleTitleMouseDown(e, idx)}
+            onDoubleClick={() => resetPosition(idx)}
             style={{
               background: "rgba(255,255,255,0.06)",
               backdropFilter: "blur(24px) saturate(1.6)",
