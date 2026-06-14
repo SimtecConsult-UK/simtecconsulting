@@ -20,10 +20,9 @@ export default function Home() {
         {/* Spacer: covers mockup overflow + breathing room before logos land */}
         <div style={{ height: "calc(50vh + 45px)" }} />
         <PartnerLogos />
-        <p className="py-3 text-center text-[9px] font-medium tracking-[0.18em] uppercase text-white/80">
+        <p className="py-[34px] text-center text-[9px] font-medium tracking-[0.18em] uppercase text-white/80 underline decoration-white/40 underline-offset-2">
           Built with construction, environmental and infrastructure businesses.
         </p>
-        <div style={{ height: "45px" }} />
       </div>
       <PainPointBand />
 
