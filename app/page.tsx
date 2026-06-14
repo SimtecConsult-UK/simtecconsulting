@@ -1,11 +1,7 @@
-import { ApproachBand } from "./components/ApproachBand";
-import { BridgeCards } from "./components/BridgeCards";
 import { CtaBand } from "./components/CtaBand";
 import { FeatureBand } from "./components/FeatureBand";
-import { ImageBand } from "./components/ImageBand";
 import { Footer } from "./components/Footer";
 import { Hero } from "./components/Hero";
-import { HowItWorks } from "./components/HowItWorks";
 import { Nav } from "./components/Nav";
 import { PainPointBand } from "./components/PainPointBand";
 import { PartnerLogos } from "./components/PartnerLogos";
@@ -18,9 +14,16 @@ export default function Home() {
   return (
     <>
       <Nav />
-      <div className="flex min-h-screen flex-col" style={{ background: "#0b0a0c" }}>
+      {/* Hero zone — 100vh hero + scroll space for overflowing mockup + sticky logos */}
+      <div style={{ background: "#0b0a0c" }}>
         <Hero />
+        {/* Spacer: covers mockup overflow + breathing room before logos land */}
+        <div style={{ height: "calc(50vh + 45px)" }} />
         <PartnerLogos />
+        <p className="py-3 text-center text-[9px] font-medium tracking-[0.18em] uppercase text-white/80">
+          Built with construction, environmental and infrastructure businesses.
+        </p>
+        <div style={{ height: "45px" }} />
       </div>
       <PainPointBand />
 
@@ -40,10 +43,6 @@ export default function Home() {
         </div>
       </div>
 
-      <ImageBand />
-      <ApproachBand />
-      <BridgeCards />
-      <HowItWorks />
       <SocialProof />
       <Testimonials />
       <CtaBand />

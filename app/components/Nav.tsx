@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Logo } from "./Logo";
 
 const links = [
   { label: "Solutions", href: "#solutions" },
@@ -28,14 +27,14 @@ export function Nav() {
         boxShadow: scrolled ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
       }}
     >
-      <div className="mx-auto flex max-w-[var(--container-content)] items-center justify-between px-4 py-5 md:px-16">
-        <Logo white />
-        <ul className="hidden items-center gap-10 md:flex">
+      <div className="mx-auto flex max-w-[var(--container-content)] items-center justify-between px-2.5 py-3 md:px-10">
+        <img src="/simtec-logo-white.png" alt="Simtec" style={{ height: "20px", width: "auto" }} />
+        <ul className="hidden items-center gap-6 md:flex">
           {links.map((link) => (
             <li key={link.href}>
               <a
                 href={link.href}
-                className="text-[15px] font-semibold text-white/70 transition-colors hover:text-white"
+                className="text-[9px] font-semibold text-white/70 transition-colors hover:text-white"
               >
                 {link.label}
               </a>
@@ -44,7 +43,7 @@ export function Nav() {
         </ul>
         <a
           href="#contact"
-          className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand-blue)] px-6 py-3 text-[15px] font-semibold text-[#0c2421] transition-colors hover:bg-[#85f0e4]"
+          className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand-blue)] px-4 py-1.5 text-[9px] font-semibold text-[#0c2421] transition-colors hover:bg-[#85f0e4]"
         >
           Book a Workshop
         </a>
