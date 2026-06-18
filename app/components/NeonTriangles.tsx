@@ -1,3 +1,5 @@
+'use client';
+
 export function NeonTriangles() {
   return (
     <svg
@@ -34,7 +36,8 @@ export function NeonTriangles() {
         </filter>
       </defs>
 
-      {/* ── Large cyan triangle — float up-right, 9s ── */}
+      {/* ── Large cyan triangle — float up-right, 9s — rotateY right 35° ── */}
+      <g className="triangle-cyan">
       <g>
         <animateTransform
           attributeName="transform"
@@ -69,6 +72,7 @@ export function NeonTriangles() {
           strokeWidth="1"
           opacity="0.95"
         />
+      </g>
       </g>
 
       {/* ── Medium violet triangle — float down-left, 11s ── */}
@@ -109,7 +113,8 @@ export function NeonTriangles() {
         />
       </g>
 
-      {/* ── Pink inner triangle — float up, 7s ── */}
+      {/* ── Pink inner triangle — float up, 7s — rotateY left 20° ── */}
+      <g className="triangle-pink">
       <g>
         <animateTransform
           attributeName="transform"
@@ -146,8 +151,10 @@ export function NeonTriangles() {
           opacity="0.9"
         />
       </g>
+      </g>
 
-      {/* ── Inverted deep-violet triangle — float right, 13s ── */}
+      {/* ── Inverted deep-violet triangle — float right, 13s — rotateY left 20° ── */}
+      <g className="triangle-violet">
       <g>
         <animateTransform
           attributeName="transform"
@@ -183,6 +190,7 @@ export function NeonTriangles() {
           strokeWidth="0.8"
           opacity="0.65"
         />
+      </g>
       </g>
     </svg>
   );

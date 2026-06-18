@@ -1,40 +1,25 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useScrollEffect } from "../hooks/useScrollEffect";
 
 export function ProductMock() {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useScrollEffect(() => {
     const el = ref.current;
     if (!el) return;
-
-    const onScroll = () => {
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-
-      // Phase 1 — tilt up as element enters viewport
-      const inStart = vh;
-      const inEnd = vh * 0.2;
-      const inProgress = Math.min(Math.max((inStart - rect.top) / (inStart - inEnd), 0), 1);
-      const rotateX = 40 * (1 - inProgress);
-      const inOpacity = Math.min(inProgress * 1.5, 1);
-
-      // Phase 2 — blur + fade out as element exits through the top
-      // Starts when rect.top < 0, completes when 60% of height has scrolled past
-      const exitProgress = Math.min(Math.max(-rect.top / (rect.height * 0.6), 0), 1);
-      const blur = exitProgress * 24;
-      const outOpacity = 1 - exitProgress;
-
-      el.style.transform = `perspective(1200px) rotateX(${rotateX}deg)`;
-      el.style.opacity = String(inOpacity * outOpacity);
-      el.style.filter = blur > 0 ? `blur(${blur}px)` : "";
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    const rect = el.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const inProgress = Math.min(Math.max((vh - rect.top) / (vh * 0.8), 0), 1);
+    const rotateX = 40 * (1 - inProgress);
+    const inOpacity = Math.min(inProgress * 1.5, 1);
+    const exitProgress = Math.min(Math.max(-rect.top / (rect.height * 0.6), 0), 1);
+    const blur = exitProgress * 24;
+    el.style.transform = `perspective(1200px) rotateX(${rotateX}deg)`;
+    el.style.opacity = String(inOpacity * (1 - exitProgress));
+    el.style.filter = blur > 0 ? `blur(${blur}px)` : "";
+  });
 
   return (
     <div

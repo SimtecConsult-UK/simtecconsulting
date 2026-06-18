@@ -1,41 +1,29 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useScrollEffect } from "../hooks/useScrollEffect";
 
 export function PainPointBand() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useScrollEffect(() => {
     const wrapper = wrapperRef.current;
     const card = cardRef.current;
     if (!wrapper || !card) return;
-
-    const onScroll = () => {
-      const rect = wrapper.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const scrolled = -rect.top;
-      const extra = wrapper.offsetHeight - vh;
-
-      if (scrolled <= 0) {
-        card.style.transform = "scale(0.62)";
-        card.style.borderRadius = "32px";
-        card.style.overflow = "hidden";
-        return;
-      }
-
-      const progress = Math.min(scrolled / extra, 1);
-      const scale = 0.62 + progress * 0.32;
-      const radius = 32 - progress * 16;
-      card.style.transform = `scale(${scale})`;
-      card.style.borderRadius = `${radius}px`;
+    const scrolled = -wrapper.getBoundingClientRect().top;
+    const extra = wrapper.offsetHeight - window.innerHeight;
+    if (scrolled <= 0) {
+      card.style.transform = "scale(0.62)";
+      card.style.borderRadius = "32px";
       card.style.overflow = "hidden";
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+      return;
+    }
+    const progress = Math.min(scrolled / extra, 1);
+    card.style.transform = `scale(${0.62 + progress * 0.32})`;
+    card.style.borderRadius = `${32 - progress * 16}px`;
+    card.style.overflow = "hidden";
+  });
 
   return (
     /* Wrapper is 2× viewport tall — the extra height is the scroll travel */

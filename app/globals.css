@@ -259,3 +259,10 @@ body.is-dragging * {
   user-select: none !important;
 }
 
+/* NeonTriangles — 3D perspective folds */
+.triangle-cyan            { transform-origin: 65% 57%; transform: perspective(2000px) rotateY(35deg); }
+.triangle-pink,
+.triangle-violet          { transform: perspective(800px) rotateY(-20deg); }
+.triangle-pink            { transform-origin: 64% 59%; }
+.triangle-violet          { transform-origin: 57% 52%; }
+
