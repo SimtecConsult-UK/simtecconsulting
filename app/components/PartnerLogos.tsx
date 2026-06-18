@@ -131,7 +131,7 @@ export function PartnerLogos() {
       </div>
 
       {/* Mobile/tablet: continuous marquee */}
-      <div className="lg:hidden relative py-3" style={{ overflow: "clip" }}>
+      <div className="lg:hidden relative py-3" style={{ overflow: "hidden" }}>
         <TickerFades color="#0b0a0c" />
         <div className="logo-ticker-track flex items-center" style={{ width: "max-content" }}>
           {[...logoNames, ...logoNames].map((name, i) => (
