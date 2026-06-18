@@ -8,6 +8,7 @@ export function Hero() {
   const craneRef = useRef<HTMLImageElement>(null);
 
   useScrollEffect(() => {
+    if (!window.matchMedia('(min-width: 1024px)').matches) return;
     const el = craneRef.current;
     if (!el) return;
     const p = Math.min(window.scrollY / window.innerHeight, 1);
@@ -18,8 +19,7 @@ export function Hero() {
 
   return (
     <section
-      className="relative"
-      style={{ height: "100vh", overflow: "visible" }}
+      className="relative overflow-visible lg:h-screen"
     >
       {/* Background gradient */}
       <div
@@ -35,7 +35,7 @@ export function Hero() {
       {/* Crane — left side, anchored at the logo band / section bottom */}
       <div
         aria-hidden
-        className="pointer-events-none absolute"
+        className="pointer-events-none absolute hidden lg:block"
         style={{ left: "2%", bottom: 0, zIndex: 2 }}
       >
         <img
@@ -54,15 +54,14 @@ export function Hero() {
 
       {/* Text content — nav spacer + content centred between nav bottom and mockup top */}
       <div
-        className="relative z-10 flex flex-col items-center px-4 text-center md:px-16"
-        style={{ height: "72vh" }}
+        className="relative z-10 flex flex-col items-center px-8 pb-14 text-center md:px-16 lg:pb-0 lg:h-[72vh]"
       >
         {/* Pushes content below the fixed nav */}
-        <div style={{ height: "44px", flexShrink: 0 }} />
+        <div className="h-24 flex-shrink-0 lg:h-11" />
         {/* Remaining space — content centred so gap above h1 = gap below CTA */}
         <div className="flex flex-1 flex-col items-center justify-center">
         <h1
-          className="mx-auto max-w-[728px] text-[54px] font-bold leading-[1.15] tracking-[-0.02em]"
+          className="mx-auto max-w-[728px] text-[32px] font-bold leading-[1.15] tracking-[-0.02em] md:text-[44px] lg:text-[54px]"
           style={{
             fontFamily: "var(--font-league-spartan)",
             backgroundImage:
@@ -76,7 +75,7 @@ export function Hero() {
           Construction software that works the way you do.
         </h1>
 
-        <p className="mt-3 max-w-[655px] text-[16px] leading-relaxed text-white/55 md:mt-4">
+        <p className="mt-3 max-w-[655px] px-4 text-[16px] leading-relaxed text-white/55 md:mt-4 lg:px-0">
           For construction teams that need better control, cleaner data and software that fits the way the business actually runs.
         </p>
 
@@ -93,7 +92,7 @@ export function Hero() {
 
       {/* macOS browser window — starts at 58vh, overflows below viewport */}
       <div
-        className="absolute left-1/2 z-10 -translate-x-1/2"
+        className="absolute left-1/2 z-10 -translate-x-1/2 hidden lg:block"
         style={{ top: "72vh", width: "min(960px, calc(100vw - 48px))" }}
       >
         {/* Ambient glow behind the window */}

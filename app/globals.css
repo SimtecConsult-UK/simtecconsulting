@@ -220,6 +220,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 html,
@@ -232,6 +233,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 @keyframes tab-pulse {
@@ -265,4 +267,21 @@ body.is-dragging * {
 .triangle-violet          { transform: perspective(800px) rotateY(-20deg); }
 .triangle-pink            { transform-origin: 64% 59%; }
 .triangle-violet          { transform-origin: 57% 52%; }
+
+/* NeonTriangles — responsive scale on smaller screens */
+.neon-triangles-scale-group {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+@media (max-width: 1023px) {
+  .neon-triangles-scale-group { transform: scale(0.82); }
+}
+@media (max-width: 767px) {
+  .neon-triangles-scale-group { transform: scale(0.68); }
+}
+
+/* PartnerLogos — continuous marquee for mobile/tablet */
+.logo-ticker-track {
+  animation: problem-ticker 22s linear infinite;
+}
 
