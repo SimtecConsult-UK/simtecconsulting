@@ -36,6 +36,7 @@ export function NeonTriangles() {
         </filter>
       </defs>
 
+      <g className="neon-triangles-scale-group">
       {/* ── Large cyan triangle — float up-right, 9s — rotateY right 35° ── */}
       <g className="triangle-cyan">
       <g>
@@ -192,6 +193,7 @@ export function NeonTriangles() {
         />
       </g>
       </g>
+      </g>{/* end neon-triangles-scale-group */}
     </svg>
   );
 }

@@ -116,14 +116,31 @@ function LogoNode({ name }: { name: string }) {
 
 export function PartnerLogos() {
   return (
-    <section
-      className="relative"
-      style={{ position: "sticky", bottom: 0, zIndex: 10, background: "#0b0a0c" }}
-    >
-      <div className="w-full px-8 py-3 md:px-16">
-        <div className="mx-auto max-w-[var(--container-content)] grid grid-cols-2 items-center gap-4 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10">
+    <section className="sticky bottom-0 z-10" style={{ background: "#0b0a0c" }}>
+      {/* Desktop: static grid */}
+      <div className="hidden lg:block w-full px-8 py-3 md:px-16">
+        <div className="mx-auto max-w-[var(--container-content)] grid grid-cols-10 items-center gap-4">
           {logoNames.map((name) => (
             <div key={name} className="flex h-8 items-center justify-center text-white/80" aria-label={name}>
+              <LogoNode name={name} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile/tablet: continuous marquee */}
+      <div className="lg:hidden relative py-3" style={{ overflow: "clip" }}>
+        {/* Edge fade masks */}
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16" style={{ background: "linear-gradient(to right, #0b0a0c, transparent)" }} />
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16" style={{ background: "linear-gradient(to left, #0b0a0c, transparent)" }} />
+        <div className="logo-ticker-track flex items-center" style={{ width: "max-content" }}>
+          {[...logoNames, ...logoNames].map((name, i) => (
+            <div
+              key={i}
+              className="flex h-8 w-32 flex-shrink-0 items-center justify-center px-3 text-white/80"
+              aria-label={i < logoNames.length ? name : undefined}
+              aria-hidden={i >= logoNames.length}
+            >
               <LogoNode name={name} />
             </div>
           ))}

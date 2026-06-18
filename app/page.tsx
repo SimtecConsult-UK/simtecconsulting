@@ -14,8 +14,8 @@ export default function Home() {
       {/* Hero zone — 100vh hero + scroll space for overflowing mockup + sticky logos */}
       <div style={{ background: "#0b0a0c" }}>
         <Hero />
-        {/* Spacer: covers mockup overflow + breathing room before logos land */}
-        <div style={{ height: "calc(50vh + 45px)" }} />
+        {/* Spacer: covers mockup overflow + breathing room before logos land (desktop only) */}
+        <div className="hidden lg:block" style={{ height: "calc(50vh + 45px)" }} />
         <PartnerLogos />
         <p className="py-3 text-center text-[9px] font-medium tracking-[0.18em] uppercase text-white/80">
           Built with construction, environmental and infrastructure businesses.
