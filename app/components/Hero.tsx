@@ -1,6 +1,21 @@
+'use client';
+
+import { useRef } from "react";
+import { useScrollEffect } from "../hooks/useScrollEffect";
 import { NeonTriangles } from "./NeonTriangles";
 
 export function Hero() {
+  const craneRef = useRef<HTMLImageElement>(null);
+
+  useScrollEffect(() => {
+    const el = craneRef.current;
+    if (!el) return;
+    const p = Math.min(window.scrollY / window.innerHeight, 1);
+    const inv = 1 - p;
+    el.style.opacity = String(0.5 * inv);
+    el.style.filter = `blur(${p * 28}px) drop-shadow(0 0 8px rgba(0,229,255,${0.45 * inv})) drop-shadow(0 0 24px rgba(168,85,247,${0.3 * inv}))`;
+  });
+
   return (
     <section
       className="relative"
@@ -16,6 +31,26 @@ export function Hero() {
         }}
       />
       <NeonTriangles />
+
+      {/* Crane — left side, anchored at the logo band / section bottom */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute"
+        style={{ left: "2%", bottom: 0, zIndex: 2 }}
+      >
+        <img
+          ref={craneRef}
+          src="/cranepng.png"
+          alt=""
+          style={{
+            height: "68vh",
+            width: "auto",
+            display: "block",
+            opacity: 0.5,
+            mixBlendMode: "screen",
+          }}
+        />
+      </div>
 
       {/* Text content — nav spacer + content centred between nav bottom and mockup top */}
       <div

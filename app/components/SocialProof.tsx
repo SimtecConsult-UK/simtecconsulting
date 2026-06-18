@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useScrollEffect } from "../hooks/useScrollEffect";
 
 export function SocialProof() {
   const GAP = 32;
@@ -18,25 +19,15 @@ export function SocialProof() {
   const sectionRef = useRef<HTMLElement>(null);
   const heartRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useScrollEffect(() => {
     const section = sectionRef.current;
     const heart = heartRef.current;
     if (!section || !heart) return;
-
-    const maxTranslate = WHITE_H - HEART_SIZE; // 150px
-
-    const onScroll = () => {
-      const rect = section.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const scrollable = Math.max(section.offsetHeight - vh, 1);
-      const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
-      heart.style.transform = `translateY(${progress * maxTranslate}px)`;
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    const rect = section.getBoundingClientRect();
+    const scrollable = Math.max(section.offsetHeight - window.innerHeight, 1);
+    const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+    heart.style.transform = `translateY(${progress * (WHITE_H - HEART_SIZE)}px)`;
+  });
 
   return (
     <section ref={sectionRef} className="px-4 py-24 md:px-16" style={{ background: "#f8f1fe" }}>
