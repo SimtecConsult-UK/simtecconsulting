@@ -57,7 +57,7 @@ export function Hero() {
         className="relative z-10 flex flex-col items-center px-8 pb-14 text-center md:px-16 lg:pb-0 lg:h-[72vh]"
       >
         {/* Pushes content below the fixed nav */}
-        <div className="h-24 flex-shrink-0 lg:h-11" />
+        <div className="h-24 flex-shrink-0 lg:h-[var(--nav-height)]" />
         {/* Remaining space — content centred so gap above h1 = gap below CTA */}
         <div className="flex flex-1 flex-col items-center justify-center">
         <h1

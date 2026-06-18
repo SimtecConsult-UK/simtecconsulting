@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { TickerFades } from "./TickerFades";
 
 const BASE = ["Construction", "Environmental", "Infrastructure"];
 // Triple the list so there's always content on both sides of the active item
@@ -69,17 +70,7 @@ export function IndustryTicker() {
       ref={containerRef}
       className="relative overflow-hidden bg-[var(--color-surface-container-low)] py-14"
     >
-      {/* Edge fade masks */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-36 md:w-56"
-        style={{ background: "linear-gradient(to right, var(--color-surface-container-low), transparent)" }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-36 md:w-56"
-        style={{ background: "linear-gradient(to left, var(--color-surface-container-low), transparent)" }}
-      />
+      <TickerFades color="var(--color-surface-container-low)" widthClass="w-36 md:w-56" />
 
       {/* Label */}
       <p className="mb-6 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--color-outline)]">

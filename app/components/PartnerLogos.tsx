@@ -1,3 +1,5 @@
+import { TickerFades } from "./TickerFades";
+
 const logoNames = [
   "Northbridge Construction",
   "BuildState",
@@ -130,9 +132,7 @@ export function PartnerLogos() {
 
       {/* Mobile/tablet: continuous marquee */}
       <div className="lg:hidden relative py-3" style={{ overflow: "clip" }}>
-        {/* Edge fade masks */}
-        <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16" style={{ background: "linear-gradient(to right, #0b0a0c, transparent)" }} />
-        <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16" style={{ background: "linear-gradient(to left, #0b0a0c, transparent)" }} />
+        <TickerFades color="#0b0a0c" />
         <div className="logo-ticker-track flex items-center" style={{ width: "max-content" }}>
           {[...logoNames, ...logoNames].map((name, i) => (
             <div
