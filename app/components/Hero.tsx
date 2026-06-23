@@ -16,9 +16,8 @@ export function Hero() {
         {/* Aligned to nav logo — same container as Nav */}
         <div className="mx-auto w-full max-w-[var(--container-content)] flex flex-1 flex-col items-center justify-center text-center px-2.5 md:px-10">
         <h1
-          className="max-w-[728px] text-[32px] font-bold leading-[1.2] md:text-[44px] lg:text-[54px]"
+          className="font-heading max-w-[728px] text-[32px] font-bold leading-[1.2] md:text-[44px] lg:text-[54px]"
           style={{
-            fontFamily: "var(--font-league-spartan)",
             backgroundImage:
               "linear-gradient(180deg, #d4faf5 0%, #6eeada 55%, #3ec4b0 100%)",
             WebkitBackgroundClip: "text",

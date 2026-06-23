@@ -36,7 +36,7 @@ export function PainPointBand() {
           willChange: "transform, border-radius",
         }}
       >
-        <h2 className="mx-auto max-w-[1100px] text-center text-[28px] font-bold leading-[1.08] tracking-[-0.02em] text-[#0c2421] sm:text-[38px] md:text-[48px] lg:text-[58px]" style={{ fontFamily: "var(--font-league-spartan)" }}>
+        <h2 className="font-heading mx-auto max-w-[1100px] text-center text-[28px] font-bold leading-[1.08] tracking-[-0.02em] text-[#0c2421] sm:text-[38px] md:text-[48px] lg:text-[58px]">
           Construction businesses are often forced into rigid workflows, disconnected systems, generic software platforms, and poorly adopted processes.
         </h2>
       </div>
