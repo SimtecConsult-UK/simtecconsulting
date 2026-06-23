@@ -91,60 +91,9 @@
   --container-content: 1280px;
 }
 
-/* ── Neon triangle animations ── */
-@keyframes neon-float-a {
-  0%, 100% { transform: translateY(0px) translateX(0px); }
-  33%       { transform: translateY(-18px) translateX(6px); }
-  66%       { transform: translateY(10px) translateX(-4px); }
-}
-@keyframes neon-float-b {
-  0%, 100% { transform: translateY(0px) translateX(0px); }
-  40%       { transform: translateY(14px) translateX(-8px); }
-  70%       { transform: translateY(-12px) translateX(5px); }
-}
-@keyframes neon-float-c {
-  0%, 100% { transform: translateY(0px) translateX(0px); }
-  50%       { transform: translateY(-22px) translateX(-6px); }
-}
-@keyframes neon-float-d {
-  0%, 100% { transform: translateY(0px) translateX(0px); }
-  45%       { transform: translateY(16px) translateX(8px); }
-}
-@keyframes neon-glow-pulse {
-  0%, 100% { opacity: 0.75; }
-  50%       { opacity: 1; }
-}
-@keyframes neon-glow-pulse-slow {
-  0%, 100% { opacity: 0.5; }
-  50%       { opacity: 0.85; }
-}
+/* ── Blueprint background animations ── */
+@keyframes simtecDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 
-.neon-tri-a {
-  animation: neon-float-a 9s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.neon-tri-b {
-  animation: neon-float-b 11s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.neon-tri-c {
-  animation: neon-float-c 7s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.neon-tri-d {
-  animation: neon-float-d 13s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.neon-pulse {
-  animation: neon-glow-pulse 4s ease-in-out infinite;
-}
-.neon-pulse-slow {
-  animation: neon-glow-pulse-slow 6s ease-in-out infinite;
-}
 
 /* ── Construction animation ── */
 .c-fence         { opacity: 0; }
@@ -265,24 +214,6 @@ body.is-dragging * {
   user-select: none !important;
 }
 
-/* NeonTriangles — 3D perspective folds */
-.triangle-cyan            { transform-origin: 65% 57%; transform: perspective(2000px) rotateY(35deg); }
-.triangle-pink,
-.triangle-violet          { transform: perspective(800px) rotateY(-20deg); }
-.triangle-pink            { transform-origin: 64% 59%; }
-.triangle-violet          { transform-origin: 57% 52%; }
-
-/* NeonTriangles — responsive scale on smaller screens */
-.neon-triangles-scale-group {
-  transform-box: view-box;
-  transform-origin: 50% 50%;
-}
-@media (max-width: 1023px) {
-  .neon-triangles-scale-group { transform: scale(0.82); }
-}
-@media (max-width: 767px) {
-  .neon-triangles-scale-group { transform: scale(0.68); }
-}
 
 /* PartnerLogos — continuous marquee for mobile/tablet */
 .logo-ticker-track {

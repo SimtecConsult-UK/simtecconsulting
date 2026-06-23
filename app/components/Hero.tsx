@@ -1,82 +1,36 @@
-'use client';
-
-import { useRef } from "react";
-import { useScrollEffect } from "../hooks/useScrollEffect";
-import { NeonTriangles } from "./NeonTriangles";
+import { BlueprintBackground } from "./BlueprintBackground";
 
 export function Hero() {
-  const craneRef = useRef<HTMLImageElement>(null);
-
-  useScrollEffect(() => {
-    if (!window.matchMedia('(min-width: 1024px)').matches) return;
-    const el = craneRef.current;
-    if (!el) return;
-    const p = Math.min(window.scrollY / window.innerHeight, 1);
-    const inv = 1 - p;
-    el.style.opacity = String(0.5 * inv);
-    el.style.filter = `blur(${p * 28}px) drop-shadow(0 0 8px rgba(0,229,255,${0.45 * inv})) drop-shadow(0 0 24px rgba(168,85,247,${0.3 * inv}))`;
-  });
-
   return (
     <section
-      className="relative overflow-visible lg:h-screen"
+      className="relative overflow-visible lg:h-[140vh]"
     >
-      {/* Background gradient */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 40%, rgba(255,255,255,0) 75%)",
-        }}
-      />
-      <NeonTriangles />
-
-      {/* Crane — left side, anchored at the logo band / section bottom */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute hidden lg:block"
-        style={{ left: "2%", bottom: 0, zIndex: 2 }}
-      >
-        <img
-          ref={craneRef}
-          src="/cranepng.png"
-          alt=""
-          style={{
-            height: "68vh",
-            width: "auto",
-            display: "block",
-            opacity: 0.5,
-            mixBlendMode: "screen",
-          }}
-        />
-      </div>
+      <BlueprintBackground />
 
       {/* Text content — nav spacer + content centred between nav bottom and mockup top */}
       <div
-        className="relative z-10 flex flex-col items-center px-8 pb-14 text-center md:px-16 lg:pb-0 lg:h-[72vh]"
+        className="relative z-10 flex flex-col pb-14 lg:pb-0 lg:h-[calc(100vh-60px)]"
       >
         {/* Pushes content below the fixed nav */}
         <div className="h-24 flex-shrink-0 lg:h-[var(--nav-height)]" />
-        {/* Remaining space — content centred so gap above h1 = gap below CTA */}
-        <div className="flex flex-1 flex-col items-center justify-center">
+        {/* Aligned to nav logo — same container as Nav */}
+        <div className="mx-auto w-full max-w-[var(--container-content)] flex flex-1 flex-col items-center justify-center text-center px-2.5 md:px-10">
         <h1
-          className="mx-auto max-w-[728px] text-[32px] font-bold leading-[1.15] tracking-[-0.02em] md:text-[44px] lg:text-[54px]"
+          className="max-w-[728px] text-[32px] font-bold leading-[1.2] md:text-[44px] lg:text-[54px]"
           style={{
             fontFamily: "var(--font-league-spartan)",
             backgroundImage:
-              "linear-gradient(180deg, #ffffff 0%, #e3eaff 50%, #c7d4ff 100%)",
+              "linear-gradient(180deg, #d4faf5 0%, #6eeada 55%, #3ec4b0 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
-            filter: "drop-shadow(0 0 40px rgba(255,255,255,0.35))",
           }}
         >
           Construction software that works the way you do.
         </h1>
 
-        <p className="mt-3 max-w-[655px] px-4 text-[16px] leading-relaxed text-white/55 md:mt-4 lg:px-0">
-          For construction teams that need better control, cleaner data and software that fits the way the business actually runs.
+        <p className="mt-3 max-w-[580px] text-[16px] leading-relaxed text-white/80 md:mt-4">
+          We partner with construction, environmental and infrastructure businesses to understand how you work, then engineer bespoke systems that fit your operation perfectly.
         </p>
 
         <div className="mt-5 md:mt-6">
@@ -93,7 +47,7 @@ export function Hero() {
       {/* macOS browser window — starts at 58vh, overflows below viewport */}
       <div
         className="absolute left-1/2 z-10 -translate-x-1/2 hidden lg:block"
-        style={{ top: "72vh", width: "min(960px, calc(100vw - 48px))" }}
+        style={{ top: "calc(100vh - 60px)", width: "min(960px, calc(100vw - 48px))" }}
       >
         {/* Ambient glow behind the window */}
         <div
@@ -104,15 +58,11 @@ export function Hero() {
 
         {/* Window chrome + video */}
         <div
-          className="relative overflow-hidden"
+          className="relative overflow-hidden rounded-[10px] border border-black/[0.12] flex flex-col"
           style={{
-            borderRadius: "10px",
-            border: "1px solid rgba(0,0,0,0.12)",
             boxShadow:
               "0 40px 120px rgba(0,0,0,0.65), " +
               "0 0 0 1px rgba(0,0,0,0.06)",
-            display: "flex",
-            flexDirection: "column",
           }}
         >
           {/* Title bar */}
@@ -137,14 +87,7 @@ export function Hero() {
 
             {/* URL bar */}
             <div
-              className="flex items-center gap-1.5 rounded-md px-3"
-              style={{
-                background: "#d8d8d8",
-                height: "17px",
-                width: "320px",
-                margin: "0 auto",
-                flexShrink: 0,
-              }}
+              className="flex items-center gap-1.5 rounded-md px-3 bg-[#d8d8d8] h-[17px] w-[320px] mx-auto flex-shrink-0"
             >
               {/* Lock icon */}
               <svg
