@@ -179,8 +179,7 @@ export function SolutionTabs() {
 
         {/* Title */}
         <h3
-          className="text-[20px] font-bold leading-snug tracking-[-0.01em] text-on-surface md:text-[22px]"
-          style={{ fontFamily: "var(--font-league-spartan)" }}
+          className="font-heading text-[20px] font-bold leading-snug tracking-[-0.01em] text-on-surface md:text-[22px]"
         >
           {s.title}
         </h3>

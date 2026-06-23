@@ -167,8 +167,7 @@ export function Testimonials() {
       <div className="px-4 md:px-16">
         <div className="mx-auto max-w-[var(--container-content)]">
           <h2
-            className="text-center text-[40px] font-bold leading-[1.06] tracking-[-0.02em] text-[#1a1530] sm:text-[52px] md:text-[60px]"
-            style={{ fontFamily: "var(--font-league-spartan)" }}
+            className="font-heading text-center text-[40px] font-bold leading-[1.06] tracking-[-0.02em] text-[#1a1530] sm:text-[52px] md:text-[60px]"
           >
             Their words speak for us.
           </h2>
@@ -217,8 +216,7 @@ export function Testimonials() {
 
               {/* Name & role */}
               <p
-                className="mt-4 text-[18px] font-bold text-[#1a1530]"
-                style={{ fontFamily: "var(--font-league-spartan)" }}
+                className="font-heading mt-4 text-[18px] font-bold text-[#1a1530]"
               >
                 {t.name}
               </p>

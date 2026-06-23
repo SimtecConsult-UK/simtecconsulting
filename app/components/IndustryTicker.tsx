@@ -93,9 +93,8 @@ export function IndustryTicker() {
             <span
               key={i}
               ref={(el) => { itemRefs.current[i] = el; }}
-              className="select-none whitespace-nowrap font-bold"
+              className="font-heading select-none whitespace-nowrap font-bold"
               style={{
-                fontFamily: "var(--font-league-spartan)",
                 fontSize: "clamp(38px, 5vw, 66px)",
                 color: dist === 0 ? "var(--color-on-surface)" : "var(--color-outline-variant)",
                 transition: `color ${TRANS_MS}ms ease`,

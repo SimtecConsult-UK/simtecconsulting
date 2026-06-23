@@ -33,8 +33,7 @@ export function OnSiteOperations() {
 
         {/* Section heading — outside the card */}
         <h2
-          className="mb-12 text-[36px] font-bold leading-[1.05] tracking-[-0.02em] text-[var(--color-on-surface)] sm:text-[48px] md:mb-14 md:text-[60px]"
-          style={{ fontFamily: "var(--font-league-spartan)" }}
+          className="font-heading mb-12 text-[36px] font-bold leading-[1.05] tracking-[-0.02em] text-[var(--color-on-surface)] sm:text-[48px] md:mb-14 md:text-[60px]"
         >
           Run every job with clarity
         </h2>
@@ -49,8 +48,7 @@ export function OnSiteOperations() {
                 On-site operations
               </p>
               <h3
-                className="mb-10 text-[22px] font-bold leading-[1.2] tracking-[-0.01em] text-[var(--color-on-surface)] md:text-[28px]"
-                style={{ fontFamily: "var(--font-league-spartan)" }}
+                className="font-heading mb-10 text-[22px] font-bold leading-[1.2] tracking-[-0.01em] text-[var(--color-on-surface)] md:text-[28px]"
               >
                 Turn execution data into better decisions
               </h3>

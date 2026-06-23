@@ -35,8 +35,7 @@ export function SocialProof() {
 
         {/* Heading */}
         <h2
-          className="mx-auto mb-14 max-w-[640px] text-center text-[40px] font-bold leading-[1.06] tracking-[-0.02em] text-[#1a1530] sm:text-[52px] md:text-[60px]"
-          style={{ fontFamily: "var(--font-league-spartan)" }}
+          className="font-heading mx-auto mb-14 max-w-[640px] text-center text-[40px] font-bold leading-[1.06] tracking-[-0.02em] text-[#1a1530] sm:text-[52px] md:text-[60px]"
         >
           Companies love us and it shows.
         </h2>
@@ -58,7 +57,7 @@ export function SocialProof() {
                 borderRadius: "28px 28px 28px 0",
               }}
             >
-              <p className="text-[72px] font-bold leading-none tracking-tight text-white" style={{ fontFamily: "var(--font-league-spartan)" }}>
+              <p className="font-heading text-[72px] font-bold leading-none tracking-tight text-white">
                 25+
               </p>
               <p className="mt-2 text-[14px] font-medium text-white/70">happy clients</p>
@@ -82,7 +81,7 @@ export function SocialProof() {
                 borderRadius: "28px 28px 28px 0",
               }}
             >
-              <p className="text-[72px] font-bold leading-none tracking-tight text-[#1a1530]" style={{ fontFamily: "var(--font-league-spartan)" }}>
+              <p className="font-heading text-[72px] font-bold leading-none tracking-tight text-[#1a1530]">
                 95%
               </p>
               <p className="mt-3 text-[22px] font-medium leading-snug text-[#1a1530]/60">
@@ -105,7 +104,7 @@ export function SocialProof() {
                 borderRadius: "28px 0 28px 28px",
               }}
             >
-              <p className="text-[72px] font-bold leading-none tracking-tight text-[#1a1530]" style={{ fontFamily: "var(--font-league-spartan)" }}>
+              <p className="font-heading text-[72px] font-bold leading-none tracking-tight text-[#1a1530]">
                 4.9/5
               </p>
               <p className="mt-2 text-[14px] font-medium text-[#1a1530]/60">client satisfaction score</p>

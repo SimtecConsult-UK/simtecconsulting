@@ -45,8 +45,8 @@ export function CtaBand() {
               </p>
 
               <h2
-                className="text-[40px] font-bold leading-[1.06] tracking-[-0.02em] sm:text-[48px] md:text-[56px]"
-                style={{ fontFamily: "var(--font-league-spartan)", color: "#0c2421" }}
+                className="font-heading text-[40px] font-bold leading-[1.06] tracking-[-0.02em] sm:text-[48px] md:text-[56px]"
+                style={{ color: "#0c2421" }}
               >
                 Free Operational Discovery Workshop.
               </h2>
