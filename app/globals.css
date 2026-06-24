@@ -94,6 +94,93 @@
 /* ── Blueprint background animations ── */
 @keyframes simtecDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 
+/* ── Hero (Simtec Hero Section Redesign) ──────────────────────────────────
+   One "screen" unit (--sh) is decoupled from vh so the full blueprint renders
+   across two screens. Breakpoints map to each target viewport. Fonts adapted
+   to our type system (League Spartan headings / Inter body). */
+/* One spacing token drives all three equal gaps: nav→header, mockup→logo band,
+   and logo band→end of the dark section. Defined on the dark wrapper so the
+   hero subtree AND the trailing spacer (a sibling of .hero-root) both inherit it. */
+.hero-zone { --hero-gap: 32px; }
+@media (min-width: 600px)  { .hero-zone { --hero-gap: 40px; } }
+@media (min-width: 1000px) { .hero-zone { --hero-gap: 48px; } }
+@media (min-width: 1600px) { .hero-zone { --hero-gap: 64px; } }
+
+.hero-root {
+  --sh: 900px; /* phone */
+  /* Extra height below the first viewport so the mockup (anchored --hero-gap
+     above the hero's bottom = the logo band) peeks ~15% at the fold and is
+     uncovered on scroll. reveal ≈ 0.85·mockupHeight + gap − logoBarHeight.
+     Phone shows no mockup, so it just needs a little scroll room. */
+  --hero-reveal: 120px;
+  position: relative;
+  width: 100%;
+  height: calc(100vh + var(--hero-reveal));
+  overflow: hidden;
+  background: #0b0a0c;
+  color: #ffffff;
+  font-family: var(--font-sans);
+}
+.hero-content {
+  position: absolute;
+  top: var(--nav-height);
+  left: 0;
+  right: 0;
+  z-index: 2;
+  /* Center the text in the band between the nav and the CRANE 01 label
+     (≈0.589·--sh on every breakpoint), so nav→header equals subheader→crane. */
+  height: calc(0.589 * var(--sh) - var(--nav-height));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 0 auto;
+  padding: 0 26px;
+}
+.hero-h1 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.018em;
+  line-height: 1.18;
+  font-size: 27px;
+  max-width: 360px;
+  text-wrap: balance;
+  text-shadow: 0 2px 22px rgba(11, 10, 12, 0.85);
+}
+.hero-sub {
+  margin: 16px auto 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: #c2c6cd;
+  max-width: 300px;
+  text-wrap: pretty;
+  text-shadow: 0 1px 16px rgba(11, 10, 12, 0.92);
+}
+/* tablet (≥600) */
+@media (min-width: 600px) {
+  /* Tablet hides the mockup, so no extra reveal height is needed below the fold. */
+  .hero-root { --sh: 1000px; --hero-reveal: 120px; }
+  .hero-content { max-width: 620px; }
+  .hero-h1 { font-size: 40px; line-height: 1.1; letter-spacing: -0.024em; max-width: 560px; }
+  .hero-sub { font-size: 17px; margin-top: 22px; max-width: 403px; }
+}
+/* laptop (≥1000) */
+@media (min-width: 1000px) {
+  .hero-root { --sh: 720px; --hero-reveal: 475px; }
+  .hero-content { max-width: 1080px; }
+  .hero-h1 { font-size: 52px; line-height: 1.07; letter-spacing: -0.028em; max-width: 24ch; }
+  .hero-sub { font-size: 18px; margin-top: 20px; max-width: 620px; }
+}
+/* desktop (≥1600) */
+@media (min-width: 1600px) {
+  .hero-root { --sh: 1080px; --hero-reveal: 491px; }
+  .hero-content { max-width: 1520px; }
+  .hero-h1 { font-size: 88px; line-height: 1.05; letter-spacing: -0.03em; max-width: 22ch; }
+  .hero-sub { font-size: 21px; margin-top: 34px; max-width: 874px; }
+}
+
 
 /* ── Construction animation ── */
 .c-fence         { opacity: 0; }
@@ -176,7 +263,7 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 html,
@@ -189,7 +276,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden; /* iOS Safari requires this on body, not just html */
+  overflow-x: clip; /* clip (not hidden) avoids creating a scroll container, which would break position:sticky */
 }
 
 @keyframes tab-pulse {
