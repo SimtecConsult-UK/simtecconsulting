@@ -166,17 +166,21 @@
   .hero-h1 { font-size: 40px; line-height: 1.1; letter-spacing: -0.024em; max-width: 560px; }
   .hero-sub { font-size: 17px; margin-top: 22px; max-width: 403px; }
 }
-/* laptop (≥1000) */
+/* laptop (≥1000) — left-align the text to the next section's content edge.
+   The inner .hero-block (max-w-1200, mx-auto) + this padding mirror the
+   ModulePicker section (lg:px-16 + max-w-[1200px] mx-auto), so the left edges
+   match exactly. Padding steps 40→64 at 1024 to track ModulePicker's md→lg. */
 @media (min-width: 1000px) {
   .hero-root { --sh: 720px; --hero-reveal: 475px; }
-  .hero-content { max-width: 1080px; }
+  .hero-content { max-width: none; align-items: stretch; text-align: left; padding: 0 40px; }
+  .hero-sub { margin-left: 0; }
   .hero-h1 { font-size: 52px; line-height: 1.07; letter-spacing: -0.028em; max-width: 24ch; }
   .hero-sub { font-size: 18px; margin-top: 20px; max-width: 620px; }
 }
+@media (min-width: 1024px) { .hero-content { padding: 0 64px; } }
 /* desktop (≥1600) */
 @media (min-width: 1600px) {
   .hero-root { --sh: 1080px; --hero-reveal: 491px; }
-  .hero-content { max-width: 1520px; }
   .hero-h1 { font-size: 88px; line-height: 1.05; letter-spacing: -0.03em; max-width: 22ch; }
   .hero-sub { font-size: 21px; margin-top: 34px; max-width: 874px; }
 }
