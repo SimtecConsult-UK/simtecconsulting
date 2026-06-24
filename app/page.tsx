@@ -1,4 +1,5 @@
 import { CtaBand } from "./components/CtaBand";
+import { ModulePicker } from "./components/ModulePicker";
 import { OnSiteOperations } from "./components/OnSiteOperations";
 import { Footer } from "./components/Footer";
 import { Hero } from "./components/Hero";
@@ -11,17 +12,14 @@ export default function Home() {
   return (
     <>
       <Nav />
-      {/* Hero zone — 140vh hero + small spacer covering mockup overflow + sticky logos */}
-      <div style={{ background: "#0b0a0c" }}>
+      {/* Hero zone — blueprint hero + product mockup, then partner logos on the same dark band */}
+      <div className="hero-zone" style={{ background: "#0b0a0c" }}>
         <Hero />
-        {/* Spacer: covers remaining mockup overflow below the 140vh section (desktop only) */}
-        <div className="hidden lg:block" style={{ height: "calc(25vh + 45px)" }} />
         <PartnerLogos />
-        <p className="py-3 text-center text-[9px] font-medium tracking-[0.18em] uppercase text-white/80">
-          Built with construction, environmental and infrastructure businesses.
-        </p>
-        <div style={{ height: "45px" }} />
+        <div style={{ height: "var(--hero-gap)" }} />
       </div>
+
+      <ModulePicker />
 
       <OnSiteOperations />
 
