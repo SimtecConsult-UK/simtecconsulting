@@ -32,7 +32,7 @@ export function Hero() {
       </div>
 
       {/* macOS product mockup — revealed in the second screen.
-          Hidden on phone (<600px); shown on tablet/laptop/desktop. */}
+          Hidden on phone and tablet (<1000px); shown on laptop/desktop. */}
       <div
         className="absolute left-0 right-0 z-10 hidden px-10 min-[1000px]:block lg:px-16"
         style={{ bottom: "var(--hero-gap)" }}

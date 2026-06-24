@@ -1,5 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import Image from "next/image";
+import { useScrollEffect } from "../hooks/useScrollEffect";
 
 const links = [
   { label: "Solutions", href: "#solutions" },
@@ -10,11 +12,8 @@ const links = [
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  // Syncs on mount too, so a scroll-restored reload doesn't leave the nav transparent.
+  useScrollEffect(() => setScrolled(window.scrollY > 10));
 
   return (
     <nav
@@ -28,13 +27,20 @@ export function Nav() {
       }}
     >
       <div className="mx-auto flex max-w-[var(--container-content)] items-center justify-between px-2.5 py-3 md:px-10">
-        <img src="/simtec-logo-white.png" alt="Simtec" style={{ height: "20px", width: "auto" }} />
+        <Image
+          src="/simtec-logo-white.png"
+          alt="Simtec"
+          width={2699}
+          height={668}
+          className="h-5 w-auto"
+          priority
+        />
         <ul className="hidden items-center gap-6 md:flex">
           {links.map((link) => (
             <li key={link.href}>
               <a
                 href={link.href}
-                className="text-[9px] font-semibold text-white/70 transition-colors hover:text-white"
+                className="text-[13px] font-semibold text-white/70 transition-colors hover:text-white md:text-[14px]"
               >
                 {link.label}
               </a>
@@ -43,7 +49,7 @@ export function Nav() {
         </ul>
         <a
           href="#contact"
-          className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand-blue)] px-4 py-1.5 text-[9px] font-semibold text-[#0c2421] transition-colors hover:bg-[#85f0e4]"
+          className="inline-flex items-center justify-center rounded-full bg-[var(--color-brand-blue)] px-4 py-1.5 text-[13px] font-semibold text-[#0c2421] transition-colors hover:bg-[#85f0e4] md:text-[14px]"
         >
           Book a Workshop
         </a>
