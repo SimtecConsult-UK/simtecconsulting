@@ -118,7 +118,7 @@ function LogoNode({ name }: { name: string }) {
 
 export function PartnerLogos() {
   return (
-    <section className="sticky bottom-0 z-10" style={{ background: "#0b0a0c" }}>
+    <section className="logo-band">
       {/* Desktop: static grid */}
       <div className="hidden lg:block w-full px-8 py-3 md:px-16">
         <div className="mx-auto max-w-[var(--container-content)] grid grid-cols-10 items-center gap-4">

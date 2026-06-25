@@ -3,24 +3,24 @@
 // The blueprint is the full construction site plan that renders across the
 // two-screen-tall hero. Injected as raw SVG to preserve the design exactly.
 
-// Roads that connect the building clusters. Once the blueprint has finished
-// drawing (~3.9s), a slow, faint "light" travels each road — duplicating the
+// Roads that connect the building clusters. Starting ~1s after the draw
+// animation begins, a slow, faint "light" travels each road — duplicating the
 // road geometry as a pathLength=1 line with a short lit dash that sweeps along
 // it (see globals.css → simtecPulse). Durations are tuned so longer roads
 // don't read as faster; delays are offset so the pulses never march in sync.
 // NOTE: each `d` mirrors a road <path> in BLUEPRINT_SVG below — if the blueprint
 // is regenerated and road geometry changes, these must be updated to match.
 const PULSE_ROADS = [
-  { d: "M381.9 -136.5 L -527.4 388.5",  color: "#6eeada", dur: 10.5, delay: 4.4 },
-  { d: "M509.2 -63.0 L -218.2 357.0",   color: "#e46897", dur: 8.5,  delay: 6.0 },
-  { d: "M163.7 -115.5 L 472.8 63.0",    color: "#6387d9", dur: 6.5,  delay: 5.0 },
-  { d: "M-163.7 73.5 L 145.5 252.0",    color: "#6eeada", dur: 6.0,  delay: 7.2 },
-  { d: "M-345.5 178.5 L -72.7 336.0",   color: "#7b2bd8", dur: 5.5,  delay: 5.6 },
-  { d: "M72.7 42.0 L 291.0 168.0",      color: "#6387d9", dur: 5.0,  delay: 8.0 },
-  { d: "M636.5 -283.5 L 381.9 -136.5",  color: "#6eeada", dur: 6.0,  delay: 6.4 },
-  { d: "M763.8 -210.0 L 509.2 -63.0",   color: "#e46897", dur: 6.0,  delay: 8.8 },
-  { d: "M436.5 -273.0 L 745.6 -94.5",   color: "#6387d9", dur: 7.5,  delay: 4.8 },
-  { d: "M873.0 -147.0 L -127.3 430.5",  color: "#6eeada", dur: 14.0, delay: 5.4 },
+  { d: "M381.9 -136.5 L -527.4 388.5",  color: "#6eeada", dur: 10.5, delay: 1.0 },
+  { d: "M509.2 -63.0 L -218.2 357.0",   color: "#e46897", dur: 8.5,  delay: 2.6 },
+  { d: "M163.7 -115.5 L 472.8 63.0",    color: "#6387d9", dur: 6.5,  delay: 1.6 },
+  { d: "M-163.7 73.5 L 145.5 252.0",    color: "#6eeada", dur: 6.0,  delay: 3.8 },
+  { d: "M-345.5 178.5 L -72.7 336.0",   color: "#7b2bd8", dur: 5.5,  delay: 2.2 },
+  { d: "M72.7 42.0 L 291.0 168.0",      color: "#6387d9", dur: 5.0,  delay: 4.6 },
+  { d: "M636.5 -283.5 L 381.9 -136.5",  color: "#6eeada", dur: 6.0,  delay: 3.0 },
+  { d: "M763.8 -210.0 L 509.2 -63.0",   color: "#e46897", dur: 6.0,  delay: 5.4 },
+  { d: "M436.5 -273.0 L 745.6 -94.5",   color: "#6387d9", dur: 7.5,  delay: 1.4 },
+  { d: "M873.0 -147.0 L -127.3 430.5",  color: "#6eeada", dur: 14.0, delay: 2.0 },
 ];
 
 const PULSE_LAYER = String.raw`
@@ -37,7 +37,7 @@ ${PULSE_ROADS.map(
 ).join("\n")}
         </g>`;
 
-const BLUEPRINT_SVG = String.raw`    <svg viewBox="0 0 1680 900" preserveAspectRatio="xMidYMax slice" style="position:absolute; top:0; left:0; width:100%; height:var(--sh); overflow:visible;">
+const BLUEPRINT_SVG = String.raw`    <svg viewBox="0 0 1680 900" preserveAspectRatio="xMidYMax slice" style="position:absolute; top:0; left:0; width:100%; height:var(--bp-h); overflow:visible;">
       <g transform="translate(-90 320)">
       <g transform="translate(840 250) rotate(11) scale(0.96) translate(-840 -250)">
       <g transform="translate(849.1 364.5) scale(1.000)">
@@ -443,15 +443,16 @@ ${PULSE_LAYER}
       </g>
       </g>
     </svg>
-    <div style="position:absolute; inset:0; background:radial-gradient(130% 50% at 50% var(--sh), rgba(110,234,218,0.07), transparent 60%), linear-gradient(180deg, rgba(11,10,12,1) 0, rgba(11,10,12,0.92) calc(var(--sh) * 0.24), rgba(11,10,12,0.55) calc(var(--sh) * 0.44), rgba(11,10,12,0.12) calc(var(--sh) * 0.62), rgba(11,10,12,0) calc(var(--sh) * 0.80), rgba(11,10,12,0) calc(var(--sh) * 0.98), rgba(11,10,12,1) calc(var(--sh) + var(--hero-reveal) * 0.6));"></div>
 `;
 
 export function BlueprintBackground() {
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 z-0"
-      dangerouslySetInnerHTML={{ __html: BLUEPRINT_SVG }}
-    />
+    <div aria-hidden className="blueprint-bg pointer-events-none absolute inset-0 z-0">
+      <div dangerouslySetInnerHTML={{ __html: BLUEPRINT_SVG }} />
+      {/* Glow + legibility scrim — extracted from the SVG so it can be tuned
+          per breakpoint (the scrim now spans the whole hero zone, including
+          the logo band, on phone/tablet). */}
+      <div className="blueprint-scrim" />
+    </div>
   );
 }

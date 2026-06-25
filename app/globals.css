@@ -111,23 +111,35 @@
 /* One spacing token drives all three equal gaps: nav→header, mockup→logo band,
    and logo band→end of the dark section. Defined on the dark wrapper so the
    hero subtree AND the trailing spacer (a sibling of .hero-root) both inherit it. */
-.hero-zone { --hero-gap: 32px; }
-@media (min-width: 600px)  { .hero-zone { --hero-gap: 40px; } }
-@media (min-width: 1000px) { .hero-zone { --hero-gap: 48px; } }
-@media (min-width: 1600px) { .hero-zone { --hero-gap: 64px; } }
-
-.hero-root {
+/* --sh (one hero "screen" unit) and --hero-reveal live on the zone now, because
+   the blueprint background is a zone-level child (shared by the hero and the
+   logo band) and needs to read them too. --hero-root just inherits them.
+   Phone/tablet is the base; the laptop tier (≥1000, where the mockup appears)
+   layers the desktop treatment on top — so there's no separate max-width seam. */
+.hero-zone {
+  position: relative;
+  background: #0b0a0c;
+  --hero-gap: 32px;
   --sh: 900px; /* phone */
   /* Extra height below the first viewport so the mockup (anchored --hero-gap
      above the hero's bottom = the logo band) peeks ~15% at the fold and is
      uncovered on scroll. reveal ≈ 0.85·mockupHeight + gap − logoBarHeight.
      Phone shows no mockup, so it just needs a little scroll room. */
   --hero-reveal: 120px;
+  /* Blueprint SVG box height. Phone/tablet (no mockup): fill the whole zone so
+     the blueprint runs continuously down behind the logo band. The laptop tier
+     resets it to one screen unit so the hero composition is unchanged there. */
+  --bp-h: 100%;
+}
+@media (min-width: 600px)  { .hero-zone { --hero-gap: 40px; --sh: 1000px; } }
+@media (min-width: 1000px) { .hero-zone { --hero-gap: 48px; --sh: 720px;  --hero-reveal: 475px; --bp-h: var(--sh); } }
+@media (min-width: 1600px) { .hero-zone { --hero-gap: 64px; --sh: 1080px; --hero-reveal: 491px; } }
+
+.hero-root {
   position: relative;
   width: 100%;
   height: calc(100vh + var(--hero-reveal));
   overflow: hidden;
-  background: #0b0a0c;
   color: #ffffff;
   font-family: var(--font-sans);
 }
@@ -170,8 +182,6 @@
 }
 /* tablet (≥600) */
 @media (min-width: 600px) {
-  /* Tablet hides the mockup, so no extra reveal height is needed below the fold. */
-  .hero-root { --sh: 1000px; --hero-reveal: 120px; }
   .hero-content { max-width: 620px; }
   .hero-h1 { font-size: 40px; line-height: 1.1; letter-spacing: -0.024em; max-width: 560px; }
   .hero-sub { font-size: 17px; margin-top: 22px; max-width: 403px; }
@@ -181,16 +191,62 @@
    ModulePicker section (lg:px-16 + max-w-[1200px] mx-auto), so the left edges
    match exactly. Padding steps 40→64 at 1024 to track ModulePicker's md→lg. */
 @media (min-width: 1000px) {
-  .hero-root { --sh: 720px; --hero-reveal: 475px; }
   .hero-content { max-width: none; align-items: stretch; text-align: left; padding: 0 40px; }
   .hero-sub { margin-left: 0; }
   .hero-h1 { font-size: 52px; line-height: 1.07; letter-spacing: -0.028em; max-width: 24ch; }
   .hero-sub { font-size: 18px; margin-top: 20px; max-width: 620px; }
 }
 @media (min-width: 1024px) { .hero-content { padding: 0 64px; } }
+/* ── Blueprint background layer (zone-level: spans hero + logo band) ── */
+.blueprint-bg { overflow: hidden; } /* clip the over-wide / over-tall SVG to the zone */
+/* Glow + dark fade over the blueprint, anchored to the hero "screen" unit.
+   Phone/tablet base: the blueprint fills the zone and the logo band is
+   transparent, so instead of fading to solid black before the band, keep the
+   lower area clear (blueprint shows through) and lay only a gentle scrim over
+   the very bottom for logo legibility. Top fade is kept for headline contrast. */
+.blueprint-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 46% at 50% calc(var(--sh) * 0.5), rgba(110, 234, 218, 0.06), transparent 62%),
+    linear-gradient(180deg,
+      rgba(11, 10, 12, 1) 0,
+      rgba(11, 10, 12, 0.9) calc(var(--sh) * 0.24),
+      rgba(11, 10, 12, 0.5) calc(var(--sh) * 0.44),
+      rgba(11, 10, 12, 0.1) calc(var(--sh) * 0.62),
+      rgba(11, 10, 12, 0) calc(var(--sh) * 0.78),
+      rgba(11, 10, 12, 0) 80%,
+      rgba(11, 10, 12, 0.6) 100%
+    );
+}
+/* Logo band — position driven here (not via Tailwind utilities) so it can differ
+   per breakpoint. Phone/tablet base: in-flow (pinned at the section bottom) and
+   transparent, sitting on the shared blueprint backdrop; kept above it via z-index. */
+.logo-band {
+  position: relative;
+  z-index: 10;
+  background: transparent;
+}
+/* Laptop+ (mockup present): the fade reaches solid black past the hero, and the
+   logo band becomes a sticky flat dark strip at the fold under the peeking mockup. */
+@media (min-width: 1000px) {
+  .blueprint-scrim {
+    background:
+      radial-gradient(130% 50% at 50% var(--sh), rgba(110, 234, 218, 0.07), transparent 60%),
+      linear-gradient(180deg,
+        rgba(11, 10, 12, 1) 0,
+        rgba(11, 10, 12, 0.92) calc(var(--sh) * 0.24),
+        rgba(11, 10, 12, 0.55) calc(var(--sh) * 0.44),
+        rgba(11, 10, 12, 0.12) calc(var(--sh) * 0.62),
+        rgba(11, 10, 12, 0) calc(var(--sh) * 0.80),
+        rgba(11, 10, 12, 0) calc(var(--sh) * 0.98),
+        rgba(11, 10, 12, 1) calc(var(--sh) + var(--hero-reveal) * 0.6)
+      );
+  }
+  .logo-band { position: sticky; bottom: 0; background: #0b0a0c; }
+}
 /* desktop (≥1600) */
 @media (min-width: 1600px) {
-  .hero-root { --sh: 1080px; --hero-reveal: 491px; }
   .hero-h1 { font-size: 88px; line-height: 1.05; letter-spacing: -0.03em; max-width: 22ch; }
   .hero-sub { font-size: 21px; margin-top: 34px; max-width: 874px; }
 }
