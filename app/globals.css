@@ -94,6 +94,16 @@
 /* ── Blueprint background animations ── */
 @keyframes simtecDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 
+/* Traveling "light" pulse that rides the roads after the blueprint is drawn.
+   Each pulse path is pathLength=1 with a short lit dash; offsetting the dash
+   from 1→0 sweeps the light from one end of the road to the other, seamlessly
+   (dash + gap sum to 1, so the loop has no visible seam). */
+@keyframes simtecPulse { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .simtec-pulse { animation: none !important; opacity: 0; }
+}
+
 /* ── Hero (Simtec Hero Section Redesign) ──────────────────────────────────
    One "screen" unit (--sh) is decoupled from vh so the full blueprint renders
    across two screens. Breakpoints map to each target viewport. Fonts adapted
