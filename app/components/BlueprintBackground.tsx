@@ -3,7 +3,7 @@
 // The blueprint is the full construction site plan that renders across the
 // two-screen-tall hero. Injected as raw SVG to preserve the design exactly.
 
-const BLUEPRINT_SVG = String.raw`    <svg viewBox="0 0 1680 900" preserveAspectRatio="xMidYMax slice" style="position:absolute; top:0; left:0; width:100%; height:var(--sh); overflow:visible;">
+const BLUEPRINT_SVG = String.raw`    <svg viewBox="0 0 1680 900" preserveAspectRatio="xMidYMax slice" style="position:absolute; top:0; left:0; width:100%; height:var(--bp-h); overflow:visible;">
       <g transform="translate(-90 320)">
       <g transform="translate(840 250) rotate(11) scale(0.96) translate(-840 -250)">
       <g transform="translate(849.1 364.5) scale(1.000)">
@@ -408,15 +408,16 @@ const BLUEPRINT_SVG = String.raw`    <svg viewBox="0 0 1680 900" preserveAspectR
       </g>
       </g>
     </svg>
-    <div style="position:absolute; inset:0; background:radial-gradient(130% 50% at 50% var(--sh), rgba(110,234,218,0.07), transparent 60%), linear-gradient(180deg, rgba(11,10,12,1) 0, rgba(11,10,12,0.92) calc(var(--sh) * 0.24), rgba(11,10,12,0.55) calc(var(--sh) * 0.44), rgba(11,10,12,0.12) calc(var(--sh) * 0.62), rgba(11,10,12,0) calc(var(--sh) * 0.80), rgba(11,10,12,0) calc(var(--sh) * 0.98), rgba(11,10,12,1) calc(var(--sh) + var(--hero-reveal) * 0.6));"></div>
 `;
 
 export function BlueprintBackground() {
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 z-0"
-      dangerouslySetInnerHTML={{ __html: BLUEPRINT_SVG }}
-    />
+    <div aria-hidden className="blueprint-bg pointer-events-none absolute inset-0 z-0">
+      <div dangerouslySetInnerHTML={{ __html: BLUEPRINT_SVG }} />
+      {/* Glow + legibility scrim — extracted from the SVG so it can be tuned
+          per breakpoint (the scrim now spans the whole hero zone, including
+          the logo band, on phone/tablet). */}
+      <div className="blueprint-scrim" />
+    </div>
   );
 }

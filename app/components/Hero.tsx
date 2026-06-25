@@ -1,11 +1,8 @@
-import { BlueprintBackground } from "./BlueprintBackground";
-
 export function Hero() {
   return (
     <section className="hero-root">
-      {/* Full construction-site blueprint — renders across the two-screen hero */}
-      <BlueprintBackground />
-
+      {/* Blueprint background now lives at the hero-zone level (see page.tsx) so it
+          spans the hero and the partner-logo band as one continuous backdrop. */}
       {/* Headline + sub, anchored in the dark upper band, clear of the cranes.
           Our global Nav (in page.tsx) sits above; --nav-height reserves its space. */}
       <div className="hero-content">
