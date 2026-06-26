@@ -1,117 +1,136 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
-const tabs = [
+const modules = [
   {
-    label: "Site & Field operations",
-    description:
-      "Site diaries, daily records, inspections, photos, labour, plant, issues, progress and mobile workflows.",
+    name: "HSEQ Management",
+    desc: "Manage RAMS, toolbox talks, permits, incidents, NCRs, audits, inspections, safety briefings and compliance dashboards from one place.",
+    vid: "/video1-section1.webm",
   },
   {
-    label: "Materials, Waste & Environmental Data",
-    description:
-      "Waste tracking, soil movements, testing, permits, transfer notes, diversion, emissions and environmental reporting.",
+    name: "Waste & Materials Tracking",
+    desc: "Track waste and material movements, generate Waste Transfer Notes, Hazardous Waste Consignment Notes and maintain clear compliance records.",
+    vid: "/video1-section1.webm",
   },
   {
-    label: "Compliance and H&S",
-    description:
-      "RAMS, audits, actions, incidents, permits, document control, sign-offs and compliance evidence.",
+    name: "Environmental & Carbon Reporting",
+    desc: "Capture data around material reuse, transport, emissions and environmental impact. Turn operational activity into useful reporting for clients, regulators or internal ESG requirements.",
+    vid: "/video1-section1.webm",
   },
 ];
 
 export function OnSiteOperations() {
   const [active, setActive] = useState(0);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+  useEffect(() => {
+    videoRefs.current.forEach((v, i) => {
+      if (!v) return;
+      if (i === active) v.play().catch(() => {});
+      else v.pause();
+    });
+  }, [active]);
 
   return (
     <section
       id="solutions"
-      className="px-4 py-24 md:px-16 md:py-32"
-      style={{ background: "var(--color-surface-container-low)" }}
+      style={{ background: "#e8eaf4" }}
+      className="px-6 py-10 md:px-10 md:py-14 xl:px-20 xl:py-20"
     >
-      <div className="mx-auto max-w-[1090px]">
+      {/* Section heading */}
+      <h2
+        className="font-heading mx-auto mb-10 max-w-[1760px] text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-[#13151e] sm:text-[36px] md:mb-12 lg:text-[44px] xl:text-[52px] 2xl:text-[64px]"
+      >
+        Build safety, compliance and environmental control directly into everyday workflows.
+      </h2>
 
-        {/* Section heading — outside the card */}
-        <h2
-          className="font-heading mb-12 text-[36px] font-bold leading-[1.05] tracking-[-0.02em] text-[var(--color-on-surface)] sm:text-[48px] md:mb-14 md:text-[60px]"
-        >
-          Run every job with clarity
-        </h2>
+      {/* Panel */}
+      <div
+        className="mx-auto w-full max-w-[1760px] overflow-hidden rounded-[28px] bg-white"
+        style={{
+          boxShadow:
+            "0 24px 64px -32px rgba(20,26,50,.28), 0 2px 8px rgba(20,26,50,.06)",
+        }}
+      >
+        {/* Two-column grid — left col scales from 400→560px across lg→2xl */}
+        <div className="grid grid-cols-1 lg:grid-cols-[clamp(400px,30vw,560px)_1fr]">
 
-        {/* Card */}
-        <div className="overflow-hidden rounded-3xl border border-[var(--color-outline-variant)] bg-white shadow-[0_4px_48px_rgba(0,0,0,0.07),0_1px_8px_rgba(0,0,0,0.05)]">
-          <div className="grid grid-cols-1 lg:grid-cols-[5fr_7fr]">
+          {/* ── Left: heading + interactive list ── */}
+          <div className="border-b border-[#e8eaef] px-8 py-10 lg:border-b-0 lg:border-r lg:px-14 lg:py-14 lg:pl-16 2xl:px-[88px] 2xl:py-[88px] 2xl:pl-[104px]">
+            <h2
+              className="font-heading text-[28px] font-bold leading-[1.1] tracking-[-0.022em] text-[#13151e] sm:text-[34px] 2xl:text-[52px] 2xl:tracking-[-0.026em]"
+            >
+              Compliance, HSEQ &amp;<br />Environmental Tracking
+            </h2>
 
-            {/* Left — label + h3 + tabs */}
-            <div className="border-b border-[var(--color-outline-variant)] p-8 lg:border-b-0 lg:border-r lg:p-12">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-on-surface-variant)]">
-                On-site operations
-              </p>
-              <h3
-                className="font-heading mb-10 text-[22px] font-bold leading-[1.2] tracking-[-0.01em] text-[var(--color-on-surface)] md:text-[28px]"
-              >
-                Turn execution data into better decisions
-              </h3>
-
-              {/* Vertical tabs */}
-              <div>
-                {tabs.map((tab, i) => (
+            <div className="mt-9 2xl:mt-[52px]">
+              {modules.map((m, i) => {
+                const on = i === active;
+                return (
                   <button
-                    key={tab.label}
+                    key={m.name}
                     onClick={() => setActive(i)}
-                    className="group w-full border-t border-[var(--color-outline-variant)] py-4 text-left first:border-t-0"
+                    className="w-full cursor-pointer border-t border-[#e8eaef] py-[18px] text-left first:border-t-0 2xl:py-[26px]"
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-[14px] 2xl:gap-4">
                       <span
-                        className={`mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full transition-all duration-200 ${
-                          i === active
-                            ? "scale-[1.4] bg-[var(--color-primary)]"
-                            : "bg-[var(--color-outline-variant)] group-hover:bg-[var(--color-outline)]"
-                        }`}
+                        className="mt-[6px] h-3 w-3 shrink-0 rounded-full transition-colors duration-200 2xl:mt-2 2xl:h-3.5 2xl:w-3.5"
+                        style={{ background: on ? "#2d5fc4" : "#d0d4de" }}
                       />
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p
-                          className={`text-[14px] font-semibold leading-snug transition-colors duration-200 ${
-                            i === active
-                              ? "text-[var(--color-on-surface)]"
-                              : "text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-on-surface)]"
-                          }`}
+                          className="text-[17px] font-semibold leading-[1.22] tracking-[-0.01em] text-[#13151e] 2xl:text-[24px]"
                         >
-                          {tab.label}
+                          {m.name}
                         </p>
                         <div
-                          className={`overflow-hidden text-[13px] leading-relaxed text-[var(--color-on-surface-variant)] transition-all duration-300 ${
-                            i === active ? "mt-1.5 max-h-24 opacity-100" : "max-h-0 opacity-0"
+                          className={`mt-2.5 max-w-[340px] text-[14px] leading-[1.6] text-[#6b7280] transition-opacity duration-200 2xl:mt-[13px] 2xl:max-w-[480px] 2xl:text-[17px] ${
+                            on ? "opacity-100" : "opacity-0"
                           }`}
                         >
-                          {tab.description}
+                          {m.desc}
                         </div>
                       </div>
                     </div>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-
-            {/* Right — video fills the column */}
-            <div
-              className="relative overflow-hidden"
-              style={{ background: "var(--color-surface-container-low)" }}
-            >
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "left top", display: "block", clipPath: "inset(4px 0 0 0)" }}
-              >
-                <source src="/video1-section1.webm" type="video/webm" />
-              </video>
-            </div>
-
           </div>
-        </div>
 
+          {/* ── Right: video frame ── */}
+          <div className="flex items-center bg-[#f4f5f9] p-8 lg:p-10 2xl:p-16">
+            <div
+              className="w-full overflow-hidden rounded-[14px]"
+              style={{
+                aspectRatio: "16 / 9",
+                background: "#0c0e14",
+                boxShadow:
+                  "0 28px 64px -28px rgba(20,26,50,.48), 0 4px 16px -6px rgba(20,26,50,.18)",
+              }}
+            >
+              {modules.map((m, i) => (
+                <video
+                  key={m.name}
+                  ref={(el) => { videoRefs.current[i] = el; }}
+                  src={m.vid}
+                  muted
+                  loop
+                  playsInline
+                  style={{
+                    display: i === active ? "block" : "none",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "top left",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+        </div>
       </div>
     </section>
   );
