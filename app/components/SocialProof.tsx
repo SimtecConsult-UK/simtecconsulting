@@ -107,17 +107,17 @@ export function SocialProof() {
           <div className="mb-3 flex w-full max-w-[350px] gap-3">
             <div
               className="sp-shine flex flex-1 flex-col items-center justify-center p-5 text-center"
-              style={{ ...d("0s"), height: 160, background: "linear-gradient(135deg, #5ccfc2 0%, #8fe7da 100%)", borderRadius: "20px 20px 20px 0", boxShadow: SHADOW.green }}
+              style={{ ...d("0s"), height: 160, background: "#4568f3", borderRadius: "20px 20px 20px 0", boxShadow: SHADOW.green }}
             >
               <p className="font-heading text-[44px] font-bold leading-none tracking-tight text-white">25+</p>
               <p className="mt-1.5 text-[11px] font-medium text-white/70">happy clients</p>
             </div>
             <div
               className="sp-shine flex flex-1 flex-col items-center justify-center p-5 text-center"
-              style={{ ...d("1.25s"), height: 160, background: "#e46897", borderRadius: "20px 20px 0 20px", boxShadow: SHADOW.pink }}
+              style={{ ...d("1.25s"), height: 160, background: "#e4dffa", borderRadius: "20px 20px 0 20px", boxShadow: SHADOW.pink }}
             >
-              <p className="font-heading text-[44px] font-bold leading-none tracking-tight text-white">4.9/5</p>
-              <p className="mt-1.5 text-[11px] font-medium text-white/80">client satisfaction score</p>
+              <p className="font-heading text-[44px] font-bold leading-none tracking-tight text-[#1a1530]">4.9/5</p>
+              <p className="mt-1.5 text-[11px] font-medium text-[#1a1530]/60">client satisfaction score</p>
             </div>
           </div>
 
@@ -157,7 +157,7 @@ export function SocialProof() {
           <div className="flex items-start" style={{ gap: "var(--sp-gap)" }}>
             <div
               className="sp-shine flex shrink-0 flex-col items-center justify-center text-center"
-              style={{ ...d("0s"), width: "var(--sp-left-w)", height: "var(--sp-green-h)", padding: "22px", marginTop: "calc((var(--sp-white-h) - var(--sp-green-h)) / 2)", background: "linear-gradient(135deg, #5ccfc2 0%, #8fe7da 100%)", borderRadius: "28px 28px 28px 0", boxShadow: SHADOW.green }}
+              style={{ ...d("0s"), width: "var(--sp-left-w)", height: "var(--sp-green-h)", padding: "22px", marginTop: "calc((var(--sp-white-h) - var(--sp-green-h)) / 2)", background: "#4568f3", borderRadius: "28px 28px 28px 0", boxShadow: SHADOW.green }}
             >
               <p className="font-heading text-[56px] font-bold leading-none tracking-tight text-white lg:text-[72px]">25+</p>
               <p className="mt-2 text-[11px] font-medium text-white/70 lg:text-[14px]">happy clients</p>
@@ -186,10 +186,10 @@ export function SocialProof() {
           <div className="flex items-start" style={{ gap: "var(--sp-gap)", marginLeft: "calc(-1 * var(--sp-gap))" }}>
             <div
               className="sp-shine flex shrink-0 flex-col items-center justify-center text-center"
-              style={{ ...d("2.5s"), width: "var(--sp-left-w)", height: "var(--sp-row2-h)", padding: "22px", marginTop: "calc(-1 * var(--sp-gap))", background: "#e46897", borderRadius: "28px 0 28px 28px", boxShadow: SHADOW.pink }}
+              style={{ ...d("2.5s"), width: "var(--sp-left-w)", height: "var(--sp-row2-h)", padding: "22px", marginTop: "calc(-1 * var(--sp-gap))", background: "#e4dffa", borderRadius: "28px 0 28px 28px", boxShadow: SHADOW.pink }}
             >
-              <p className="font-heading text-[56px] font-bold leading-none tracking-tight text-white lg:text-[72px]">4.9/5</p>
-              <p className="mt-2 text-[11px] font-medium text-white/80 lg:text-[14px]">client satisfaction score</p>
+              <p className="font-heading text-[56px] font-bold leading-none tracking-tight text-[#1a1530] lg:text-[72px]">4.9/5</p>
+              <p className="mt-2 text-[11px] font-medium text-[#1a1530]/60 lg:text-[14px]">client satisfaction score</p>
             </div>
 
             <div
