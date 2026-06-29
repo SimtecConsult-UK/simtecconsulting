@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-
 const testimonials = [
   {
     name: "Alex Collman",
@@ -80,161 +78,158 @@ const testimonials = [
   },
 ];
 
-const N = testimonials.length; // 9
-// Triple the array so both ends have clones for seamless looping
-const EXTENDED = [...testimonials, ...testimonials, ...testimonials];
+type Variant = "cw" | "cd" | "cl" | "cb";
 
-const PEEK = 80;
-const GAP = 24;
-const OFFSET = PEEK + GAP; // 104px — left edge of the first full card
+const CARD_STYLE: Record<
+  Variant,
+  {
+    bg: string;
+    color: string;
+    quoteColor: string;
+    ava: { background: string; color: string };
+    isDark: boolean;
+  }
+> = {
+  cw: { bg: "#fff",    color: "#1a1530", quoteColor: "rgba(26,21,48,.78)",  ava: { background: "#e4dffa",               color: "#3a2d6e" }, isDark: false },
+  cd: { bg: "#1a1530", color: "#fff",    quoteColor: "rgba(255,255,255,.9)", ava: { background: "rgba(255,255,255,0.18)", color: "#fff"   }, isDark: true  },
+  cl: { bg: "#e4dffa", color: "#1a1530", quoteColor: "rgba(26,21,48,.82)",  ava: { background: "#1a1530",               color: "#fff"   }, isDark: false },
+  cb: {
+    bg: "linear-gradient(135deg,#264dd9 0%,#4568f3 100%)",
+    color: "#fff", quoteColor: "rgba(255,255,255,.9)",
+    ava: { background: "rgba(255,255,255,0.18)", color: "#fff" },
+    isDark: true,
+  },
+};
+
+const FADE_MASK = "linear-gradient(180deg,transparent,#000 10%,#000 90%,transparent)";
+
+function getInitials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+}
+
+function buildCard(idx: number, v: Variant) {
+  const t = testimonials[idx];
+  const s = CARD_STYLE[v];
+  return {
+    name: t.name, role: t.role,
+    initials: getInitials(t.name),
+    quote: "“" + t.paragraphs.join("\n\n") + "”",
+    isDark: s.isDark, bg: s.bg, color: s.color, quoteColor: s.quoteColor, ava: s.ava,
+  };
+}
+
+function Avatar({ initials, bg, color, size, fontSize }: {
+  initials: string; bg: string; color: string; size: number; fontSize: number;
+}) {
+  return (
+    <div style={{ width: size, height: size, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize, fontWeight: 600, letterSpacing: ".02em", background: bg, color }}>
+      {initials}
+    </div>
+  );
+}
+
+const featured = buildCard(0, "cd");
+
+const d3base = [
+  buildCard(4, "cw"), buildCard(5, "cb"), buildCard(7, "cw"),
+  buildCard(3, "cl"), buildCard(6, "cw"), buildCard(8, "cb"),
+];
+const driftCards = [...d3base, ...d3base];
 
 export function Testimonials() {
-  // Start at N+1 so t[0] peeks on the left and t[1], t[2] are fully visible
-  const [rawIndex, setRawIndex] = useState(N + 1);
-  const [animated, setAnimated] = useState(true);
-  const [cardWidth, setCardWidth] = useState(460);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const animatedRef = useRef(true);
-
-  useEffect(() => {
-    animatedRef.current = animated;
-  }, [animated]);
-
-  // Measure container and calculate card width responsively
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const update = () => {
-      const w = el.offsetWidth;
-      setCardWidth(Math.floor((w - 2 * PEEK - 3 * GAP) / 2));
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  // Snap back to the middle set after entering a clone zone (invisible jump)
-  useEffect(() => {
-    let snapTo: number | null = null;
-    if (rawIndex >= 2 * N) {
-      snapTo = rawIndex - N;
-    } else if (rawIndex < N) {
-      snapTo = rawIndex + N;
-    }
-    if (snapTo === null) return;
-
-    const timer = setTimeout(() => {
-      setAnimated(false);
-      setRawIndex(snapTo!);
-      requestAnimationFrame(() => requestAnimationFrame(() => setAnimated(true)));
-    }, 520); // just after the 500ms slide transition
-    return () => clearTimeout(timer);
-  }, [rawIndex]);
-
-  // Horizontal trackpad swipe → navigate
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    let cooldown = false;
-
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
-      e.preventDefault();
-      if (cooldown || !animatedRef.current) return;
-      if (e.deltaX > 30) {
-        cooldown = true;
-        setRawIndex(i => i + 1);
-        setTimeout(() => { cooldown = false; }, 600);
-      } else if (e.deltaX < -30) {
-        cooldown = true;
-        setRawIndex(i => i - 1);
-        setTimeout(() => { cooldown = false; }, 600);
-      }
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, []);
-
-  const prev = () => { if (animatedRef.current) setRawIndex(i => i - 1); };
-  const next = () => { if (animatedRef.current) setRawIndex(i => i + 1); };
-
   return (
-    <section style={{ background: "#f8f1fe" }} className="pb-24 pt-0">
-
-      {/* Heading + arrows — centered */}
-      <div className="px-4 md:px-16">
-        <div className="mx-auto max-w-[var(--container-content)]">
+    <section style={{ background: "#e8eaf4", overflow: "hidden" }}>
+      <div
+        className="mx-auto px-5 py-14 md:px-10 md:py-[74px] lg:px-20 lg:py-[74px]"
+        style={{ maxWidth: 1200 }}
+      >
+        {/* Header */}
+        <div style={{ textAlign: "center", maxWidth: 760, margin: "0 auto 48px" }}>
+          <p className="font-mono mb-[18px] text-[12px] font-medium uppercase tracking-[.22em] text-[#7c7fa0]">
+            What clients say
+          </p>
           <h2
-            className="font-heading text-center text-[40px] font-bold leading-[1.06] tracking-[-0.02em] text-[#1a1530] sm:text-[52px] md:text-[60px]"
+            className="font-heading tracking-[-0.02em]"
+            style={{ fontWeight: 700, lineHeight: 1.04, fontSize: 46, color: "#1a1530" }}
           >
             Their words speak for us.
           </h2>
+        </div>
 
-          <div className="mt-10 mb-12 flex justify-center gap-3">
-            <button
-              onClick={prev}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1a1530] text-white transition-opacity hover:opacity-80"
-              aria-label="Previous"
+        {/* Featured + drifting list */}
+        <div className="testimonials-feat-grid">
+          {/* Featured card */}
+          <div
+            style={{
+              borderRadius: "24px 24px 24px 4px",
+              padding: 44,
+              background: "#1a1530",
+              color: "#fff",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              boxShadow: "0 26px 56px -28px rgba(20,26,50,.55)",
+            }}
+          >
+            <blockquote
+              className="font-heading tracking-[-0.01em]"
+              style={{ fontWeight: 600, fontSize: 25, lineHeight: 1.36, whiteSpace: "pre-line", color: "rgba(255,255,255,.95)" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M11 3.5L6 9l5 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <button
-              onClick={next}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1a1530] text-white transition-opacity hover:opacity-80"
-              aria-label="Next"
+              {featured.quote}
+            </blockquote>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 22 }}>
+              <Avatar initials={featured.initials} bg={featured.ava.background} color={featured.ava.color} size={52} fontSize={16} />
+              <div>
+                <div className="font-heading" style={{ fontWeight: 600, fontSize: 19, lineHeight: 1.1 }}>{featured.name}</div>
+                <div style={{ fontSize: 13, lineHeight: 1.3, marginTop: 3, color: "rgba(255,255,255,.5)" }}>{featured.role}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Drifting compact list */}
+          <div
+            className="testimonials-drift"
+            style={{
+              position: "relative",
+              overflow: "hidden",
+              WebkitMaskImage: FADE_MASK,
+              maskImage: FADE_MASK,
+            }}
+          >
+            <div
+              className="testimonials-drift-col"
+              style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", flexDirection: "column", gap: 16 }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M7 3.5L12 9l-5 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+              {driftCards.map((card, i) => (
+                <div
+                  key={i}
+                  style={{
+                    borderRadius: "18px 18px 18px 4px",
+                    padding: "22px 24px",
+                    border: card.isDark ? undefined : "1px solid rgba(26,21,48,.05)",
+                    boxShadow: "0 8px 22px -10px rgba(20,26,50,.22),0 1px 3px rgba(20,26,50,.07)",
+                    background: card.bg,
+                    color: card.color,
+                  }}
+                >
+                  <p style={{ fontSize: 14, lineHeight: 1.55, whiteSpace: "pre-line", color: card.quoteColor }}>
+                    {card.quote}
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14 }}>
+                    <Avatar initials={card.initials} bg={card.ava.background} color={card.ava.color} size={36} fontSize={12} />
+                    <div>
+                      <div className="font-heading" style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.1 }}>{card.name}</div>
+                      <div style={{ fontSize: 11, lineHeight: 1.3, marginTop: 3, color: card.isDark ? "rgba(255,255,255,.5)" : "rgba(26,21,48,.5)" }}>
+                        {card.role}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Full-width carousel */}
-      <div ref={containerRef} className="overflow-hidden">
-        <div
-          className="flex items-start"
-          style={{
-            gap: GAP,
-            transform: `translateX(${OFFSET - rawIndex * (cardWidth + GAP)}px)`,
-            transition: animated ? "transform 500ms ease-in-out" : "none",
-          }}
-        >
-          {EXTENDED.map((t, i) => (
-            <div
-              key={i}
-              className="shrink-0 rounded-[24px] bg-white p-8"
-              style={{ width: cardWidth }}
-            >
-              {/* Avatar placeholder */}
-              <div className="h-10 w-10 rounded-full bg-[#e4dffa]" />
-
-              {/* Name & role */}
-              <p
-                className="font-heading mt-4 text-[18px] font-bold text-[#1a1530]"
-              >
-                {t.name}
-              </p>
-              <p className="text-[13px] font-medium text-[#1a1530]/50">{t.role}</p>
-
-              {/* Quote */}
-              <div className="mt-5 space-y-3">
-                {t.paragraphs.map((p, j) => (
-                  <p key={j} className="text-[15px] leading-relaxed text-[#1a1530]/70">
-                    {j === 0 ? `"${p}` : p}{j === t.paragraphs.length - 1 ? '"' : ""}
-                  </p>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
     </section>
   );
 }
