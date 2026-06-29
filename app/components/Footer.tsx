@@ -3,7 +3,7 @@ import { Logo } from "./Logo";
 
 export function Footer() {
   return (
-    <footer className="px-4 py-16 text-black md:px-16 md:py-24" style={{ background: "#f8f1fe" }}>
+    <footer className="px-4 py-16 text-black md:px-16 md:py-24" style={{ background: "#ffffff" }}>
       <div className="mx-auto max-w-[var(--container-content)]">
         <div>
           <Logo />

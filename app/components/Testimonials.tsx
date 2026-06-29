@@ -138,7 +138,7 @@ const driftCards = [...d3base, ...d3base];
 
 export function Testimonials() {
   return (
-    <section style={{ background: "#e8eaf4", overflow: "hidden" }}>
+    <section style={{ background: "#ffffff", overflow: "hidden" }}>
       <div
         className="mx-auto px-5 py-14 md:px-10 md:py-[74px] lg:px-20 lg:py-[74px]"
         style={{ maxWidth: 1200 }}
