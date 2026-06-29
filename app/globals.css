@@ -102,6 +102,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .simtec-pulse { animation: none !important; opacity: 0; }
+  .testimonials-drift-col { animation: none; }
 }
 
 /* ── Hero (Simtec Hero Section Redesign) ──────────────────────────────────
@@ -378,5 +379,39 @@ body.is-dragging * {
 /* PartnerLogos — continuous marquee for mobile/tablet */
 .logo-ticker-track {
   animation: problem-ticker 22s linear infinite;
+}
+
+/* ── Testimonials Option C ── */
+@keyframes driftUp {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+
+.testimonials-drift-col {
+  animation: driftUp 32s linear infinite;
+}
+
+.testimonials-drift:hover .testimonials-drift-col {
+  animation-play-state: paused;
+}
+
+.testimonials-feat-grid {
+  display: grid;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.testimonials-drift {
+  height: 380px;
+}
+
+@media (min-width: 1024px) {
+  .testimonials-feat-grid {
+    grid-template-columns: 1.05fr 1fr;
+  }
+
+  .testimonials-drift {
+    height: auto;
+  }
 }
 
