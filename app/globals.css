@@ -417,3 +417,81 @@ body.is-dragging * {
   }
 }
 
+/* ── Team ("The people behind Simtec") ──────────────────────────────────────
+   Hero photo + 4-photo grid. --tr is the tile corner radius (stepped per
+   breakpoint); each tile keeps one sharp corner, and the pattern flips between
+   the 2-col (phone/tablet) and 4-col (≥1000) layouts. Base = phone. */
+.team-heading { font-size: 32px; }
+
+.team-tile {
+  position: relative;
+  overflow: hidden;
+  --tr: 16px;
+  border-radius: var(--tr);
+  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.team-hero { height: 230px; }
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+.team-grid .team-tile { height: 150px; }
+
+/* Sharp-corner pattern — 2-col (phone/tablet) */
+.team-hero            { border-bottom-left-radius: 0; }      /* BL sharp */
+.team-grid .team-tile:nth-child(1) { border-top-left-radius: 0; }    /* TL */
+.team-grid .team-tile:nth-child(2) { border-bottom-left-radius: 0; } /* BL */
+.team-grid .team-tile:nth-child(3) { border-top-left-radius: 0; }    /* TL */
+.team-grid .team-tile:nth-child(4) { border-top-right-radius: 0; }   /* TR */
+
+@media (hover: hover) {
+  .team-tile:hover { transform: translateY(-7px) scale(1.025); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .team-tile { transition: none; }
+  .team-tile:hover { transform: none; }
+}
+
+/* tablet (≥600) */
+@media (min-width: 600px) {
+  .team-heading { font-size: 36px; }
+  .team-tile { --tr: 18px; }
+  .team-hero { height: 300px; }
+  .team-grid { gap: 12px; margin-top: 12px; }
+  .team-grid .team-tile { height: 180px; }
+}
+
+/* desktop (≥1000) — 4-col grid, sharp-corner pattern flips */
+@media (min-width: 1000px) {
+  .team-heading { font-size: 46px; }
+  .team-br { display: none; } /* heading flows to one line on laptop+ */
+  .team-tile { --tr: 22px; }
+  .team-hero { height: 420px; }
+  .team-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .team-grid .team-tile { height: 200px; }
+
+  /* 4-col pattern: tiles 1 (TL) & 4 (TR) keep their base sharp corner; the two
+     middle tiles become fully rounded by restoring just the corner each one
+     sharpened in the 2-col layout (same specificity as the base rule, so the
+     later declaration wins — a shorthand reset here would lose to :nth-child). */
+  .team-grid .team-tile:nth-child(2) { border-bottom-left-radius: var(--tr); }
+  .team-grid .team-tile:nth-child(3) { border-top-left-radius: var(--tr); }
+}
+
+/* wide (≥1600) */
+@media (min-width: 1600px) {
+  .team-heading { font-size: 64px; }
+  .team-tile { --tr: 28px; }
+  .team-hero { height: 620px; }
+  .team-grid { gap: 20px; margin-top: 20px; }
+  .team-grid .team-tile { height: 290px; }
+}
+
