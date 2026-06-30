@@ -5,6 +5,7 @@ import { Footer } from "./components/Footer";
 import { BlueprintBackground } from "./components/BlueprintBackground";
 import { Hero } from "./components/Hero";
 import { Nav } from "./components/Nav";
+import { Team } from "./components/Team";
 import { PartnerLogos } from "./components/PartnerLogos";
 import { SocialProof } from "./components/SocialProof";
 import { Testimonials } from "./components/Testimonials";
@@ -22,6 +23,8 @@ export default function Home() {
         <PartnerLogos />
         <div style={{ height: "var(--hero-gap)" }} />
       </div>
+
+      <Team />
 
       <ModulePicker />
 
