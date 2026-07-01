@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { SECTION_IDS } from "../lib/sections";
 
 const modules = [
   {
@@ -34,7 +35,7 @@ export function OnSiteOperations() {
 
   return (
     <section
-      id="solutions"
+      id={SECTION_IDS.productDemo}
       style={{ background: "#e8eaf4" }}
       className="px-6 py-10 md:px-10 md:py-14 xl:px-20 xl:py-20"
     >

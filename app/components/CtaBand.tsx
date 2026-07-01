@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { SECTION_IDS } from "../lib/sections";
 
 const OUTPUTS = [
   "High-level workflow review",
@@ -27,7 +28,7 @@ export function CtaBand() {
   }, []);
 
   return (
-    <section className="px-6 py-10 md:px-10 md:py-14 xl:px-20 xl:py-20" style={{ background: "#ffffff" }}>
+    <section id={SECTION_IDS.contact} className="px-6 py-10 md:px-10 md:py-14 xl:px-20 xl:py-20" style={{ background: "#ffffff" }}>
       <div className="mx-auto max-w-[1760px]">
         <div
           ref={cardRef}
@@ -82,7 +83,7 @@ export function CtaBand() {
 
               <div className="mt-8 flex flex-col items-start gap-3">
                 <a
-                  href="#"
+                  href={`#${SECTION_IDS.contact}`}
                   className="font-sans inline-flex items-center gap-[9px] rounded-[8px] bg-[#2dd4bf] px-[26px] py-3.5 text-[15px] font-semibold text-[#06241f] no-underline transition-opacity hover:opacity-85"
                 >
                   Book a Workshop

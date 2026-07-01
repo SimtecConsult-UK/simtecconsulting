@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SECTION_IDS } from "../lib/sections";
 
 // Accent matches the nav "Book a Workshop" CTA (brand teal + dark ink text on fills)
 const ACCENT = "var(--color-brand-blue)";
@@ -108,7 +109,7 @@ export function ModulePicker() {
   const currentPicks = picks[activeType] ?? RECOMMENDED[activeType];
 
   return (
-    <section className="bg-white px-5 py-8 md:px-10 md:py-11 lg:px-16 lg:py-16">
+    <section id={SECTION_IDS.solutions} className="bg-white px-5 py-8 md:px-10 md:py-11 lg:px-16 lg:py-16">
       <div className="mx-auto max-w-[1200px]">
 
         {/* Eyebrow — teal pill (matches nav CTA); bright teal as flat text on white is illegible */}

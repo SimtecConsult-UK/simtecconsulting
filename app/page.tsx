@@ -24,9 +24,9 @@ export default function Home() {
         <div style={{ height: "var(--hero-gap)" }} />
       </div>
 
-      <Team />
-
       <ModulePicker />
+
+      <Team />
 
       <OnSiteOperations />
 
