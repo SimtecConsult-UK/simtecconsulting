@@ -2,11 +2,13 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useScrollEffect } from "../hooks/useScrollEffect";
+import { SECTION_IDS } from "../lib/sections";
 
 const links = [
-  { label: "Solutions", href: "#solutions" },
-  { label: "Company", href: "#company" },
-  { label: "Resources", href: "#resources" },
+  { label: "Solutions", href: `#${SECTION_IDS.solutions}` },
+  { label: "Our Team", href: `#${SECTION_IDS.team}` },
+  { label: "Case Studies", href: `#${SECTION_IDS.productDemo}` },
+  { label: "Testimonials", href: `#${SECTION_IDS.testimonials}` },
 ];
 
 export function Nav() {
@@ -91,6 +93,7 @@ export function Nav() {
             width={2699}
             height={668}
             className="h-[22px] w-auto min-[521px]:h-[26px]"
+            sizes="(min-width: 521px) 105px, 89px"
             priority
           />
 
@@ -109,7 +112,7 @@ export function Nav() {
 
           <div className="flex items-center gap-3.5">
             <a
-              href="#contact"
+              href={`#${SECTION_IDS.contact}`}
               className="hidden min-[521px]:inline-flex items-center justify-center gap-2 rounded-full border border-[#2dd4bf] px-6 py-[11px] text-[14px] font-semibold text-[#2dd4bf] transition-colors duration-150 hover:bg-[#2dd4bf] hover:text-[#06241f]"
             >
               Book a Workshop
@@ -153,6 +156,7 @@ export function Nav() {
               width={2699}
               height={668}
               className="h-[22px] w-auto"
+              sizes="89px"
             />
             <button
               ref={closeButtonRef}
@@ -187,9 +191,9 @@ export function Nav() {
           </ul>
 
           <a
-            href="#contact"
+            href={`#${SECTION_IDS.contact}`}
             onClick={() => setMenuOpen(false)}
-            className="mt-auto flex min-[521px]:hidden items-center justify-center gap-2 rounded-[14px] border border-[#2dd4bf] py-4 text-[16px] font-semibold text-[#2dd4bf]"
+            className="mt-auto flex items-center justify-center gap-2 rounded-[14px] border border-[#2dd4bf] py-4 text-[16px] font-semibold text-[#2dd4bf]"
           >
             Book a Workshop
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

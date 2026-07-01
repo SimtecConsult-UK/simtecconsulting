@@ -1,5 +1,7 @@
 "use client";
 
+import { SECTION_IDS } from "../lib/sections";
+
 const testimonials = [
   {
     name: "Alex Collman",
@@ -138,7 +140,7 @@ const driftCards = [...d3base, ...d3base];
 
 export function Testimonials() {
   return (
-    <section style={{ background: "#ffffff", overflow: "hidden" }}>
+    <section id={SECTION_IDS.testimonials} style={{ background: "#ffffff", overflow: "hidden" }}>
       <div
         className="mx-auto px-5 py-14 md:px-10 md:py-[74px] lg:px-20 lg:py-[74px]"
         style={{ maxWidth: 1200 }}

@@ -331,11 +331,24 @@
 }
 
 :root {
-  --nav-height: 44px;
+  --nav-height: 54px; /* py-4 (32px) + logo h-[22px] */
+}
+
+@media (min-width: 521px) {
+  :root {
+    --nav-height: 58px; /* py-4 (32px) + logo h-[26px] */
+  }
+}
+
+@media (min-width: 900px) {
+  :root {
+    --nav-height: 70px; /* py-[22px] (44px) + logo h-[26px] */
+  }
 }
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--nav-height) + 16px);
   overflow-x: clip;
 }
 

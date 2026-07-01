@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { SECTION_IDS } from "../lib/sections";
 
 // Hero photo + 4-photo grid (design: "Team Section 1b"). Asymmetric corner
 // radii give each tile one sharp corner; the radii flip between the 4-col
@@ -21,6 +22,7 @@ const GRID = [
 export function Team() {
   return (
     <section
+      id={SECTION_IDS.team}
       className="px-5 py-14 md:px-10 md:py-[74px] lg:px-16 lg:py-[88px]"
       style={{ background: "#e8eaf4", overflow: "hidden" }}
     >
