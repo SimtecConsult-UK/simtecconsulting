@@ -24,7 +24,7 @@ export function Team() {
     <section
       id={SECTION_IDS.team}
       className="px-5 py-14 md:px-10 md:py-[74px] lg:px-16 lg:py-[88px]"
-      style={{ background: "#e8eaf4", overflow: "hidden" }}
+      style={{ background: "var(--color-tinted-bg)", overflow: "hidden" }}
     >
       <div className="mx-auto max-w-[1200px]">
         <h2
@@ -33,7 +33,7 @@ export function Team() {
         >
           The people
           <br className="team-br" />{" "}
-          behind Simtec.
+          behind the systems.
         </h2>
 
         {/* Hero photo */}

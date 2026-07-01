@@ -53,7 +53,7 @@ export function SocialProof() {
   });
 
   return (
-    <section ref={sectionRef} className="bg-white px-5 py-16 md:px-10 md:py-20 lg:px-16 lg:py-24">
+    <section ref={sectionRef} className="px-5 py-16 md:px-10 md:py-20 lg:px-16 lg:py-24" style={{ background: "var(--color-tinted-bg)" }}>
       <style>{`
         .sp-rows {
           --sp-gap: 24px;
@@ -115,7 +115,7 @@ export function SocialProof() {
             </div>
             <div
               className="sp-shine flex flex-1 flex-col items-center justify-center p-5 text-center"
-              style={{ ...d("1.25s"), height: 160, background: "#e4dffa", borderRadius: "20px 20px 0 20px", boxShadow: SHADOW.pink }}
+              style={{ ...d("1.25s"), height: 160, background: "#e4dffa", borderRadius: "20px 20px 0 20px", boxShadow: SHADOW.pink, border: "1px solid rgba(0,0,0,0.08)" }}
             >
               <p className="font-heading text-[44px] font-bold leading-none tracking-tight text-[#1a1530]">4.9/5</p>
               <p className="mt-1.5 text-[11px] font-medium text-[#1a1530]/60">client satisfaction score</p>
@@ -187,7 +187,7 @@ export function SocialProof() {
           <div className="flex items-start" style={{ gap: "var(--sp-gap)", marginLeft: "calc(-1 * var(--sp-gap))" }}>
             <div
               className="sp-shine flex shrink-0 flex-col items-center justify-center text-center"
-              style={{ ...d("2.5s"), width: "var(--sp-left-w)", height: "var(--sp-row2-h)", padding: "22px", marginTop: "calc(-1 * var(--sp-gap))", background: "#e4dffa", borderRadius: "28px 0 28px 28px", boxShadow: SHADOW.pink }}
+              style={{ ...d("2.5s"), width: "var(--sp-left-w)", height: "var(--sp-row2-h)", padding: "22px", marginTop: "calc(-1 * var(--sp-gap))", background: "#e4dffa", borderRadius: "28px 0 28px 28px", boxShadow: SHADOW.pink, border: "1px solid rgba(0,0,0,0.08)" }}
             >
               <p className="font-heading text-[56px] font-bold leading-none tracking-tight text-[#1a1530] lg:text-[72px]">4.9/5</p>
               <p className="mt-2 text-[11px] font-medium text-[#1a1530]/60 lg:text-[14px]">client satisfaction score</p>

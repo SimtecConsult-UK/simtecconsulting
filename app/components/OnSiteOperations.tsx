@@ -36,8 +36,7 @@ export function OnSiteOperations() {
   return (
     <section
       id={SECTION_IDS.productDemo}
-      style={{ background: "#e8eaf4" }}
-      className="px-6 py-10 md:px-10 md:py-14 xl:px-20 xl:py-20"
+      className="bg-white px-6 py-10 md:px-10 md:py-14 xl:px-20 xl:py-20"
     >
       {/* Section heading */}
       <h2

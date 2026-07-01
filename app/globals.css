@@ -45,6 +45,7 @@
   --color-surface-white: #ffffff;
   --color-accent-coral: #ff6b6b;
   --color-brand-blue: #6eeada;
+  --color-tinted-bg: #e8eaf4;
 
   /* DESIGN.md — typography scale */
   --text-display-lg: 48px;
@@ -164,7 +165,7 @@
   padding: 0 26px;
 }
 .hero-h1 {
-  margin: 0;
+  margin: 0 auto;
   font-family: var(--font-heading);
   font-weight: 700;
   letter-spacing: -0.018em;
@@ -196,7 +197,7 @@
 @media (min-width: 1000px) {
   .hero-content { max-width: none; align-items: stretch; text-align: left; padding: 0 40px; }
   .hero-sub { margin-left: 0; }
-  .hero-h1 { font-size: 52px; line-height: 1.07; letter-spacing: -0.028em; max-width: 24ch; }
+  .hero-h1 { font-size: 52px; line-height: 1.07; letter-spacing: -0.028em; max-width: 24ch; margin: 0; }
   .hero-sub { font-size: 18px; margin-top: 20px; max-width: 620px; }
 }
 @media (min-width: 1024px) { .hero-content { padding: 0 64px; } }
@@ -481,7 +482,6 @@ body.is-dragging * {
 /* desktop (≥1000) — 4-col grid, sharp-corner pattern flips */
 @media (min-width: 1000px) {
   .team-heading { font-size: 46px; }
-  .team-br { display: none; } /* heading flows to one line on laptop+ */
   .team-tile { --tr: 22px; }
   .team-hero { height: 420px; }
   .team-grid {
@@ -497,6 +497,11 @@ body.is-dragging * {
      later declaration wins — a shorthand reset here would lose to :nth-child). */
   .team-grid .team-tile:nth-child(2) { border-bottom-left-radius: var(--tr); }
   .team-grid .team-tile:nth-child(3) { border-top-left-radius: var(--tr); }
+}
+
+/* heading fits on one line at 1100px+ (at 1000px it's too tight) */
+@media (min-width: 1100px) {
+  .team-br { display: none; }
 }
 
 /* wide (≥1600) */
