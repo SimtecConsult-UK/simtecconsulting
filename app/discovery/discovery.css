@@ -117,6 +117,12 @@
 .dw-kick-sec {
   letter-spacing: 0.14em;
 }
+/* Intro/section-intro/end kickers aren't wrapped in .dw-qhead (which gives
+   question screens their label-to-title gap via margin-bottom), so they need
+   the same explicit gap here rather than relying on incidental font leading. */
+.dw-kick-lone {
+  margin-bottom: 12px;
+}
 
 .dw-reqtag {
   font-family: var(--font-jetbrains-mono), monospace;
