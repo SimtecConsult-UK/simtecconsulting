@@ -217,7 +217,7 @@ export function DiscoveryWizard() {
 
   const bottomLabel =
     current.kind === "intro"
-      ? "≈ 15 MINUTES · AUTO-SAVES"
+      ? "≈ 15 MINUTES"
       : current.kind === "end"
       ? "REVIEW & SUBMIT"
       : current.kind === "sintro"
@@ -299,7 +299,6 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
   ];
   return (
     <>
-      <p className="dw-kick dw-kick-lone">Free operational discovery workshop</p>
       <h1 className="dw-h1 dw-h1-intro">Scope your project in about 15 minutes.</h1>
       <p className="dw-help">
         Short questions, one at a time — focus on what the system needs to help you achieve, not perfect technical wording.
@@ -335,7 +334,6 @@ function SectionIntroScreen({
     <>
       <p className="dw-kick dw-kick-sec dw-kick-lone">Section {sectionNumber} of 16</p>
       <h2 className="dw-h1 dw-h1-sintro">{section.name}</h2>
-      <p className="dw-help">{section.description}</p>
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 30 }}>
         <button className="dw-btn" onClick={onContinue}>
           Continue →
