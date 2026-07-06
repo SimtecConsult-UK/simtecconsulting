@@ -299,7 +299,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
   ];
   return (
     <>
-      <p className="dw-kick">Free operational discovery workshop</p>
+      <p className="dw-kick dw-kick-lone">Free operational discovery workshop</p>
       <h1 className="dw-h1 dw-h1-intro">Scope your project in about 15 minutes.</h1>
       <p className="dw-help">
         Short questions, one at a time — focus on what the system needs to help you achieve, not perfect technical wording.
@@ -333,7 +333,7 @@ function SectionIntroScreen({
 }) {
   return (
     <>
-      <p className="dw-kick dw-kick-sec">Section {sectionNumber} of 16</p>
+      <p className="dw-kick dw-kick-sec dw-kick-lone">Section {sectionNumber} of 16</p>
       <h2 className="dw-h1 dw-h1-sintro">{section.name}</h2>
       <p className="dw-help">{section.description}</p>
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 30 }}>
@@ -620,7 +620,7 @@ function EndScreen({
 }) {
   return (
     <>
-      <p className="dw-kick">Final step</p>
+      <p className="dw-kick dw-kick-lone">Final step</p>
       <h2 className="dw-h1 dw-h1-sintro">That&rsquo;s everything we need.</h2>
       <p className="dw-help">
         Use the ▲ arrow to review any answer. When you&rsquo;re ready, confirm below and we&rsquo;ll prepare your Phase 1 scope
