@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useScrollEffect } from "../hooks/useScrollEffect";
-import { SECTION_IDS } from "../lib/sections";
+import { ROUTES, SECTION_IDS } from "../lib/sections";
 
 const links = [
   { label: "Solutions", href: `#${SECTION_IDS.solutions}` },
@@ -112,7 +112,7 @@ export function Nav() {
 
           <div className="flex items-center gap-3.5">
             <a
-              href={`#${SECTION_IDS.contact}`}
+              href={ROUTES.discovery}
               className="hidden min-[521px]:inline-flex items-center justify-center gap-2 rounded-full border border-[#2dd4bf] px-6 py-[11px] text-[14px] font-semibold text-[#2dd4bf] transition-colors duration-150 hover:bg-[#2dd4bf] hover:text-[#06241f]"
             >
               Book a Workshop
@@ -191,7 +191,7 @@ export function Nav() {
           </ul>
 
           <a
-            href={`#${SECTION_IDS.contact}`}
+            href={ROUTES.discovery}
             onClick={() => setMenuOpen(false)}
             className="mt-auto flex items-center justify-center gap-2 rounded-[14px] border border-[#2dd4bf] py-4 text-[16px] font-semibold text-[#2dd4bf]"
           >

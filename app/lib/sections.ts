@@ -3,5 +3,8 @@ export const SECTION_IDS = {
   team: "team",
   productDemo: "product-demo",
   testimonials: "testimonials",
-  contact: "contact",
+} as const;
+
+export const ROUTES = {
+  discovery: "/discovery",
 } as const;

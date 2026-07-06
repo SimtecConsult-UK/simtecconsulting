@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SECTION_IDS } from "../lib/sections";
+import { ROUTES, SECTION_IDS } from "../lib/sections";
 
 // Accent matches the nav "Book a Workshop" CTA (brand teal + dark ink text on fills)
 const ACCENT = "var(--color-brand-blue)";
@@ -269,12 +269,13 @@ export function ModulePicker() {
               <p className="mb-4 text-[12.5px] leading-[1.55] text-[#5a6573]">
                 Every module runs on one shared core. Start with a few — switch more on whenever you&apos;re ready.
               </p>
-              <button
-                className="font-heading w-full cursor-pointer rounded-[9px] bg-[var(--color-brand-blue)] py-[12px] text-[14px] font-semibold transition-colors hover:bg-[#85f0e4] lg:py-[13px]"
+              <a
+                href={ROUTES.discovery}
+                className="font-heading block w-full cursor-pointer rounded-[9px] bg-[var(--color-brand-blue)] py-[12px] text-center text-[14px] font-semibold transition-colors hover:bg-[#85f0e4] lg:py-[13px]"
                 style={{ color: ON_ACCENT }}
               >
                 Book a Workshop →
-              </button>
+              </a>
             </div>
 
           </div>
