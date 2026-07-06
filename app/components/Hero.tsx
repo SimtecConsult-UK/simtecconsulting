@@ -1,4 +1,4 @@
-import { SECTION_IDS } from "../lib/sections";
+import { ROUTES } from "../lib/sections";
 
 export function Hero() {
   return (
@@ -22,7 +22,7 @@ export function Hero() {
               sub→crane proportions). Centered on tablet/mobile, left-aligned
               on laptop+ to match the text. */}
           <a
-            href={`#${SECTION_IDS.contact}`}
+            href={ROUTES.discovery}
             className="absolute left-1/2 top-full mt-7 inline-flex -translate-x-1/2 items-center justify-center rounded-full bg-[var(--color-brand-blue)] px-6 py-2.5 text-[13px] font-semibold text-[#0c2421] transition-colors hover:bg-[#85f0e4] md:text-[14px] min-[1000px]:left-0 min-[1000px]:mt-8 min-[1000px]:translate-x-0"
           >
             Book a Workshop
