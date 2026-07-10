@@ -2,6 +2,8 @@
 // Ported from design_handoff_discovery_wizard/reference/Discovery Wizard.dc.html (the `DEF` array).
 // Copy, options, column definitions and conditional (`showIf`) rules are transcribed verbatim.
 
+import { MODULE_CATALOG } from "../lib/moduleCatalog";
+
 export type Answers = Record<string, string | string[] | undefined>;
 
 export type RepRow = Record<string, string>;
@@ -61,57 +63,6 @@ export type Section = {
   description: string;
   questions: Question[];
 };
-
-// Source of truth for the 5 system categories and their modules — backs both
-// the `selectedModules` groupedMulti (names only) and the `proposedModules`
-// rep table's pre-populated rows (name + description).
-export const MODULE_CATALOG: { header: string; modules: { name: string; description: string }[] }[] = [
-  {
-    header: "Project Management & Field Productivity",
-    modules: [
-      { name: "Project & Job Management", description: "Projects, jobs and tasks start-to-finish: status, notes and documents." },
-      { name: "Planning & Scheduling", description: "Plan people, plant and equipment on calendar or Gantt views." },
-      { name: "Emergency Call-Out Management", description: "Log urgent reactive jobs and dispatch the right people fast." },
-      { name: "Site Diaries & Field Reporting", description: "Daily diaries, labour, plant, materials, delays and photos." },
-      { name: "Mobile Operative & Driver Workflows", description: "Mobile forms for job updates, photos, signatures and PODs." },
-    ],
-  },
-  {
-    header: "Fleet, Asset & Logistics",
-    modules: [
-      { name: "Dispatch & Logistics", description: "Collections, deliveries, routes, progress and proof of delivery." },
-      { name: "Plant, Equipment & Asset Tracking", description: "Live register of vehicles, skips and plant: who has what, and where." },
-      { name: "Maintenance & Servicing Records", description: "Servicing, repairs, inspections, MOTs and certification reminders." },
-      { name: "Vehicle Safety Checks", description: "Daily driver checks on mobile, with instant defect flagging." },
-    ],
-  },
-  {
-    header: "Compliance, HSEQ & Environmental",
-    modules: [
-      { name: "HSEQ Management", description: "RAMS, toolbox talks, permits, incidents, NCRs, audits and dashboards." },
-      { name: "Waste & Materials Tracking", description: "Movements, Waste Transfer Notes, Consignment Notes and compliance records." },
-      { name: "Environmental & Carbon Reporting", description: "Reuse, transport, emissions and ESG-ready reporting." },
-    ],
-  },
-  {
-    header: "Commercial, Finance & Client",
-    modules: [
-      { name: "Quotes, POs & Applications for Payment", description: "Quotes, POs, dayworks, applications and invoice preparation." },
-      { name: "Field-to-Invoice Workflows", description: "Link signed site records straight into commercial processes." },
-      { name: "Client Portals", description: "Secure client access to progress, reports, documents and history." },
-      { name: "Automated Forms, PDFs & Notifications", description: "Forms that trigger approvals, PDFs, emails and SMS alerts." },
-    ],
-  },
-  {
-    header: "Admin Systems & Integrations",
-    modules: [
-      { name: "Timesheets & Labour Capture", description: "Time against jobs and cost codes, approvals and payroll export." },
-      { name: "Training & Certification Management", description: "Track training, licences and expiry dates with reminders." },
-      { name: "Recruitment & Applicant Tracking", description: "Manage CVs, applications and vacancies in one dashboard." },
-      { name: "System Integrations", description: "Connect Xero, Sage, OneDrive, SharePoint, tracking and HR tools." },
-    ],
-  },
-];
 
 // One row per module selected in `selectedModules`, sectioned by system in
 // `MODULE_CATALOG` order, with title/description pre-filled from the catalog.
