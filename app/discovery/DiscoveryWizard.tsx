@@ -9,6 +9,7 @@ import {
   type Step,
   SECTIONS,
   STEPS,
+  isSectionAnswered,
   isStepVisible,
 } from "./data";
 
@@ -45,6 +46,15 @@ function clamp(value: number, min: number, max: number) {
 
 const isQuestionStep = (s: Step): s is Extract<Step, { kind: "question" }> => s.kind === "question";
 
+const MINUTES_PER_QUESTION = 0.6;
+// A section's segment shows a sliver of fill as soon as it's entered (its
+// sintro screen), before any of its questions have been answered.
+const MIN_SECTION_FILL_PCT = 8;
+
+function padSectionNumber(sectionIndex: number) {
+  return String(sectionIndex + 1).padStart(2, "0");
+}
+
 export function DiscoveryWizard() {
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
@@ -52,10 +62,12 @@ export function DiscoveryWizard() {
   const [consent, setConsent] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
 
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pendingSave = useRef<PersistedState | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
 
   const flushSave = useCallback(() => {
     if (!pendingSave.current) return;
@@ -121,16 +133,33 @@ export function DiscoveryWizard() {
       // nav buttons) right after selecting an option doesn't double-advance.
       clearTimeout(advanceTimer.current);
       setIdx((prev) => clamp(prev + delta, 0, visibleSteps.length - 1));
+      setNavOpen(false);
     },
     [visibleSteps.length]
   );
   const next = useCallback(() => nav(1), [nav]);
   const prev = useCallback(() => nav(-1), [nav]);
 
+  const jumpToSection = useCallback(
+    (sectionIndex: number) => {
+      const target = visibleSteps.findIndex(
+        (step) => step.kind === "sintro" && step.sectionIndex === sectionIndex
+      );
+      if (target < 0) return;
+      clearTimeout(advanceTimer.current);
+      setIdx(target);
+      setNavOpen(false);
+    },
+    [visibleSteps]
+  );
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toUpperCase();
-      if (e.key === "Enter" && tag !== "TEXTAREA" && tag !== "BUTTON") {
+      if (e.key === "Escape" && navOpen) {
+        e.preventDefault();
+        setNavOpen(false);
+      } else if (e.key === "Enter" && tag !== "TEXTAREA" && tag !== "BUTTON") {
         e.preventDefault();
         nav(1);
       } else if (e.key === "ArrowUp" && tag !== "INPUT" && tag !== "TEXTAREA") {
@@ -143,7 +172,20 @@ export function DiscoveryWizard() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [nav]);
+  }, [nav, navOpen]);
+
+  // Close the jump flyout on any click outside it, so it doesn't sit on top
+  // of the page intercepting clicks meant for the content underneath.
+  useEffect(() => {
+    if (!navOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setNavOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [navOpen]);
 
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
@@ -208,12 +250,51 @@ export function DiscoveryWizard() {
 
   const sectionIndex = current.kind === "sintro" || current.kind === "question" ? current.sectionIndex : null;
   const section = sectionIndex != null ? SECTIONS[sectionIndex] : null;
-  const secNo = sectionIndex != null ? String(sectionIndex + 1).padStart(2, "0") : "";
+  const secNo = sectionIndex != null ? padSectionNumber(sectionIndex) : "";
 
   const isTealScreen = current.kind === "intro" || current.kind === "sintro";
   const isCenteredBox = current.kind === "intro" || current.kind === "sintro" || current.kind === "end";
 
-  const pct = visibleSteps.length > 1 ? (currentIndex / (visibleSteps.length - 1)) * 100 : 0;
+  // Extends `sectionIndex` with the "end" screen (past the last section) so
+  // the nav below has one number line covering intro (-1) through end (16).
+  const currentSectionIndex = current.kind === "end" ? SECTIONS.length : sectionIndex ?? -1;
+
+  const sectionNav = SECTIONS.map((sec, si) => {
+    const passed = si < currentSectionIndex;
+    const isCurrent = si === currentSectionIndex;
+    let fillPct = passed ? 100 : 0;
+    if (isCurrent) {
+      const sectionQuestionSteps = visibleSteps.filter(
+        (step) => step.kind === "question" && step.sectionIndex === si
+      );
+      const pos = current.kind === "question" ? sectionQuestionSteps.indexOf(current) : -1;
+      fillPct = pos < 0 ? MIN_SECTION_FILL_PCT : Math.round(((pos + 1) / sectionQuestionSteps.length) * 100);
+    }
+    // "Done" reflects whether the section's required questions actually have
+    // answers — not just whether the user has scrolled past it — so jumping
+    // ahead doesn't falsely mark unvisited sections complete, and jumping
+    // back to review doesn't erase a section's completion.
+    const done = isSectionAnswered(sec, answers, repRows);
+    const visibleQuestionCount = sec.questions.filter((q) => !q.showIf || q.showIf(answers)).length;
+    return {
+      section: sec,
+      si,
+      done,
+      isCurrent,
+      fillPct,
+      stateClass: done ? " dw-done" : isCurrent ? " dw-on" : "",
+      minutes: Math.max(1, Math.round(visibleQuestionCount * MINUTES_PER_QUESTION)),
+    };
+  });
+
+  const completedSectionCount = sectionNav.filter((item) => item.done).length;
+
+  const jumpLbl =
+    currentSectionIndex >= 0 && currentSectionIndex < SECTIONS.length
+      ? `${padSectionNumber(currentSectionIndex)} · ${SECTIONS[currentSectionIndex].shortName}`
+      : `All ${SECTIONS.length} sections`;
+
+  const flyHead = `All sections · ${completedSectionCount} of ${SECTIONS.length} complete`;
 
   const bottomLabel =
     current.kind === "intro"
@@ -221,19 +302,78 @@ export function DiscoveryWizard() {
       : current.kind === "end"
       ? "REVIEW & SUBMIT"
       : current.kind === "sintro"
-      ? `SECTION ${current.sectionIndex + 1} OF 16`
+      ? `SECTION ${current.sectionIndex + 1} OF ${SECTIONS.length}`
       : `QUESTION ${qNum} OF ${qTotal}`;
 
   return (
     <div className={`dw-wiz${isTealScreen ? " dw-teal" : ""}`}>
       <div className="dw-glow" />
-      <div className="dw-progress">
-        <div className="dw-progress-fill" style={{ width: `${pct}%` }} />
-      </div>
 
       <div className="dw-top">
         <Logo height={17} opacity={0.9} />
         <span className="dw-saved">AUTO-SAVED ✓</span>
+      </div>
+
+      <div className="dw-segwrap">
+        {sectionNav.map((item) => (
+          <span
+            key={item.section.name}
+            className={`dw-seg${item.isCurrent ? " dw-on" : ""}`}
+            role="button"
+            tabIndex={0}
+            aria-label={`Jump to section ${item.si + 1}: ${item.section.shortName}`}
+            aria-current={item.isCurrent ? "step" : undefined}
+            onClick={() => jumpToSection(item.si)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                jumpToSection(item.si);
+              }
+            }}
+          >
+            <span className="dw-segf" style={{ width: `${item.fillPct}%` }} />
+          </span>
+        ))}
+      </div>
+
+      <div className="dw-navrow" ref={navRef}>
+        <button
+          className="dw-jumpbtn"
+          aria-haspopup="true"
+          aria-expanded={navOpen}
+          onClick={() => setNavOpen((o) => !o)}
+        >
+          {jumpLbl} <span className="dw-jumpcaret">▾</span>
+        </button>
+        {navOpen && (
+          <div className="dw-flyout" role="menu">
+            <div className="dw-fhead">{flyHead}</div>
+            <div className="dw-fgrid" style={{ gridTemplateRows: `repeat(${Math.ceil(SECTIONS.length / 2)}, auto)` }}>
+              {sectionNav.map((item) => (
+                <div
+                  key={item.section.name}
+                  className={`dw-fitem${item.stateClass}`}
+                  role="menuitem"
+                  tabIndex={0}
+                  aria-current={item.isCurrent ? "step" : undefined}
+                  onClick={() => jumpToSection(item.si)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      jumpToSection(item.si);
+                    }
+                  }}
+                >
+                  <span className="dw-fnum">{item.done ? "✓" : padSectionNumber(item.si)}</span>
+                  {item.section.shortName}
+                  <span className="dw-fmeta">
+                    {item.done ? "✓ DONE" : item.isCurrent ? "NOW" : `~${item.minutes} MIN`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="dw-main">
@@ -332,7 +472,9 @@ function SectionIntroScreen({
 }) {
   return (
     <>
-      <p className="dw-kick dw-kick-sec dw-kick-lone">Section {sectionNumber} of 16</p>
+      <p className="dw-kick dw-kick-sec dw-kick-lone">
+        Section {sectionNumber} of {SECTIONS.length}
+      </p>
       <h2 className="dw-h1 dw-h1-sintro">{section.name}</h2>
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 30 }}>
         <button className="dw-btn" onClick={onContinue}>
