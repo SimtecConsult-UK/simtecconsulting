@@ -39,6 +39,7 @@ export type Question = {
 
 export type Section = {
   name: string;
+  shortName: string;
   description: string;
   questions: Question[];
 };
@@ -46,6 +47,7 @@ export type Section = {
 export const SECTIONS: Section[] = [
   {
     name: "Project Basics",
+    shortName: "Project basics",
     description: "Capture client, project and commercial/timing context.",
     questions: [
       { id: "company", type: "text", label: "Company", placeholder: "Company name", required: true },
@@ -74,6 +76,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Business Context",
+    shortName: "Business context",
     description: "Understand the business background and why the project matters.",
     questions: [
       { id: "businessDescription", type: "long", label: "What does your business do?", placeholder: "A sentence or two is plenty…" },
@@ -87,6 +90,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Users and Access",
+    shortName: "Users & access",
     description: "Identify who uses the system and what permissions are needed.",
     questions: [
       { id: "dayOneUsers", type: "multi", label: "Day-one users", required: true, help: "Select everyone who will use the system from day one.", options: ["Admin", "Manager", "Director", "Office", "Site", "Field", "Client", "Consultant", "Supplier", "Finance", "Other"] },
@@ -110,6 +114,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Current Process / Workflow Overview",
+    shortName: "Current workflow",
     description: "Capture the real workflow from start to finish.",
     questions: [
       { id: "mainProcess", type: "long", label: "Main process the system supports", required: true, help: "In plain words, start to finish.", placeholder: "" },
@@ -137,6 +142,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Scope and Modules",
+    shortName: "Scope & modules",
     description: "Break the project into functional areas and prioritise Phase 1.",
     questions: [
       { id: "primarySystemType", type: "choice", label: "Primary system type", required: true, options: ["Job/project management", "Client portal", "Field app", "Compliance", "Document management", "Reporting dashboard", "Materials/waste", "Plant/equipment", "Finance", "Scheduling", "AI/document automation", "Other"] },
@@ -160,6 +166,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Records and Data Model",
+    shortName: "Records & data",
     description: "Identify what the system needs to track and how records relate.",
     questions: [
       { id: "mainRecords", type: "multi", label: "Main records to track", required: true, options: ["Clients", "Sites", "Projects", "Jobs", "Enquiries", "Tasks", "Documents", "Users", "Vehicles", "Plant", "Materials", "Forms", "Quotes", "Invoices", "Emails", "Compliance records", "Other"] },
@@ -184,6 +191,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Statuses, Dates and Triggers",
+    shortName: "Statuses & dates",
     description: "Work out what the system actively manages, prompts or calculates.",
     questions: [
       {
@@ -221,6 +229,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Dashboards, Reports and KPIs",
+    shortName: "Dashboards & KPIs",
     description: "Define what users need to see to manage the business.",
     questions: [
       { id: "firstThingUsersSee", type: "long", label: "First thing users need to see", required: true, help: "When they log in on a normal morning.", placeholder: "" },
@@ -244,6 +253,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Documents, Templates and Outputs",
+    shortName: "Documents & templates",
     description: "Capture documents created, reused, stored or issued.",
     questions: [
       { id: "documentsCreated", type: "long", label: "Documents created during the process", help: "Bullet points are fine.", placeholder: "" },
@@ -270,6 +280,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Automation and AI",
+    shortName: "Automation & AI",
     description: "Identify useful automation while keeping control clear.",
     questions: [
       { id: "repetitiveTasks", type: "long", label: "Repetitive tasks to automate", help: "Bullet points are fine.", placeholder: "" },
@@ -290,6 +301,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Integrations and Existing Tools",
+    shortName: "Integrations",
     description: "Understand what the new solution needs to connect with.",
     questions: [
       { id: "currentTools", type: "multi", label: "Current tools", required: true, options: ["Outlook", "Gmail", "Word", "Excel", "SharePoint", "OneDrive", "Google Drive", "Xero", "Sage", "QuickBooks", "CRM", "Planning Portal", "GIS", "Field app", "Existing database", "Spreadsheet tracker", "Other"] },
@@ -316,6 +328,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Data Migration and Existing Files",
+    shortName: "Data migration",
     description: "Understand whether historic or live data needs importing.",
     questions: [
       { id: "migrationRequired", type: "choice", label: "Data migration required?", required: true, options: ["Yes", "No", "Possibly", "Not sure"] },
@@ -341,6 +354,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Security, Controls and Compliance",
+    shortName: "Security & compliance",
     description: "Capture approval, audit, access and regulatory requirements.",
     questions: [
       { id: "complianceRequirements", type: "long", label: "Compliance/regulatory requirements", placeholder: "" },
@@ -354,6 +368,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Devices and Non-Functional Requirements",
+    shortName: "Devices & performance",
     description: "Capture how the system will be used and quality expectations.",
     questions: [
       { id: "devicesRequired", type: "multi", label: "Devices required", required: true, options: ["Desktop/web", "Tablet", "Mobile", "Offline mobile", "Not sure"] },
@@ -367,6 +382,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Supporting Documents",
+    shortName: "Supporting documents",
     description: "Collect files and links that help scope the work. Helpful examples: spreadsheets, templates, workflow diagrams, screenshots, forms, RFPs, API docs, dashboard examples, wireframes, exports.",
     questions: [
       {
@@ -393,6 +409,7 @@ export const SECTIONS: Section[] = [
   },
   {
     name: "Final Prioritisation",
+    shortName: "Final prioritisation",
     description: "Lock in scope clarity before submission.",
     questions: [
       {
@@ -436,4 +453,54 @@ export const STEPS = buildSteps(SECTIONS);
 export function isStepVisible(step: Step, answers: Answers): boolean {
   if (step.kind !== "question") return true;
   return !step.question.showIf || step.question.showIf(answers);
+}
+
+function hasText(value: string | undefined): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function hasNonKeyValue(row: RepRow): boolean {
+  return Object.entries(row).some(([key, value]) => key !== "__key" && hasText(value));
+}
+
+export function isQuestionAnswered(
+  question: Question,
+  answers: Answers,
+  repRows: Record<string, RepRow[]>
+): boolean {
+  switch (question.type) {
+    case "text":
+    case "long":
+      return hasText(answers[question.id] as string | undefined);
+    case "choice":
+      return hasText(answers[question.id] as string | undefined);
+    case "multi": {
+      const value = answers[question.id] as string[] | undefined;
+      return !!value && value.length > 0;
+    }
+    case "group":
+      return (question.fields || []).some((field) => hasText(answers[`${question.id}.${field.key}`] as string | undefined));
+    case "rep":
+      return (repRows[question.id] || []).some(hasNonKeyValue);
+    default:
+      return false;
+  }
+}
+
+// A section counts as "done" once its required questions (that are currently
+// visible given `answers`) are all answered. Sections with no required
+// questions instead need at least one visible question answered — otherwise
+// they'd read as "done" before the user ever opens them.
+export function isSectionAnswered(
+  section: Section,
+  answers: Answers,
+  repRows: Record<string, RepRow[]>
+): boolean {
+  const visibleQuestions = section.questions.filter((q) => !q.showIf || q.showIf(answers));
+  const requiredQuestions = visibleQuestions.filter((q) => q.required);
+  const toCheck = requiredQuestions.length > 0 ? requiredQuestions : visibleQuestions;
+  if (toCheck.length === 0) return false;
+  return requiredQuestions.length > 0
+    ? toCheck.every((q) => isQuestionAnswered(q, answers, repRows))
+    : toCheck.some((q) => isQuestionAnswered(q, answers, repRows));
 }
