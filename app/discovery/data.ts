@@ -21,7 +21,12 @@ export type GroupField = {
   placeholder?: string;
 };
 
-export type QuestionType = "text" | "long" | "choice" | "multi" | "group" | "rep";
+export type ModuleGroup = {
+  header: string;
+  options: string[];
+};
+
+export type QuestionType = "text" | "long" | "choice" | "multi" | "group" | "rep" | "groupedMulti";
 
 export type Question = {
   id: string;
@@ -35,6 +40,19 @@ export type Question = {
   columns?: RepColumn[];
   addLabel?: string;
   showIf?: (answers: Answers) => boolean;
+  /** groupedMulti only: module groups, one per `filterBy` option. */
+  groups?: ModuleGroup[];
+  /** groupedMulti only: id of the multi-select question whose selected
+   * values decide which `groups` (matched by header) are shown. */
+  filterBy?: string;
+  /** rep only: pre-populate/re-sync rows from other answers instead of two blanks. */
+  getDefaultRows?: (answers: Answers) => RepRow[];
+  /** rep only: row key holding the group header to section rows under. */
+  groupRowsBy?: string;
+  /** rep only: every header that should always get its own section (even
+   * with zero rows), given the current answers. Without this, a group with
+   * no rows yet simply wouldn't appear. */
+  groupHeadersFor?: (answers: Answers) => string[];
 };
 
 export type Section = {
@@ -43,6 +61,84 @@ export type Section = {
   description: string;
   questions: Question[];
 };
+
+// Source of truth for the 5 system categories and their modules — backs both
+// the `selectedModules` groupedMulti (names only) and the `proposedModules`
+// rep table's pre-populated rows (name + description).
+export const MODULE_CATALOG: { header: string; modules: { name: string; description: string }[] }[] = [
+  {
+    header: "Project Management & Field Productivity",
+    modules: [
+      { name: "Project & Job Management", description: "Projects, jobs and tasks start-to-finish: status, notes and documents." },
+      { name: "Planning & Scheduling", description: "Plan people, plant and equipment on calendar or Gantt views." },
+      { name: "Emergency Call-Out Management", description: "Log urgent reactive jobs and dispatch the right people fast." },
+      { name: "Site Diaries & Field Reporting", description: "Daily diaries, labour, plant, materials, delays and photos." },
+      { name: "Mobile Operative & Driver Workflows", description: "Mobile forms for job updates, photos, signatures and PODs." },
+    ],
+  },
+  {
+    header: "Fleet, Asset & Logistics",
+    modules: [
+      { name: "Dispatch & Logistics", description: "Collections, deliveries, routes, progress and proof of delivery." },
+      { name: "Plant, Equipment & Asset Tracking", description: "Live register of vehicles, skips and plant: who has what, and where." },
+      { name: "Maintenance & Servicing Records", description: "Servicing, repairs, inspections, MOTs and certification reminders." },
+      { name: "Vehicle Safety Checks", description: "Daily driver checks on mobile, with instant defect flagging." },
+    ],
+  },
+  {
+    header: "Compliance, HSEQ & Environmental",
+    modules: [
+      { name: "HSEQ Management", description: "RAMS, toolbox talks, permits, incidents, NCRs, audits and dashboards." },
+      { name: "Waste & Materials Tracking", description: "Movements, Waste Transfer Notes, Consignment Notes and compliance records." },
+      { name: "Environmental & Carbon Reporting", description: "Reuse, transport, emissions and ESG-ready reporting." },
+    ],
+  },
+  {
+    header: "Commercial, Finance & Client",
+    modules: [
+      { name: "Quotes, POs & Applications for Payment", description: "Quotes, POs, dayworks, applications and invoice preparation." },
+      { name: "Field-to-Invoice Workflows", description: "Link signed site records straight into commercial processes." },
+      { name: "Client Portals", description: "Secure client access to progress, reports, documents and history." },
+      { name: "Automated Forms, PDFs & Notifications", description: "Forms that trigger approvals, PDFs, emails and SMS alerts." },
+    ],
+  },
+  {
+    header: "Admin Systems & Integrations",
+    modules: [
+      { name: "Timesheets & Labour Capture", description: "Time against jobs and cost codes, approvals and payroll export." },
+      { name: "Training & Certification Management", description: "Track training, licences and expiry dates with reminders." },
+      { name: "Recruitment & Applicant Tracking", description: "Manage CVs, applications and vacancies in one dashboard." },
+      { name: "System Integrations", description: "Connect Xero, Sage, OneDrive, SharePoint, tracking and HR tools." },
+    ],
+  },
+];
+
+// One row per module selected in `selectedModules`, sectioned by system in
+// `MODULE_CATALOG` order, with title/description pre-filled from the catalog.
+// Structural fields (things the renderer needs, not user-typed answers) are
+// `__`-prefixed, matching `__key`'s existing convention — see `hasNonKeyValue`.
+export function defaultProposedModuleRows(answers: Answers): RepRow[] {
+  const selectedSystems = (answers.primarySystemType as string[] | undefined) || [];
+  const selectedModules = (answers.selectedModules as string[] | undefined) || [];
+  const rows: RepRow[] = [];
+  MODULE_CATALOG.forEach((group) => {
+    if (!selectedSystems.includes(group.header)) return;
+    group.modules.forEach((m) => {
+      if (!selectedModules.includes(m.name)) return;
+      rows.push({ __key: `${group.header}::${m.name}`, __group: group.header, moduleTitle: m.name, description: m.description });
+    });
+  });
+  return rows;
+}
+
+// Every system the user picked in `primarySystemType` should always get its
+// own section in `proposedModules`, even before any of its modules are
+// selected — otherwise a system with zero pre-picked catalog modules would
+// never get a place to add a custom one.
+export function proposedModuleGroupHeaders(answers: Answers): string[] {
+  const selectedSystems = (answers.primarySystemType as string[] | undefined) || [];
+  return MODULE_CATALOG.map((g) => g.header).filter((h) => selectedSystems.includes(h));
+}
 
 export const SECTIONS: Section[] = [
   {
@@ -145,7 +241,15 @@ export const SECTIONS: Section[] = [
     shortName: "Scope & modules",
     description: "Break the project into functional areas and prioritise Phase 1.",
     questions: [
-      { id: "primarySystemType", type: "choice", label: "Primary system type", required: true, options: ["Job/project management", "Client portal", "Field app", "Compliance", "Document management", "Reporting dashboard", "Materials/waste", "Plant/equipment", "Finance", "Scheduling", "AI/document automation", "Other"] },
+      { id: "primarySystemType", type: "multi", label: "Primary system type", required: true, options: ["Project Management & Field Productivity", "Fleet, Asset & Logistics", "Compliance, HSEQ & Environmental", "Commercial, Finance & Client", "Admin Systems & Integrations"] },
+      {
+        id: "selectedModules",
+        type: "groupedMulti",
+        label: "Choose the modules that you want",
+        required: true,
+        filterBy: "primarySystemType",
+        groups: MODULE_CATALOG.map((g) => ({ header: g.header, options: g.modules.map((m) => m.name) })),
+      },
       {
         id: "proposedModules",
         type: "rep",
@@ -153,6 +257,9 @@ export const SECTIONS: Section[] = [
         required: true,
         help: "One row per module. Priority: Must for Phase 1, Nice, or Future.",
         addLabel: "Add module",
+        getDefaultRows: defaultProposedModuleRows,
+        groupRowsBy: "__group",
+        groupHeadersFor: proposedModuleGroupHeaders,
         columns: [
           { key: "moduleTitle", header: "Module title", placeholder: "e.g. Job tracker" },
           { key: "description", header: "Description", placeholder: "What it does, in a sentence", width: "1.5fr" },
@@ -455,12 +562,42 @@ export function isStepVisible(step: Step, answers: Answers): boolean {
   return !step.question.showIf || step.question.showIf(answers);
 }
 
+// The section-jump dropdown doesn't make sense before the user has seen any
+// section — hide it on the opening screen and the first section's intro.
+export function isSectionJumpVisible(step: Step): boolean {
+  return !(step.kind === "intro" || (step.kind === "sintro" && step.sectionIndex === 0));
+}
+
+const MULTI_ANSWER_QUESTION_IDS = new Set(
+  SECTIONS.flatMap((s) => s.questions).filter((q) => q.type === "multi" || q.type === "groupedMulti").map((q) => q.id)
+);
+
+// Drafts saved before a question's type changed from single- to multi-select
+// (or vice versa) can have the wrong shape in localStorage. Coerce on load so
+// a leftover string doesn't crash the first multi-select toggle, and a
+// leftover array doesn't break a since-reverted single-select.
+export function sanitizeAnswers(raw: Answers): Answers {
+  const sanitized: Answers = { ...raw };
+  Object.keys(sanitized).forEach((id) => {
+    const value = sanitized[id];
+    const expectsArray = MULTI_ANSWER_QUESTION_IDS.has(id);
+    if (expectsArray && typeof value === "string") {
+      sanitized[id] = value ? [value] : [];
+    } else if (!expectsArray && Array.isArray(value)) {
+      sanitized[id] = value[0];
+    }
+  });
+  return sanitized;
+}
+
 function hasText(value: string | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+// `__`-prefixed keys (`__key`, `__group`, …) are structural bookkeeping the
+// renderer needs, not user-typed content, and never count toward "answered".
 function hasNonKeyValue(row: RepRow): boolean {
-  return Object.entries(row).some(([key, value]) => key !== "__key" && hasText(value));
+  return Object.entries(row).some(([key, value]) => !key.startsWith("__") && hasText(value));
 }
 
 export function isQuestionAnswered(
@@ -474,14 +611,17 @@ export function isQuestionAnswered(
       return hasText(answers[question.id] as string | undefined);
     case "choice":
       return hasText(answers[question.id] as string | undefined);
-    case "multi": {
+    case "multi":
+    case "groupedMulti": {
       const value = answers[question.id] as string[] | undefined;
       return !!value && value.length > 0;
     }
     case "group":
       return (question.fields || []).some((field) => hasText(answers[`${question.id}.${field.key}`] as string | undefined));
-    case "rep":
-      return (repRows[question.id] || []).some(hasNonKeyValue);
+    case "rep": {
+      const rows = repRows[question.id] ?? question.getDefaultRows?.(answers) ?? [];
+      return rows.some(hasNonKeyValue);
+    }
     default:
       return false;
   }

@@ -409,6 +409,22 @@
   font-weight: 600;
 }
 
+.dw-modgroups {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 800px;
+}
+.dw-modgroup-title {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0fae9a;
+  margin: 0 0 10px;
+}
+
 .dw-gcol {
   display: flex;
   flex-direction: column;
@@ -440,8 +456,7 @@
   border-bottom-color: #0fae9a;
 }
 
-.dw-rephead,
-.dw-reprow {
+.dw-reptable {
   display: grid;
   gap: 10px;
   align-items: center;

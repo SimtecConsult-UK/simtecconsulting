@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Logo } from "../components/Logo";
 import {
   type Answers,
@@ -10,7 +10,9 @@ import {
   SECTIONS,
   STEPS,
   isSectionAnswered,
+  isSectionJumpVisible,
   isStepVisible,
+  sanitizeAnswers,
 } from "./data";
 
 const STORAGE_KEY = "simtec_discovery_wizard";
@@ -36,8 +38,31 @@ function defaultRows(): RepRow[] {
   return [makeRepRow(), makeRepRow()];
 }
 
-function rowsFor(map: Record<string, RepRow[]>, qid: string): RepRow[] {
-  return map[qid] || defaultRows();
+// Catalog-generated rows carry a "header::module" key (see
+// `defaultProposedModuleRows`); manually-added rows always get a plain "rN"
+// key from `makeRepRow`. That distinction is how reconciliation below tells
+// "auto-populated, keep in sync with answers" apart from "the user added
+// this by hand, leave it alone".
+function isGeneratedRowKey(key: string | undefined): boolean {
+  return typeof key === "string" && key.includes("::");
+}
+
+function rowsFor(map: Record<string, RepRow[]>, question: Question, answers: Answers): RepRow[] {
+  const saved = map[question.id];
+  const generated = question.getDefaultRows?.(answers);
+  if (!generated) return saved || defaultRows();
+  if (!saved) return generated.length > 0 ? generated : defaultRows();
+
+  // Reconcile instead of freezing: drop generated rows whose module/system
+  // was since deselected, add rows for newly selected ones, and keep every
+  // other saved row (including any edits, and any row the user added by
+  // hand) untouched — so going back and changing an earlier answer keeps
+  // this table in sync instead of getting stuck at the first edit.
+  const generatedKeys = new Set(generated.map((r) => r.__key));
+  const kept = saved.filter((r) => !isGeneratedRowKey(r.__key) || generatedKeys.has(r.__key));
+  const keptKeys = new Set(kept.map((r) => r.__key));
+  const added = generated.filter((r) => !keptKeys.has(r.__key));
+  return [...kept, ...added];
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -86,7 +111,7 @@ export function DiscoveryWizard() {
       if (raw) {
         const saved = JSON.parse(raw) as Partial<PersistedState>;
         setIdx(saved.idx || 0);
-        setAnswers(saved.answers || {});
+        setAnswers(sanitizeAnswers(saved.answers || {}));
         setRepRows(saved.repRows || {});
         setConsent(!!saved.consent);
         setSubmitted(!!saved.submitted);
@@ -214,29 +239,41 @@ export function DiscoveryWizard() {
   );
 
   const getRows = useCallback(
-    (question: Question): RepRow[] => rowsFor(repRows, question.id),
-    [repRows]
+    (question: Question): RepRow[] => rowsFor(repRows, question, answers),
+    [repRows, answers]
   );
 
-  const setRepCell = useCallback((qid: string, rowIndex: number, colKey: string, value: string) => {
-    setRepRows((prev) => {
-      const rows = [...rowsFor(prev, qid)];
-      rows[rowIndex] = { ...rows[rowIndex], [colKey]: value };
-      return { ...prev, [qid]: rows };
-    });
-  }, []);
+  const setRepCell = useCallback(
+    (question: Question, rowIndex: number, colKey: string, value: string) => {
+      setRepRows((prev) => {
+        const rows = [...rowsFor(prev, question, answers)];
+        rows[rowIndex] = { ...rows[rowIndex], [colKey]: value };
+        return { ...prev, [question.id]: rows };
+      });
+    },
+    [answers]
+  );
 
-  const addRepRow = useCallback((question: Question) => {
-    setRepRows((prev) => ({ ...prev, [question.id]: [...rowsFor(prev, question.id), makeRepRow()] }));
-  }, []);
+  const addRepRow = useCallback(
+    (question: Question, extra?: Record<string, string>) => {
+      setRepRows((prev) => ({
+        ...prev,
+        [question.id]: [...rowsFor(prev, question, answers), { ...makeRepRow(), ...extra }],
+      }));
+    },
+    [answers]
+  );
 
-  const removeRepRow = useCallback((question: Question, rowIndex: number) => {
-    setRepRows((prev) => {
-      const rows = rowsFor(prev, question.id);
-      if (rows.length <= 1) return prev;
-      return { ...prev, [question.id]: rows.filter((_, i) => i !== rowIndex) };
-    });
-  }, []);
+  const removeRepRow = useCallback(
+    (question: Question, rowIndex: number) => {
+      setRepRows((prev) => {
+        const rows = rowsFor(prev, question, answers);
+        if (rows.length <= 1) return prev;
+        return { ...prev, [question.id]: rows.filter((_, i) => i !== rowIndex) };
+      });
+    },
+    [answers]
+  );
 
   const { qTotal, qNum } = useMemo(
     () => ({
@@ -336,45 +373,47 @@ export function DiscoveryWizard() {
         ))}
       </div>
 
-      <div className="dw-navrow" ref={navRef}>
-        <button
-          className="dw-jumpbtn"
-          aria-haspopup="true"
-          aria-expanded={navOpen}
-          onClick={() => setNavOpen((o) => !o)}
-        >
-          {jumpLbl} <span className="dw-jumpcaret">▾</span>
-        </button>
-        {navOpen && (
-          <div className="dw-flyout" role="menu">
-            <div className="dw-fhead">{flyHead}</div>
-            <div className="dw-fgrid" style={{ gridTemplateRows: `repeat(${Math.ceil(SECTIONS.length / 2)}, auto)` }}>
-              {sectionNav.map((item) => (
-                <div
-                  key={item.section.name}
-                  className={`dw-fitem${item.stateClass}`}
-                  role="menuitem"
-                  tabIndex={0}
-                  aria-current={item.isCurrent ? "step" : undefined}
-                  onClick={() => jumpToSection(item.si)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      jumpToSection(item.si);
-                    }
-                  }}
-                >
-                  <span className="dw-fnum">{item.done ? "✓" : padSectionNumber(item.si)}</span>
-                  {item.section.shortName}
-                  <span className="dw-fmeta">
-                    {item.done ? "✓ DONE" : item.isCurrent ? "NOW" : `~${item.minutes} MIN`}
-                  </span>
-                </div>
-              ))}
+      {isSectionJumpVisible(current) && (
+        <div className="dw-navrow" ref={navRef}>
+          <button
+            className="dw-jumpbtn"
+            aria-haspopup="true"
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen((o) => !o)}
+          >
+            {jumpLbl} <span className="dw-jumpcaret">▾</span>
+          </button>
+          {navOpen && (
+            <div className="dw-flyout" role="menu">
+              <div className="dw-fhead">{flyHead}</div>
+              <div className="dw-fgrid" style={{ gridTemplateRows: `repeat(${Math.ceil(SECTIONS.length / 2)}, auto)` }}>
+                {sectionNav.map((item) => (
+                  <div
+                    key={item.section.name}
+                    className={`dw-fitem${item.stateClass}`}
+                    role="menuitem"
+                    tabIndex={0}
+                    aria-current={item.isCurrent ? "step" : undefined}
+                    onClick={() => jumpToSection(item.si)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        jumpToSection(item.si);
+                      }
+                    }}
+                  >
+                    <span className="dw-fnum">{item.done ? "✓" : padSectionNumber(item.si)}</span>
+                    {item.section.shortName}
+                    <span className="dw-fmeta">
+                      {item.done ? "✓ DONE" : item.isCurrent ? "NOW" : `~${item.minutes} MIN`}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <div className="dw-main">
         <div className={`dw-box ${isCenteredBox ? "dw-center" : "dw-anchor"}`}>
@@ -395,7 +434,7 @@ export function DiscoveryWizard() {
               onToggleMulti={toggleMulti}
               onChooseSingle={chooseSingle}
               onSetRepCell={setRepCell}
-              onAddRepRow={() => addRepRow(current.question)}
+              onAddRepRow={(extra) => addRepRow(current.question, extra)}
               onRemoveRepRow={(rowIndex) => removeRepRow(current.question, rowIndex)}
               onNext={next}
             />
@@ -520,6 +559,31 @@ function AutoGrowTextarea({
   );
 }
 
+function PillRow({
+  options,
+  selected,
+  onToggle,
+}: {
+  options: string[];
+  selected: string[];
+  onToggle: (option: string) => void;
+}) {
+  return (
+    <div className="dw-pillrow">
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          className={`dw-pill${selected.includes(option) ? " dw-on" : ""}`}
+          onClick={() => onToggle(option)}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function QuestionScreen({
   question,
   secLabel,
@@ -540,8 +604,8 @@ function QuestionScreen({
   onSetAnswer: (id: string, value: string) => void;
   onToggleMulti: (id: string, option: string) => void;
   onChooseSingle: (id: string, option: string) => void;
-  onSetRepCell: (qid: string, rowIndex: number, colKey: string, value: string) => void;
-  onAddRepRow: () => void;
+  onSetRepCell: (question: Question, rowIndex: number, colKey: string, value: string) => void;
+  onAddRepRow: (extra?: Record<string, string>) => void;
   onRemoveRepRow: (rowIndex: number) => void;
   onNext: () => void;
 }) {
@@ -596,22 +660,36 @@ function QuestionScreen({
         )}
 
         {question.type === "multi" && (
-          <div className="dw-pillrow">
-            {question.options?.map((option) => {
-              const cur = (answers[question.id] as string[] | undefined) || [];
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  className={`dw-pill${cur.includes(option) ? " dw-on" : ""}`}
-                  onClick={() => onToggleMulti(question.id, option)}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
+          <PillRow
+            options={question.options || []}
+            selected={(answers[question.id] as string[] | undefined) || []}
+            onToggle={(option) => onToggleMulti(question.id, option)}
+          />
         )}
+
+        {question.type === "groupedMulti" && (() => {
+          const selected = (answers[question.id] as string[] | undefined) || [];
+          return (
+            <div className="dw-modgroups">
+              {(question.groups || [])
+                .filter(
+                  (group) =>
+                    !question.filterBy ||
+                    ((answers[question.filterBy] as string[] | undefined) || []).includes(group.header)
+                )
+                .map((group) => (
+                  <div className="dw-modgroup" key={group.header}>
+                    <h3 className="dw-modgroup-title">{group.header}</h3>
+                    <PillRow
+                      options={group.options}
+                      selected={selected}
+                      onToggle={(option) => onToggleMulti(question.id, option)}
+                    />
+                  </div>
+                ))}
+            </div>
+          );
+        })()}
 
         {question.type === "group" && (
           <div className="dw-gcol">
@@ -636,6 +714,7 @@ function QuestionScreen({
           <RepTable
             question={question}
             rows={rows}
+            answers={answers}
             onSetCell={onSetRepCell}
             onAddRow={onAddRepRow}
             onRemoveRow={onRemoveRepRow}
@@ -665,14 +744,16 @@ function QuestionScreen({
 function RepTable({
   question,
   rows,
+  answers,
   onSetCell,
   onAddRow,
   onRemoveRow,
 }: {
   question: Question;
   rows: RepRow[];
-  onSetCell: (qid: string, rowIndex: number, colKey: string, value: string) => void;
-  onAddRow: () => void;
+  answers: Answers;
+  onSetCell: (question: Question, rowIndex: number, colKey: string, value: string) => void;
+  onAddRow: (extra?: Record<string, string>) => void;
   onRemoveRow: (rowIndex: number) => void;
 }) {
   const columns = question.columns || [];
@@ -681,68 +762,109 @@ function RepTable({
     [columns]
   );
 
-  return (
-    <div>
-      <div className="dw-rephead" style={{ gridTemplateColumns: gridTemplate }}>
-        {columns.map((c) => (
-          <span className="dw-rh" key={c.key}>
-            {c.header}
-          </span>
-        ))}
-        <span />
-      </div>
-      {rows.map((row, rowIndex) => (
-        <div className="dw-reprow" style={{ gridTemplateColumns: gridTemplate }} key={row.__key ?? rowIndex}>
-          {columns.map((col) => {
-            if (col.chips) {
-              const value = row[col.key];
-              return (
-                <div className="dw-chips" key={col.key}>
-                  {["Must", "Nice", "Future"].map((label) => (
-                    <span
-                      key={label}
-                      className={`dw-pchip${value === label ? " dw-on" : ""}`}
-                      onClick={() => onSetCell(question.id, rowIndex, col.key, label)}
-                    >
-                      {label}
-                    </span>
-                  ))}
-                </div>
-              );
-            }
-            if (col.file) {
-              const fileName = row[col.key];
-              const inputId = `${question.id}-${rowIndex}-${col.key}`;
-              return (
-                <label className="dw-fbtn" key={col.key} htmlFor={inputId}>
-                  {fileName ? fileName : "⬆ CHOOSE FILE"}
-                  <input
-                    id={inputId}
-                    type="file"
-                    style={{ display: "none" }}
-                    onChange={(e) => onSetCell(question.id, rowIndex, col.key, e.target.files?.[0]?.name || "")}
-                  />
-                </label>
-              );
-            }
-            return (
-              <input
-                key={col.key}
-                className="dw-rinp"
-                placeholder={col.placeholder}
-                value={row[col.key] || ""}
-                onChange={(e) => onSetCell(question.id, rowIndex, col.key, e.target.value)}
-              />
-            );
-          })}
-          <button className="dw-xbtn" onClick={() => onRemoveRow(rowIndex)} aria-label="Remove row">
-            ×
-          </button>
-        </div>
+  // Header cells and row cells are flattened into ONE grid per table (rather
+  // than a separate grid per row) so "auto"-sized columns — the priority
+  // chips — settle on a single shared width instead of sizing independently
+  // per row and drifting out of alignment with the header.
+  const renderHeaderCells = () => (
+    <>
+      {columns.map((c) => (
+        <span className="dw-rh" key={c.key}>
+          {c.header}
+        </span>
       ))}
-      <button className="dw-addbtn" onClick={onAddRow}>
+      <span />
+    </>
+  );
+
+  const renderRowCells = (row: RepRow, rowIndex: number) => (
+    <>
+      {columns.map((col) => {
+        if (col.chips) {
+          const value = row[col.key];
+          return (
+            <div className="dw-chips" key={col.key}>
+              {["Must", "Nice", "Future"].map((label) => (
+                <span
+                  key={label}
+                  className={`dw-pchip${value === label ? " dw-on" : ""}`}
+                  onClick={() => onSetCell(question, rowIndex, col.key, label)}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          );
+        }
+        if (col.file) {
+          const fileName = row[col.key];
+          const inputId = `${question.id}-${rowIndex}-${col.key}`;
+          return (
+            <label className="dw-fbtn" key={col.key} htmlFor={inputId}>
+              {fileName ? fileName : "⬆ CHOOSE FILE"}
+              <input
+                id={inputId}
+                type="file"
+                style={{ display: "none" }}
+                onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.files?.[0]?.name || "")}
+              />
+            </label>
+          );
+        }
+        return (
+          <input
+            key={col.key}
+            className="dw-rinp"
+            placeholder={col.placeholder}
+            value={row[col.key] || ""}
+            onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
+          />
+        );
+      })}
+      <button className="dw-xbtn" onClick={() => onRemoveRow(rowIndex)} aria-label="Remove row">
+        ×
+      </button>
+    </>
+  );
+
+  const renderTable = (indices: number[], extra?: Record<string, string>) => (
+    <>
+      <div className="dw-reptable" style={{ gridTemplateColumns: gridTemplate }}>
+        {renderHeaderCells()}
+        {indices.map((rowIndex) => (
+          <Fragment key={rows[rowIndex].__key ?? rowIndex}>{renderRowCells(rows[rowIndex], rowIndex)}</Fragment>
+        ))}
+      </div>
+      <button className="dw-addbtn" onClick={() => onAddRow(extra)}>
         + {question.addLabel || "Add row"}
       </button>
+    </>
+  );
+
+  const groupBy = question.groupRowsBy;
+  if (!groupBy) {
+    return <div>{renderTable(rows.map((_, rowIndex) => rowIndex))}</div>;
+  }
+
+  // Seed every expected group first (e.g. every system the user picked),
+  // even before it has any rows — otherwise a group with nothing in it yet
+  // would simply never appear, with no way to add its first row.
+  const groups = new Map<string, number[]>();
+  (question.groupHeadersFor?.(answers) || []).forEach((header) => groups.set(header, []));
+  rows.forEach((row, rowIndex) => {
+    const header = row[groupBy] || "Other modules";
+    if (!groups.has(header)) groups.set(header, []);
+    groups.get(header)!.push(rowIndex);
+  });
+
+  return (
+    <div className="dw-modgroups">
+      {[...groups.entries()].map(([header, indices]) => (
+        <div className="dw-modgroup" key={header}>
+          <h3 className="dw-modgroup-title">{header}</h3>
+          {renderTable(indices, { [groupBy]: header })}
+        </div>
+      ))}
     </div>
   );
 }
