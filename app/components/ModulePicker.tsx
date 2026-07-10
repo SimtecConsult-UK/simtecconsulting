@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ROUTES, SECTION_IDS } from "../lib/sections";
+import { MODULE_CATALOG } from "../lib/moduleCatalog";
 
 // Accent matches the nav "Book a Workshop" CTA (brand teal + dark ink text on fills)
 const ACCENT = "var(--color-brand-blue)";
@@ -21,70 +22,31 @@ const TYPES = [
   "Internal Operations",
 ];
 
-const CATEGORIES = [
-  {
-    name: "Project Management & Field Productivity",
-    color: "#0B0A0C",
-    modules: [
-      { id: 0, name: "Project & Job Management", desc: "Projects, jobs and tasks start-to-finish — status, notes and docs." },
-      { id: 1, name: "Planning & Scheduling", desc: "Plan people, plant and equipment on calendar or Gantt views." },
-      { id: 2, name: "Emergency Call-Out Management", desc: "Log urgent reactive jobs and dispatch the right people fast." },
-      { id: 3, name: "Site Diaries & Field Reporting", desc: "Daily diaries, labour, plant, materials, delays and photos." },
-      { id: 4, name: "Mobile Operative & Driver Workflows", desc: "Mobile forms for job updates, photos, signatures and PODs." },
-    ],
-  },
-  {
-    name: "Fleet, Asset & Logistics",
-    color: "#6EEADA",
-    modules: [
-      { id: 5, name: "Dispatch & Logistics", desc: "Collections, deliveries, routes, progress and proof of delivery." },
-      { id: 6, name: "Plant, Equipment & Asset Tracking", desc: "Live register of vehicles, skips and plant — who has what, where." },
-      { id: 7, name: "Maintenance & Servicing Records", desc: "Servicing, repairs, inspections, MOTs and certification reminders." },
-      { id: 8, name: "Vehicle Safety Checks", desc: "Daily driver checks on mobile, with instant defect flagging." },
-    ],
-  },
-  {
-    name: "Compliance, HSEQ & Environmental",
-    color: "#6387D9",
-    modules: [
-      { id: 9, name: "HSEQ Management", desc: "RAMS, toolbox talks, permits, incidents, NCRs, audits, dashboards." },
-      { id: 10, name: "Waste & Materials Tracking", desc: "Movements, Waste Transfer & Consignment Notes, compliance records." },
-      { id: 11, name: "Environmental & Carbon Reporting", desc: "Reuse, transport, emissions and ESG-ready reporting." },
-    ],
-  },
-  {
-    name: "Commercial, Finance & Client",
-    color: "#7B2BD8",
-    modules: [
-      { id: 12, name: "Quotes, POs & Applications for Payment", desc: "Quotes, POs, dayworks, applications and invoice preparation." },
-      { id: 13, name: "Field-to-Invoice Workflows", desc: "Link signed site records straight into commercial processes." },
-      { id: 14, name: "Client Portals", desc: "Secure client access to progress, reports, documents and history." },
-      { id: 15, name: "Automated Forms, PDFs & Notifications", desc: "Forms that trigger approvals, PDFs, emails and SMS alerts." },
-    ],
-  },
-  {
-    name: "Admin Systems & Integrations",
-    color: "#E46897",
-    modules: [
-      { id: 16, name: "Timesheets & Labour Capture", desc: "Time against jobs and cost codes, approvals and payroll export." },
-      { id: 17, name: "Training & Certification Management", desc: "Track training, licences and expiry dates with reminders." },
-      { id: 18, name: "Recruitment & Applicant Tracking", desc: "Manage CVs, applications and vacancies in one dashboard." },
-      { id: 19, name: "System Integrations", desc: "Connect Xero, Sage, OneDrive, SharePoint, tracking and HR tools." },
-    ],
-  },
-];
+// Names/descriptions are shared with the discovery form via ../lib/moduleCatalog.
+// `color` (tag styling) is this picker's own concern, not part of the shared
+// catalog — assigned by category position, which is stable regardless of
+// header wording. Module `id`s come straight from the shared catalog (a
+// permanent identifier per module — see moduleCatalog.ts), so RECOMMENDED
+// below stays correct even if modules are reordered, renamed, or inserted.
+const CATEGORY_COLORS = ["#0B0A0C", "#6EEADA", "#6387D9", "#7B2BD8", "#E46897"];
 
-const RECOMMENDED: number[][] = [
-  [5, 6, 4, 10, 13, 14, 19],
-  [0, 1, 3, 9, 6, 12, 14],
-  [0, 1, 9, 12, 14, 15],
-  [3, 6, 9, 10, 11, 14],
-  [0, 3, 9, 14, 15],
-  [0, 1, 3, 6, 7, 14],
-  [0, 1, 3, 9, 16, 14],
-  [5, 6, 4, 10, 12, 14, 19],
-  [0, 1, 9, 14, 15],
-  [0, 12, 15, 16, 17, 19],
+const CATEGORIES = MODULE_CATALOG.map((category, i) => ({
+  name: category.header,
+  color: CATEGORY_COLORS[i],
+  modules: category.modules.map((m) => ({ id: m.id, name: m.name, desc: m.description })),
+}));
+
+const RECOMMENDED: string[][] = [
+  ["dispatch-logistics", "plant-equipment-asset-tracking", "mobile-operative-driver-workflows", "waste-materials-tracking", "field-to-invoice-workflows", "client-portals", "system-integrations"],
+  ["project-job-management", "planning-scheduling", "site-diaries-field-reporting", "hseq-management", "plant-equipment-asset-tracking", "quotes-pos-applications-for-payment", "client-portals"],
+  ["project-job-management", "planning-scheduling", "hseq-management", "quotes-pos-applications-for-payment", "client-portals", "automated-forms-pdfs-notifications"],
+  ["site-diaries-field-reporting", "plant-equipment-asset-tracking", "hseq-management", "waste-materials-tracking", "environmental-carbon-reporting", "client-portals"],
+  ["project-job-management", "site-diaries-field-reporting", "hseq-management", "client-portals", "automated-forms-pdfs-notifications"],
+  ["project-job-management", "planning-scheduling", "site-diaries-field-reporting", "plant-equipment-asset-tracking", "maintenance-servicing-records", "client-portals"],
+  ["project-job-management", "planning-scheduling", "site-diaries-field-reporting", "hseq-management", "timesheets-labour-capture", "client-portals"],
+  ["dispatch-logistics", "plant-equipment-asset-tracking", "mobile-operative-driver-workflows", "waste-materials-tracking", "quotes-pos-applications-for-payment", "client-portals", "system-integrations"],
+  ["project-job-management", "planning-scheduling", "hseq-management", "client-portals", "automated-forms-pdfs-notifications"],
+  ["project-job-management", "quotes-pos-applications-for-payment", "automated-forms-pdfs-notifications", "timesheets-labour-capture", "training-certification-management", "system-integrations"],
 ];
 
 // Built once at module load — O(1) id → {name, color} lookup for the summary panel.
@@ -94,9 +56,9 @@ const MODULE_INDEX = new Map(
 
 export function ModulePicker() {
   const [activeType, setActiveType] = useState(1);
-  const [picks, setPicks] = useState<Record<number, number[]>>({});
+  const [picks, setPicks] = useState<Record<number, string[]>>({});
 
-  function toggle(id: number) {
+  function toggle(id: string) {
     setPicks((prev) => {
       const cur = prev[activeType] ?? RECOMMENDED[activeType];
       return {
