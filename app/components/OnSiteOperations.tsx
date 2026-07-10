@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import { SECTION_IDS } from "../lib/sections";
+import { useTabVideoPlayer } from "../hooks/useTabVideoPlayer";
 
 const modules = [
   {
@@ -22,16 +22,7 @@ const modules = [
 ];
 
 export function OnSiteOperations() {
-  const [active, setActive] = useState(0);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-
-  useEffect(() => {
-    videoRefs.current.forEach((v, i) => {
-      if (!v) return;
-      if (i === active) v.play().catch(() => {});
-      else v.pause();
-    });
-  }, [active]);
+  const { active, setActive, videoRefs } = useTabVideoPlayer();
 
   return (
     <section

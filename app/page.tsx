@@ -1,5 +1,6 @@
 import { CtaBand } from "./components/CtaBand";
 import { ModulePicker } from "./components/ModulePicker";
+import { MoreModules } from "./components/MoreModules";
 import { OnSiteOperations } from "./components/OnSiteOperations";
 import { Footer } from "./components/Footer";
 import { BlueprintBackground } from "./components/BlueprintBackground";
@@ -29,6 +30,8 @@ export default function Home() {
       <Team />
 
       <OnSiteOperations />
+
+      <MoreModules />
 
       <SocialProof />
       <Testimonials />
