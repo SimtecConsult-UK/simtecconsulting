@@ -177,6 +177,25 @@ export function DiscoveryWizard() {
     [repRows, answers]
   );
 
+  // A rep question's seeded rows (e.g. `userRoles` pre-filled from
+  // `dayOneUsers`) only get written into `repRows` once the user edits that
+  // table directly — `rowsFor` reconciles them for that table's own render
+  // in the meantime, but raw `repRows` can lag behind. Anything that reads
+  // *another* question's rows (e.g. `dashboardsReports.audience`'s
+  // `dynamicOptions`, via `userRoleOptions`) needs the reconciled view too,
+  // or it misses seeded rows that were never directly touched.
+  const reconciledRepRows = useMemo(() => {
+    const map: Record<string, RepRow[]> = { ...repRows };
+    SECTIONS.forEach((sec) =>
+      sec.questions.forEach((q) => {
+        if (q.type === "rep" && q.getDefaultRows) {
+          map[q.id] = reconcileRepRows(q, answers, repRows[q.id]);
+        }
+      })
+    );
+    return map;
+  }, [repRows, answers]);
+
   const currentIndex = clamp(idx, 0, visibleSteps.length - 1);
   const current = visibleSteps[currentIndex];
   const currentRows = current?.kind === "question" ? getRows(current.question) : [];
@@ -487,7 +506,7 @@ export function DiscoveryWizard() {
               secLabel={`${secNo} · ${section.name}`}
               answers={answers}
               rows={currentRows}
-              repRows={repRows}
+              repRows={reconciledRepRows}
               blocked={blockedForward}
               onSetAnswer={setAnswer}
               onToggleMulti={toggleMulti}
