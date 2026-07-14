@@ -202,6 +202,12 @@
   display: flex;
   flex-direction: column;
 }
+/* Grouped rep-table questions (e.g. proposedModules) hold a wide,
+   multi-column grid sectioned into per-group blocks — widen just those
+   screens (matching .dw-modgroups-rep below) rather than every question. */
+.dw-box.dw-box-rep {
+  width: min(1600px, 94vw);
+}
 .dw-box.dw-center {
   margin: auto;
   padding: 24px 0;
@@ -415,6 +421,12 @@
   gap: 22px;
   max-width: 800px;
 }
+/* Grouped rep tables (e.g. proposedModules) sit in the wider .dw-box-rep
+   screen and should use that full width instead of the 800px cap tuned for
+   the groupedMulti pill-group layout above. */
+.dw-modgroups.dw-modgroups-rep {
+  max-width: none;
+}
 .dw-modgroup-title {
   font-family: var(--font-jetbrains-mono), monospace;
   font-weight: 600;
@@ -564,6 +576,7 @@
   font: 600 15px var(--font-ibm-plex-sans), sans-serif;
   cursor: pointer;
 }
+.dw-btn:disabled,
 .dw-btn-teal.dw-dis {
   opacity: 0.4;
   cursor: not-allowed;

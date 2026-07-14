@@ -9,9 +9,11 @@ import {
   type Step,
   SECTIONS,
   STEPS,
+  isQuestionComplete,
   isSectionAnswered,
   isSectionJumpVisible,
   isStepVisible,
+  reconcileRepRows,
   sanitizeAnswers,
 } from "./data";
 
@@ -38,31 +40,16 @@ function defaultRows(): RepRow[] {
   return [makeRepRow(), makeRepRow()];
 }
 
-// Catalog-generated rows carry a "header::module" key (see
-// `defaultProposedModuleRows`); manually-added rows always get a plain "rN"
-// key from `makeRepRow`. That distinction is how reconciliation below tells
-// "auto-populated, keep in sync with answers" apart from "the user added
-// this by hand, leave it alone".
-function isGeneratedRowKey(key: string | undefined): boolean {
-  return typeof key === "string" && key.includes("::");
-}
-
+// `reconcileRepRows` (data.ts) is the single source of truth for which rows
+// a rep question actually has — the same reconciliation the section-nav
+// "done" check uses. This just adds the rendering-only concern: a
+// key-stable placeholder pair when there's nothing to show yet, so React
+// (and add/remove) has real row identities to work with.
 function rowsFor(map: Record<string, RepRow[]>, question: Question, answers: Answers): RepRow[] {
   const saved = map[question.id];
-  const generated = question.getDefaultRows?.(answers);
-  if (!generated) return saved || defaultRows();
-  if (!saved) return generated.length > 0 ? generated : defaultRows();
-
-  // Reconcile instead of freezing: drop generated rows whose module/system
-  // was since deselected, add rows for newly selected ones, and keep every
-  // other saved row (including any edits, and any row the user added by
-  // hand) untouched — so going back and changing an earlier answer keeps
-  // this table in sync instead of getting stuck at the first edit.
-  const generatedKeys = new Set(generated.map((r) => r.__key));
-  const kept = saved.filter((r) => !isGeneratedRowKey(r.__key) || generatedKeys.has(r.__key));
-  const keptKeys = new Set(kept.map((r) => r.__key));
-  const added = generated.filter((r) => !keptKeys.has(r.__key));
-  return [...kept, ...added];
+  const reconciled = reconcileRepRows(question, answers, saved);
+  if (saved !== undefined) return reconciled;
+  return reconciled.length > 0 ? reconciled : defaultRows();
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -152,15 +139,40 @@ export function DiscoveryWizard() {
     setIdx((prev) => clamp(prev, 0, visibleSteps.length - 1));
   }, [visibleSteps.length]);
 
+  const getRows = useCallback(
+    (question: Question): RepRow[] => rowsFor(repRows, question, answers),
+    [repRows, answers]
+  );
+
+  const currentIndex = clamp(idx, 0, visibleSteps.length - 1);
+  const current = visibleSteps[currentIndex];
+  const currentRows = current?.kind === "question" ? getRows(current.question) : [];
+  // Required-but-unanswered blocks moving forward off this step — "required"
+  // otherwise only changes a label and does nothing. Uses the same
+  // reconciled rows `getRows` hands the rendered table, so this agrees with
+  // what the user actually sees (raw `repRows` can be stale — e.g. right
+  // after deselecting a module, before any cell in the table is next
+  // edited) — and with the section-nav "done" check, which reconciles the
+  // same way via `reconcileRepRows`.
+  const blockedForward = !!(
+    current?.kind === "question" &&
+    current.question.required &&
+    !isQuestionComplete(current.question, answers, currentRows)
+  );
+
   const nav = useCallback(
     (delta: number) => {
       // Cancel any pending choice auto-advance so a manual nav (arrow keys,
       // nav buttons) right after selecting an option doesn't double-advance.
       clearTimeout(advanceTimer.current);
-      setIdx((prev) => clamp(prev + delta, 0, visibleSteps.length - 1));
+      // Moving forward off the required-but-unanswered current question is
+      // blocked. Moving backward is always allowed.
+      if (!(delta > 0 && blockedForward)) {
+        setIdx((prev) => clamp(prev + delta, 0, visibleSteps.length - 1));
+      }
       setNavOpen(false);
     },
-    [visibleSteps.length]
+    [visibleSteps.length, blockedForward]
   );
   const next = useCallback(() => nav(1), [nav]);
   const prev = useCallback(() => nav(-1), [nav]);
@@ -171,11 +183,15 @@ export function DiscoveryWizard() {
         (step) => step.kind === "sintro" && step.sectionIndex === sectionIndex
       );
       if (target < 0) return;
+      // Same required-question gate as `nav`: the section-nav flyout/segments
+      // are always clickable, so without this a blocked question could just
+      // be jumped past instead of answered.
+      if (target > currentIndex && blockedForward) return;
       clearTimeout(advanceTimer.current);
       setIdx(target);
       setNavOpen(false);
     },
-    [visibleSteps]
+    [visibleSteps, currentIndex, blockedForward]
   );
 
   useEffect(() => {
@@ -214,9 +230,6 @@ export function DiscoveryWizard() {
 
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
-  const currentIndex = clamp(idx, 0, visibleSteps.length - 1);
-  const current = visibleSteps[currentIndex];
-
   const setAnswer = useCallback((id: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [id]: value }));
   }, []);
@@ -236,11 +249,6 @@ export function DiscoveryWizard() {
       advanceTimer.current = setTimeout(() => next(), 300);
     },
     [setAnswer, next]
-  );
-
-  const getRows = useCallback(
-    (question: Question): RepRow[] => rowsFor(repRows, question, answers),
-    [repRows, answers]
   );
 
   const setRepCell = useCallback(
@@ -291,6 +299,10 @@ export function DiscoveryWizard() {
 
   const isTealScreen = current.kind === "intro" || current.kind === "sintro";
   const isCenteredBox = current.kind === "intro" || current.kind === "sintro" || current.kind === "end";
+  // Only grouped rep tables (e.g. proposedModules) get the wider box — that's
+  // the only shape `.dw-modgroups-rep` (below) actually widens further; an
+  // ungrouped rep table would just stretch its plain 1fr columns unevenly.
+  const isGroupedRepQuestion = current.kind === "question" && current.question.type === "rep" && !!current.question.groupRowsBy;
 
   // Extends `sectionIndex` with the "end" screen (past the last section) so
   // the nav below has one number line covering intro (-1) through end (16).
@@ -416,7 +428,7 @@ export function DiscoveryWizard() {
       )}
 
       <div className="dw-main">
-        <div className={`dw-box ${isCenteredBox ? "dw-center" : "dw-anchor"}`}>
+        <div className={`dw-box ${isCenteredBox ? "dw-center" : "dw-anchor"}${isGroupedRepQuestion ? " dw-box-rep" : ""}`}>
           {current.kind === "intro" && <IntroScreen onStart={next} />}
 
           {current.kind === "sintro" && section && (
@@ -429,7 +441,8 @@ export function DiscoveryWizard() {
               question={current.question}
               secLabel={`${secNo} · ${section.name}`}
               answers={answers}
-              rows={getRows(current.question)}
+              rows={currentRows}
+              blocked={blockedForward}
               onSetAnswer={setAnswer}
               onToggleMulti={toggleMulti}
               onChooseSingle={chooseSingle}
@@ -459,7 +472,13 @@ export function DiscoveryWizard() {
           <button className="dw-arr" style={{ borderRadius: "8px 0 0 8px" }} onClick={prev} aria-label="Previous">
             ▲
           </button>
-          <button className="dw-arr" style={{ borderRadius: "0 8px 8px 0" }} onClick={next} aria-label="Next">
+          <button
+            className="dw-arr"
+            style={{ borderRadius: "0 8px 8px 0" }}
+            onClick={next}
+            disabled={blockedForward}
+            aria-label="Next"
+          >
             ▼
           </button>
         </div>
@@ -589,6 +608,7 @@ function QuestionScreen({
   secLabel,
   answers,
   rows,
+  blocked,
   onSetAnswer,
   onToggleMulti,
   onChooseSingle,
@@ -601,6 +621,7 @@ function QuestionScreen({
   secLabel: string;
   answers: Answers;
   rows: RepRow[];
+  blocked: boolean;
   onSetAnswer: (id: string, value: string) => void;
   onToggleMulti: (id: string, option: string) => void;
   onChooseSingle: (id: string, option: string) => void;
@@ -725,10 +746,10 @@ function QuestionScreen({
       <div className="dw-okrow">
         {showOk && (
           <>
-            <button className="dw-btn" onClick={onNext}>
+            <button className="dw-btn" onClick={onNext} disabled={blocked}>
               OK ✓
             </button>
-            <span className="dw-enter">press Enter ↵</span>
+            <span className="dw-enter">{blocked ? "Answer to continue" : "press Enter ↵"}</span>
           </>
         )}
         {showSkip && (
@@ -858,7 +879,7 @@ function RepTable({
   });
 
   return (
-    <div className="dw-modgroups">
+    <div className="dw-modgroups dw-modgroups-rep">
       {[...groups.entries()].map(([header, indices]) => (
         <div className="dw-modgroup" key={header}>
           <h3 className="dw-modgroup-title">{header}</h3>
