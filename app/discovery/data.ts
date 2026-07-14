@@ -55,6 +55,10 @@ export type Question = {
    * with zero rows), given the current answers. Without this, a group with
    * no rows yet simply wouldn't appear. */
   groupHeadersFor?: (answers: Answers) => string[];
+  /** rep only: when set (and `required`), every row must have text in all of
+   * these columns for the question to count as answered — instead of the
+   * default "at least one cell somewhere has text". */
+  requiredColumns?: string[];
 };
 
 export type Section = {
@@ -211,6 +215,7 @@ export const SECTIONS: Section[] = [
         getDefaultRows: defaultProposedModuleRows,
         groupRowsBy: "__group",
         groupHeadersFor: proposedModuleGroupHeaders,
+        requiredColumns: ["moduleTitle", "priority"],
         columns: [
           { key: "moduleTitle", header: "Module title", placeholder: "e.g. Job tracker" },
           { key: "description", header: "Description", placeholder: "What it does, in a sentence", width: "1.5fr" },
@@ -545,17 +550,58 @@ function hasText(value: string | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+// Catalog-generated rows carry a "header::module" key (see
+// `defaultProposedModuleRows`); manually-added rows always get a plain "rN"
+// key. That distinction is how reconciliation below tells "auto-populated,
+// keep in sync with answers" apart from "the user added this by hand, leave
+// it alone".
+function isGeneratedRowKey(key: string | undefined): boolean {
+  return typeof key === "string" && key.includes("::");
+}
+
+// Single source of truth for "what rows does this rep question actually have
+// right now", shared by the answered-check below and the wizard's renderer
+// (DiscoveryWizard.tsx's `rowsFor` calls this too) — so the section-nav
+// "done" state and the active question's own completeness check never
+// disagree about which rows exist.
+//
+// Reconciles instead of freezing: drops generated rows whose module/system
+// was since deselected, adds rows for newly selected ones, and keeps every
+// other saved row (including any edits, and any row the user added by hand)
+// untouched — so going back and changing an earlier answer keeps this table
+// in sync instead of getting stuck at the first edit.
+export function reconcileRepRows(question: Question, answers: Answers, saved: RepRow[] | undefined): RepRow[] {
+  const generated = question.getDefaultRows?.(answers);
+  if (saved === undefined) return generated && generated.length > 0 ? generated : [];
+  if (!generated) return saved;
+  const generatedKeys = new Set(generated.map((r) => r.__key));
+  const kept = saved.filter((r) => !isGeneratedRowKey(r.__key) || generatedKeys.has(r.__key));
+  const keptKeys = new Set(kept.map((r) => r.__key));
+  const added = generated.filter((r) => !keptKeys.has(r.__key));
+  return [...kept, ...added];
+}
+
 // `__`-prefixed keys (`__key`, `__group`, …) are structural bookkeeping the
 // renderer needs, not user-typed content, and never count toward "answered".
 function hasNonKeyValue(row: RepRow): boolean {
   return Object.entries(row).some(([key, value]) => !key.startsWith("__") && hasText(value));
 }
 
-export function isQuestionAnswered(
-  question: Question,
-  answers: Answers,
-  repRows: Record<string, RepRow[]>
-): boolean {
+// Default rep validation is lenient (any cell anywhere has text). Questions
+// that set `requiredColumns` (e.g. proposedModules) instead require every
+// row to have those specific columns filled in — half-finished rows don't
+// count as done.
+export function isRepFullyAnswered(question: Question, rows: RepRow[]): boolean {
+  if (question.requiredColumns && question.requiredColumns.length > 0) {
+    return rows.length > 0 && rows.every((row) => question.requiredColumns!.every((key) => hasText(row[key])));
+  }
+  return rows.some(hasNonKeyValue);
+}
+
+// Shared answered-check for a question given its (already-resolved, for rep
+// questions) rows — used directly by the active question screen, which
+// already has its rows resolved via `rowsFor`.
+export function isQuestionComplete(question: Question, answers: Answers, rows: RepRow[]): boolean {
   switch (question.type) {
     case "text":
     case "long":
@@ -569,13 +615,20 @@ export function isQuestionAnswered(
     }
     case "group":
       return (question.fields || []).some((field) => hasText(answers[`${question.id}.${field.key}`] as string | undefined));
-    case "rep": {
-      const rows = repRows[question.id] ?? question.getDefaultRows?.(answers) ?? [];
-      return rows.some(hasNonKeyValue);
-    }
+    case "rep":
+      return isRepFullyAnswered(question, rows);
     default:
       return false;
   }
+}
+
+export function isQuestionAnswered(
+  question: Question,
+  answers: Answers,
+  repRows: Record<string, RepRow[]>
+): boolean {
+  const rows = question.type === "rep" ? reconcileRepRows(question, answers, repRows[question.id]) : [];
+  return isQuestionComplete(question, answers, rows);
 }
 
 // A section counts as "done" once its required questions (that are currently
