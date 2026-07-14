@@ -9,6 +9,7 @@ import {
   type Step,
   SECTIONS,
   STEPS,
+  isGeneratedRowKey,
   isQuestionComplete,
   isSectionAnswered,
   isSectionJumpVisible,
@@ -309,13 +310,21 @@ export function DiscoveryWizard() {
 
   const removeRepRow = useCallback(
     (question: Question, rowIndex: number) => {
-      setRepRows((prev) => {
-        const rows = rowsFor(prev, question, answers);
-        if (rows.length <= 1) return prev;
-        return { ...prev, [question.id]: rows.filter((_, i) => i !== rowIndex) };
-      });
+      const rows = rowsFor(repRows, question, answers);
+      if (rows.length <= 1) return;
+      const target = rows[rowIndex];
+      // A generated row (e.g. seeded from an earlier answer) would just come
+      // back on the next reconcile as long as its source is still selected —
+      // turn that source off too, via the question's own `removeSource`.
+      if (isGeneratedRowKey(target.__key as string | undefined) && question.removeSource) {
+        setAnswers((prev) => question.removeSource!(target, prev));
+      }
+      setRepRows((prev) => ({
+        ...prev,
+        [question.id]: rowsFor(prev, question, answers).filter((_, i) => i !== rowIndex),
+      }));
     },
-    [answers]
+    [answers, repRows]
   );
 
   const { qTotal, qNum } = useMemo(
