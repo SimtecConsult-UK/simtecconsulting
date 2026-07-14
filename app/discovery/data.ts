@@ -143,14 +143,16 @@ export function removeUserRoleSource(row: RepRow, answers: Answers): Answers {
 
 // Unique, non-empty user types typed into `userRoles` (question 20), used as
 // dropdown options anywhere else in the form that references "who" (e.g. the
-// dashboards/reports audience column).
+// dashboards/reports audience column). Excludes the literal "Other" row that
+// `defaultUserRoleRows` seeds from the `dayOneUsers` catch-all checkbox — it's
+// a placeholder, not a real named user type, until someone renames it.
 export function userRoleOptions(repRows: Record<string, RepRow[]>): string[] {
   const rows = repRows.userRoles || [];
   const seen = new Set<string>();
   rows.forEach((row) => {
     const value = row.userType;
     const trimmed = typeof value === "string" ? value.trim() : "";
-    if (trimmed) seen.add(trimmed);
+    if (trimmed && trimmed !== "Other") seen.add(trimmed);
   });
   return Array.from(seen);
 }
