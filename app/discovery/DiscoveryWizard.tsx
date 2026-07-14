@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Logo } from "../components/Logo";
 import {
   type Answers,
@@ -49,11 +49,42 @@ function rowsFor(map: Record<string, RepRow[]>, question: Question, answers: Ans
   const saved = map[question.id];
   const reconciled = reconcileRepRows(question, answers, saved);
   if (saved !== undefined) return reconciled;
+  // Grouped rep tables (e.g. dashboards/reports split by module) rely on
+  // `groupHeadersFor` to seed their sections — the two generic blank rows
+  // would land in an ungrouped "Other modules" catch-all instead, so skip
+  // that fallback and let each section start empty with its own "+ Add".
+  if (question.groupRowsBy) return reconciled;
   return reconciled.length > 0 ? reconciled : defaultRows();
 }
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
+}
+
+// RepRow cells are string for most columns, string[] for multiSelect ones —
+// these normalize a cell to the shape the caller expects instead of
+// scattering `as string`/`as string[]` casts at each read site.
+function cellText(value: string | string[] | undefined): string {
+  return typeof value === "string" ? value : "";
+}
+function cellArray(value: string | string[] | undefined): string[] {
+  return Array.isArray(value) ? value : [];
+}
+
+// Closes a popover/flyout on any click outside `ref` — shared by the
+// section-jump flyout and the rep-table multi-select cell, both of which
+// need "click elsewhere to dismiss" without swallowing the closing click.
+function useClickOutside(ref: RefObject<HTMLElement | null>, active: boolean, onOutside: () => void) {
+  useEffect(() => {
+    if (!active) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onOutside();
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [active, ref, onOutside]);
 }
 
 const isQuestionStep = (s: Step): s is Extract<Step, { kind: "question" }> => s.kind === "question";
@@ -179,19 +210,32 @@ export function DiscoveryWizard() {
 
   const jumpToSection = useCallback(
     (sectionIndex: number) => {
-      const target = visibleSteps.findIndex(
+      const requestedTarget = visibleSteps.findIndex(
         (step) => step.kind === "sintro" && step.sectionIndex === sectionIndex
       );
-      if (target < 0) return;
+      if (requestedTarget < 0) return;
       // Same required-question gate as `nav`: the section-nav flyout/segments
       // are always clickable, so without this a blocked question could just
       // be jumped past instead of answered.
-      if (target > currentIndex && blockedForward) return;
+      if (requestedTarget > currentIndex && blockedForward) return;
+      // Jumping ahead must not skip over an earlier section whose required
+      // questions aren't answered yet — otherwise a later question that
+      // depends on an earlier answer (e.g. a dropdown fed by modules chosen
+      // in "Scope & modules") can be reached in a broken, unusable state.
+      // Redirect to that earlier section instead of the requested target.
+      const firstIncompleteSection = SECTIONS.findIndex((sec) => !isSectionAnswered(sec, answers, repRows));
+      const resolvedSectionIndex =
+        firstIncompleteSection !== -1 && firstIncompleteSection < sectionIndex ? firstIncompleteSection : sectionIndex;
+      const target =
+        resolvedSectionIndex === sectionIndex
+          ? requestedTarget
+          : visibleSteps.findIndex((step) => step.kind === "sintro" && step.sectionIndex === resolvedSectionIndex);
+      if (target < 0) return;
       clearTimeout(advanceTimer.current);
       setIdx(target);
       setNavOpen(false);
     },
-    [visibleSteps, currentIndex, blockedForward]
+    [visibleSteps, currentIndex, blockedForward, answers, repRows]
   );
 
   useEffect(() => {
@@ -217,16 +261,7 @@ export function DiscoveryWizard() {
 
   // Close the jump flyout on any click outside it, so it doesn't sit on top
   // of the page intercepting clicks meant for the content underneath.
-  useEffect(() => {
-    if (!navOpen) return;
-    const onPointerDown = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setNavOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [navOpen]);
+  useClickOutside(navRef, navOpen, () => setNavOpen(false));
 
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
@@ -252,7 +287,7 @@ export function DiscoveryWizard() {
   );
 
   const setRepCell = useCallback(
-    (question: Question, rowIndex: number, colKey: string, value: string) => {
+    (question: Question, rowIndex: number, colKey: string, value: string | string[]) => {
       setRepRows((prev) => {
         const rows = [...rowsFor(prev, question, answers)];
         rows[rowIndex] = { ...rows[rowIndex], [colKey]: value };
@@ -442,6 +477,7 @@ export function DiscoveryWizard() {
               secLabel={`${secNo} · ${section.name}`}
               answers={answers}
               rows={currentRows}
+              repRows={repRows}
               blocked={blockedForward}
               onSetAnswer={setAnswer}
               onToggleMulti={toggleMulti}
@@ -608,6 +644,7 @@ function QuestionScreen({
   secLabel,
   answers,
   rows,
+  repRows,
   blocked,
   onSetAnswer,
   onToggleMulti,
@@ -621,11 +658,12 @@ function QuestionScreen({
   secLabel: string;
   answers: Answers;
   rows: RepRow[];
+  repRows: Record<string, RepRow[]>;
   blocked: boolean;
   onSetAnswer: (id: string, value: string) => void;
   onToggleMulti: (id: string, option: string) => void;
   onChooseSingle: (id: string, option: string) => void;
-  onSetRepCell: (question: Question, rowIndex: number, colKey: string, value: string) => void;
+  onSetRepCell: (question: Question, rowIndex: number, colKey: string, value: string | string[]) => void;
   onAddRepRow: (extra?: Record<string, string>) => void;
   onRemoveRepRow: (rowIndex: number) => void;
   onNext: () => void;
@@ -690,24 +728,23 @@ function QuestionScreen({
 
         {question.type === "groupedMulti" && (() => {
           const selected = (answers[question.id] as string[] | undefined) || [];
+          const visibleGroups = (question.groups || []).filter(
+            (group) =>
+              !question.filterBy ||
+              ((answers[question.filterBy] as string[] | undefined) || []).includes(group.header)
+          );
           return (
             <div className="dw-modgroups">
-              {(question.groups || [])
-                .filter(
-                  (group) =>
-                    !question.filterBy ||
-                    ((answers[question.filterBy] as string[] | undefined) || []).includes(group.header)
-                )
-                .map((group) => (
-                  <div className="dw-modgroup" key={group.header}>
-                    <h3 className="dw-modgroup-title">{group.header}</h3>
-                    <PillRow
-                      options={group.options}
-                      selected={selected}
-                      onToggle={(option) => onToggleMulti(question.id, option)}
-                    />
-                  </div>
-                ))}
+              {visibleGroups.map((group) => (
+                <div className="dw-modgroup" key={group.header}>
+                  <h3 className="dw-modgroup-title">{group.header}</h3>
+                  <PillRow
+                    options={group.options}
+                    selected={selected}
+                    onToggle={(option) => onToggleMulti(question.id, option)}
+                  />
+                </div>
+              ))}
             </div>
           );
         })()}
@@ -736,6 +773,7 @@ function QuestionScreen({
             question={question}
             rows={rows}
             answers={answers}
+            repRows={repRows}
             onSetCell={onSetRepCell}
             onAddRow={onAddRepRow}
             onRemoveRow={onRemoveRepRow}
@@ -766,6 +804,7 @@ function RepTable({
   question,
   rows,
   answers,
+  repRows,
   onSetCell,
   onAddRow,
   onRemoveRow,
@@ -773,7 +812,8 @@ function RepTable({
   question: Question;
   rows: RepRow[];
   answers: Answers;
-  onSetCell: (question: Question, rowIndex: number, colKey: string, value: string) => void;
+  repRows: Record<string, RepRow[]>;
+  onSetCell: (question: Question, rowIndex: number, colKey: string, value: string | string[]) => void;
   onAddRow: (extra?: Record<string, string>) => void;
   onRemoveRow: (rowIndex: number) => void;
 }) {
@@ -782,6 +822,18 @@ function RepTable({
     () => columns.map((c) => (c.chips ? "auto" : c.width || "1fr")).join(" ") + " 26px",
     [columns]
   );
+  // Dropdown options are the same for every row in the table — resolve them
+  // once per column instead of re-running `dynamicOptions` inside the
+  // per-row render below.
+  const columnOptions = useMemo(() => {
+    const map = new Map<string, string[]>();
+    columns.forEach((col) => {
+      if (col.options || col.dynamicOptions) {
+        map.set(col.key, col.dynamicOptions ? col.dynamicOptions(answers, repRows) : col.options || []);
+      }
+    });
+    return map;
+  }, [columns, answers, repRows]);
 
   // Header cells and row cells are flattened into ONE grid per table (rather
   // than a separate grid per row) so "auto"-sized columns — the priority
@@ -832,12 +884,44 @@ function RepTable({
             </label>
           );
         }
+        if (col.options || col.dynamicOptions) {
+          const opts = columnOptions.get(col.key) || [];
+          if (col.multiSelect) {
+            const selected = cellArray(row[col.key]);
+            return (
+              <MultiSelectCell
+                key={col.key}
+                options={opts}
+                selected={selected}
+                placeholder={col.placeholder}
+                onChange={(next) => onSetCell(question, rowIndex, col.key, next)}
+              />
+            );
+          }
+          return (
+            <select
+              key={col.key}
+              className="dw-rinp"
+              value={cellText(row[col.key])}
+              onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
+            >
+              <option value="" disabled hidden>
+                {col.placeholder || "Select…"}
+              </option>
+              {opts.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          );
+        }
         return (
           <input
             key={col.key}
             className="dw-rinp"
             placeholder={col.placeholder}
-            value={row[col.key] || ""}
+            value={cellText(row[col.key])}
             onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
           />
         );
@@ -853,7 +937,7 @@ function RepTable({
       <div className="dw-reptable" style={{ gridTemplateColumns: gridTemplate }}>
         {renderHeaderCells()}
         {indices.map((rowIndex) => (
-          <Fragment key={rows[rowIndex].__key ?? rowIndex}>{renderRowCells(rows[rowIndex], rowIndex)}</Fragment>
+          <Fragment key={cellText(rows[rowIndex].__key) || rowIndex}>{renderRowCells(rows[rowIndex], rowIndex)}</Fragment>
         ))}
       </div>
       <button className="dw-addbtn" onClick={() => onAddRow(extra)}>
@@ -873,7 +957,7 @@ function RepTable({
   const groups = new Map<string, number[]>();
   (question.groupHeadersFor?.(answers) || []).forEach((header) => groups.set(header, []));
   rows.forEach((row, rowIndex) => {
-    const header = row[groupBy] || "Other modules";
+    const header = cellText(row[groupBy]) || "Other modules";
     if (!groups.has(header)) groups.set(header, []);
     groups.get(header)!.push(rowIndex);
   });
@@ -886,6 +970,56 @@ function RepTable({
           {renderTable(indices, { [groupBy]: header })}
         </div>
       ))}
+    </div>
+  );
+}
+
+// Multi-select for a single rep-table cell: a compact trigger (styled like
+// the other cell inputs) that opens a checkable-options popover, matching
+// the "click outside to close" pattern the section-jump flyout already uses.
+function MultiSelectCell({
+  options,
+  selected,
+  placeholder,
+  onChange,
+}: {
+  options: string[];
+  selected: string[];
+  placeholder?: string;
+  onChange: (next: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useClickOutside(wrapRef, open, () => setOpen(false));
+
+  const toggle = (option: string) => {
+    onChange(selected.includes(option) ? selected.filter((o) => o !== option) : [...selected, option]);
+  };
+
+  return (
+    <div className="dw-mswrap" ref={wrapRef}>
+      <button type="button" className="dw-rinp dw-msbtn" onClick={() => setOpen((o) => !o)}>
+        <span className={`dw-mssummary${selected.length === 0 ? " dw-msempty" : ""}`}>
+          {selected.length > 0 ? selected.join(", ") : placeholder || "Select…"}
+        </span>
+        <span className="dw-mscaret">▾</span>
+      </button>
+      {open && (
+        <div className="dw-mspanel" role="listbox">
+          {options.map((option) => (
+            <div
+              key={option}
+              className={`dw-msopt${selected.includes(option) ? " dw-on" : ""}`}
+              role="option"
+              aria-selected={selected.includes(option)}
+              onClick={() => toggle(option)}
+            >
+              <span className="dw-mscheck">{selected.includes(option) ? "✓" : ""}</span>
+              {option}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

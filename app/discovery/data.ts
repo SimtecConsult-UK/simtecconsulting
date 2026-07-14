@@ -2,11 +2,11 @@
 // Ported from design_handoff_discovery_wizard/reference/Discovery Wizard.dc.html (the `DEF` array).
 // Copy, options, column definitions and conditional (`showIf`) rules are transcribed verbatim.
 
-import { MODULE_CATALOG } from "../lib/moduleCatalog";
+import { MODULE_CATALOG, type ModuleCatalogEntry, type ModuleCategory } from "../lib/moduleCatalog";
 
 export type Answers = Record<string, string | string[] | undefined>;
 
-export type RepRow = Record<string, string>;
+export type RepRow = Record<string, string | string[]>;
 
 export type RepColumn = {
   key: string;
@@ -15,6 +15,16 @@ export type RepColumn = {
   width?: string;
   chips?: boolean;
   file?: boolean;
+  /** Render this cell as a dropdown with these fixed options. */
+  options?: string[];
+  /** Render this cell as a dropdown whose options are computed from the
+   * current answers and rep rows (e.g. the modules selected earlier in the
+   * form, or another rep question's entries — like user roles). */
+  dynamicOptions?: (answers: Answers, repRows: Record<string, RepRow[]>) => string[];
+  /** Render the options/dynamicOptions dropdown as a multi-select (a popover
+   * of checkable options) instead of a single native `<select>`. The cell's
+   * value becomes a string[]. */
+  multiSelect?: boolean;
 };
 
 export type GroupField = {
@@ -68,22 +78,58 @@ export type Section = {
   questions: Question[];
 };
 
+// Every {system, module} pair where BOTH the system (`primarySystemType`)
+// and the module (`selectedModules`) are currently selected — the shared
+// traversal behind `defaultProposedModuleRows` and `selectedModuleHeaders`.
+// `selectedModules` isn't pruned when a system is later deselected, so this
+// dual check (not just `selectedModules` alone) is what keeps orphaned
+// modules from a deselected system out of both.
+function selectedModuleEntries(answers: Answers): { group: ModuleCategory; module: ModuleCatalogEntry }[] {
+  const selectedSystems = (answers.primarySystemType as string[] | undefined) || [];
+  const selectedModules = (answers.selectedModules as string[] | undefined) || [];
+  const entries: { group: ModuleCategory; module: ModuleCatalogEntry }[] = [];
+  MODULE_CATALOG.forEach((group) => {
+    if (!selectedSystems.includes(group.header)) return;
+    group.modules.forEach((m) => {
+      if (selectedModules.includes(m.name)) entries.push({ group, module: m });
+    });
+  });
+  return entries;
+}
+
 // One row per module selected in `selectedModules`, sectioned by system in
 // `MODULE_CATALOG` order, with title/description pre-filled from the catalog.
 // Structural fields (things the renderer needs, not user-typed answers) are
 // `__`-prefixed, matching `__key`'s existing convention — see `hasNonKeyValue`.
 export function defaultProposedModuleRows(answers: Answers): RepRow[] {
-  const selectedSystems = (answers.primarySystemType as string[] | undefined) || [];
-  const selectedModules = (answers.selectedModules as string[] | undefined) || [];
-  const rows: RepRow[] = [];
-  MODULE_CATALOG.forEach((group) => {
-    if (!selectedSystems.includes(group.header)) return;
-    group.modules.forEach((m) => {
-      if (!selectedModules.includes(m.name)) return;
-      rows.push({ __key: `${group.header}::${m.name}`, __group: group.header, moduleTitle: m.name, description: m.description });
-    });
+  return selectedModuleEntries(answers).map(({ group, module: m }) => ({
+    __key: `${group.header}::${m.name}`,
+    __group: group.header,
+    moduleTitle: m.name,
+    description: m.description,
+  }));
+}
+
+// Unique, non-empty user types typed into `userRoles` (question 20), used as
+// dropdown options anywhere else in the form that references "who" (e.g. the
+// dashboards/reports audience column).
+export function userRoleOptions(repRows: Record<string, RepRow[]>): string[] {
+  const rows = repRows.userRoles || [];
+  const seen = new Set<string>();
+  rows.forEach((row) => {
+    const value = row.userType;
+    const trimmed = typeof value === "string" ? value.trim() : "";
+    if (trimmed) seen.add(trimmed);
   });
-  return rows;
+  return Array.from(seen);
+}
+
+// Every module the user picked in `selectedModules` — used to section
+// per-module rep tables (e.g. dashboards/reports) so each module gets its
+// own group of rows, the same way `proposedModuleGroupHeaders` sections the
+// proposed-modules table by system.
+export function selectedModuleHeaders(answers: Answers): string[] {
+  return selectedModuleEntries(answers).map(({ module }) => module.name);
 }
 
 // Every system the user picked in `primarySystemType` should always get its
@@ -156,7 +202,7 @@ export const SECTIONS: Section[] = [
           { key: "userType", header: "User type", placeholder: "e.g. Site manager" },
           { key: "internalExternal", header: "Internal/external", placeholder: "Internal" },
           { key: "mainTasks", header: "Main tasks", placeholder: "What they do in the system", width: "1.4fr" },
-          { key: "accessLevel", header: "Access level", placeholder: "e.g. Full, read-only" },
+          { key: "accessLevel", header: "Access level", placeholder: "Select", options: ["Full", "Read-only"] },
         ],
       },
       { id: "external", type: "choice", label: "External access needed?", required: true, options: ["Yes", "No", "Possibly later"] },
@@ -279,9 +325,15 @@ export const SECTIONS: Section[] = [
         addLabel: "Add date",
         columns: [
           { key: "dateDeadline", header: "Date/deadline", placeholder: "e.g. Licence expiry" },
-          { key: "appliesTo", header: "Applies to", placeholder: "e.g. Site", width: ".8fr" },
-          { key: "howSet", header: "How set", placeholder: "Manual / calculated", width: ".9fr" },
-          { key: "reminder", header: "Reminder?", placeholder: "Yes/No", width: ".6fr" },
+          {
+            key: "appliesTo",
+            header: "Applies to",
+            placeholder: "Select module",
+            width: ".8fr",
+            dynamicOptions: (answers) => (answers.selectedModules as string[] | undefined) || [],
+          },
+          { key: "howSet", header: "How set", placeholder: "Select", width: ".9fr", options: ["Manual", "Calculated"] },
+          { key: "reminder", header: "Reminder?", placeholder: "Select", width: ".6fr", options: ["Yes", "No"] },
           { key: "timing", header: "Timing", placeholder: "e.g. 30 days before", width: ".9fr" },
         ],
       },
@@ -301,17 +353,34 @@ export const SECTIONS: Section[] = [
         type: "rep",
         label: "Dashboards/reports",
         required: true,
+        help: "One row per report, grouped by the module it belongs to.",
         addLabel: "Add report",
+        groupRowsBy: "__group",
+        groupHeadersFor: selectedModuleHeaders,
+        requiredColumns: ["views"],
         columns: [
           { key: "name", header: "Name", placeholder: "" },
-          { key: "audience", header: "Audience", placeholder: "e.g. Directors", width: ".8fr" },
-          { key: "purpose", header: "Purpose", placeholder: "", width: "1.3fr" },
+          {
+            key: "audience",
+            header: "Audience",
+            placeholder: "Select user type",
+            width: ".8fr",
+            dynamicOptions: (_answers, repRows) => userRoleOptions(repRows),
+          },
+          { key: "purpose", header: "Purpose", placeholder: "", width: "1fr" },
           { key: "frequency", header: "Frequency", placeholder: "e.g. Weekly", width: ".7fr" },
+          {
+            key: "views",
+            header: "Views",
+            placeholder: "Select views",
+            width: "1fr",
+            multiSelect: true,
+            options: ["List", "Board", "Calendar", "Map", "Dashboard cards", "Table/register", "Detail page", "Mobile", "Client", "Export"],
+          },
           { key: "exportRequired", header: "Export required", placeholder: "Yes/No", width: ".7fr" },
         ],
       },
-      { id: "kpis", type: "long", label: "KPIs/key numbers", help: "Bullet points are fine.", placeholder: "" },
-      { id: "viewsRequired", type: "multi", label: "Views required", options: ["List", "Board", "Calendar", "Map", "Dashboard cards", "Table/register", "Detail page", "Mobile", "Client", "Export"] },
+      { id: "kpis", type: "long", label: "KPIs/key numbers", required: true, help: "Bullet points are fine.", placeholder: "" },
     ],
   },
   {
@@ -546,7 +615,8 @@ export function sanitizeAnswers(raw: Answers): Answers {
   return sanitized;
 }
 
-function hasText(value: string | undefined): boolean {
+function hasText(value: string | string[] | undefined): boolean {
+  if (Array.isArray(value)) return value.length > 0;
   return typeof value === "string" && value.trim().length > 0;
 }
 
@@ -575,7 +645,7 @@ export function reconcileRepRows(question: Question, answers: Answers, saved: Re
   if (saved === undefined) return generated && generated.length > 0 ? generated : [];
   if (!generated) return saved;
   const generatedKeys = new Set(generated.map((r) => r.__key));
-  const kept = saved.filter((r) => !isGeneratedRowKey(r.__key) || generatedKeys.has(r.__key));
+  const kept = saved.filter((r) => !isGeneratedRowKey(r.__key as string | undefined) || generatedKeys.has(r.__key));
   const keptKeys = new Set(kept.map((r) => r.__key));
   const added = generated.filter((r) => !keptKeys.has(r.__key));
   return [...kept, ...added];
@@ -608,10 +678,26 @@ export function isQuestionComplete(question: Question, answers: Answers, rows: R
       return hasText(answers[question.id] as string | undefined);
     case "choice":
       return hasText(answers[question.id] as string | undefined);
-    case "multi":
-    case "groupedMulti": {
+    case "multi": {
       const value = answers[question.id] as string[] | undefined;
       return !!value && value.length > 0;
+    }
+    case "groupedMulti": {
+      const value = (answers[question.id] as string[] | undefined) || [];
+      if (value.length === 0) return false;
+      if (!question.filterBy) return true;
+      // A selection only counts if it's still one of the currently-visible
+      // options — `filterBy` (e.g. which systems are picked) isn't pruned
+      // from this answer when it changes later, so without this a stale
+      // selection from a since-deselected group would still read as
+      // "answered" even though nothing the user can currently see is
+      // actually selected.
+      const visibleOptions = new Set(
+        (question.groups || [])
+          .filter((g) => ((answers[question.filterBy!] as string[] | undefined) || []).includes(g.header))
+          .flatMap((g) => g.options)
+      );
+      return value.some((v) => visibleOptions.has(v));
     }
     case "group":
       return (question.fields || []).some((field) => hasText(answers[`${question.id}.${field.key}`] as string | undefined));
