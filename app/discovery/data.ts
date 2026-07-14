@@ -155,7 +155,7 @@ export const SECTIONS: Section[] = [
       { id: "projectName", type: "text", label: "Project name", placeholder: "e.g. Job management system", required: true },
       { id: "projectType", type: "choice", label: "Project type", required: true, options: ["New system", "Replacement", "Enhancement", "Automation", "Reporting/dashboard", "AI/document automation", "Not sure"] },
       { id: "targetGoLive", type: "text", label: "Target go-live", placeholder: "Date, quarter — or TBC" },
-      { id: "budgetRange", type: "choice", label: "Budget range", help: "Not binding — it helps us size Phase 1 sensibly.", options: ["<£20k", "£20k–£50k", "£50k–£100k", "£100k+", "Not confirmed"] },
+      { id: "budgetRange", type: "choice", label: "Budget range", help: "Not binding — it helps us size Phase 1 sensibly.", options: ["£10k–£20k", "£20k–£50k", "£50k–£100k", "£100k+"] },
       { id: "ndaRequired", type: "choice", label: "NDA required?", options: ["Yes", "No", "Not sure"] },
       {
         id: "clientProjectLead",
