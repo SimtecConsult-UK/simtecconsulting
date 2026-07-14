@@ -19,6 +19,7 @@ import {
 } from "./data";
 
 const STORAGE_KEY = "simtec_discovery_wizard";
+const ENTER_HINT = "press Enter ↵";
 
 type PersistedState = {
   idx: number;
@@ -245,7 +246,7 @@ export function DiscoveryWizard() {
       if (e.key === "Escape" && navOpen) {
         e.preventDefault();
         setNavOpen(false);
-      } else if (e.key === "Enter" && tag !== "TEXTAREA" && tag !== "BUTTON") {
+      } else if (e.key === "Enter" && tag !== "BUTTON" && !(tag === "TEXTAREA" && (e.metaKey || e.ctrlKey || e.shiftKey))) {
         e.preventDefault();
         nav(1);
       } else if (e.key === "ArrowUp" && tag !== "INPUT" && tag !== "TEXTAREA") {
@@ -558,7 +559,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         <button className="dw-btn-teal" onClick={onStart}>
           Start →
         </button>
-        <span className="dw-enter">press Enter ↵</span>
+        <span className="dw-enter">{ENTER_HINT}</span>
       </div>
     </>
   );
@@ -583,7 +584,7 @@ function SectionIntroScreen({
         <button className="dw-btn" onClick={onContinue}>
           Continue →
         </button>
-        <span className="dw-enter">press Enter ↵</span>
+        <span className="dw-enter">{ENTER_HINT}</span>
       </div>
     </>
   );
@@ -679,6 +680,11 @@ function QuestionScreen({
 }) {
   const showOk = question.type !== "choice";
   const showSkip = !question.required;
+  const enterHint = blocked
+    ? "Answer to continue"
+    : question.type === "long"
+      ? "Enter to continue · ⌘+Enter for new line"
+      : ENTER_HINT;
 
   return (
     <>
@@ -796,7 +802,7 @@ function QuestionScreen({
             <button className="dw-btn" onClick={onNext} disabled={blocked}>
               OK ✓
             </button>
-            <span className="dw-enter">{blocked ? "Answer to continue" : "press Enter ↵"}</span>
+            <span className="dw-enter">{enterHint}</span>
           </>
         )}
         {showSkip && (
