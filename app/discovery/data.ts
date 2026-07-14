@@ -69,6 +69,17 @@ export type Question = {
    * these columns for the question to count as answered — instead of the
    * default "at least one cell somewhere has text". */
   requiredColumns?: string[];
+  /** rep only: the columns `getDefaultRows` itself fills in. A generated row
+   * with text in any OTHER column has been hand-edited, so reconciliation
+   * keeps it even after its source selection is removed — otherwise going
+   * back and deselecting the thing that generated a row would silently
+   * delete whatever the user typed into it. */
+  seedColumns?: string[];
+  /** rep only: removing a generated row (identified by its `__key`) needs to
+   * turn off whatever answer produced it — otherwise `getDefaultRows` would
+   * just regenerate it on the next render, making the remove button on a
+   * generated row a no-op. Returns the updated answers. */
+  removeSource?: (row: RepRow, answers: Answers) => Answers;
 };
 
 export type Section = {
@@ -108,6 +119,26 @@ export function defaultProposedModuleRows(answers: Answers): RepRow[] {
     moduleTitle: m.name,
     description: m.description,
   }));
+}
+
+// One row per role selected in `dayOneUsers` (question 19), so question 20
+// starts pre-seeded with a row per day-one user type instead of blank rows.
+export function defaultUserRoleRows(answers: Answers): RepRow[] {
+  const roles = (answers.dayOneUsers as string[] | undefined) || [];
+  return roles.map((role) => ({
+    __key: `role::${role}`,
+    userType: role,
+  }));
+}
+
+// Removing a generated `userRoles` row un-selects its role back in
+// `dayOneUsers` — the row exists because that box is checked, so without
+// this the row would just reappear on the next render.
+export function removeUserRoleSource(row: RepRow, answers: Answers): Answers {
+  const key = row.__key as string | undefined;
+  const role = key?.startsWith("role::") ? key.slice("role::".length) : undefined;
+  if (!role) return answers;
+  return { ...answers, dayOneUsers: ((answers.dayOneUsers as string[] | undefined) || []).filter((r) => r !== role) };
 }
 
 // Unique, non-empty user types typed into `userRoles` (question 20), used as
@@ -198,9 +229,13 @@ export const SECTIONS: Section[] = [
         required: true,
         help: "One row per user type.",
         addLabel: "Add user type",
+        getDefaultRows: defaultUserRoleRows,
+        seedColumns: ["userType"],
+        requiredColumns: ["userType", "mainTasks", "accessLevel"],
+        removeSource: removeUserRoleSource,
         columns: [
           { key: "userType", header: "User type", placeholder: "e.g. Site manager" },
-          { key: "internalExternal", header: "Internal/external", placeholder: "Internal" },
+          { key: "internalExternal", header: "Internal/external", placeholder: "Select", options: ["Internal", "External"] },
           { key: "mainTasks", header: "Main tasks", placeholder: "What they do in the system", width: "1.4fr" },
           { key: "accessLevel", header: "Access level", placeholder: "Select", options: ["Full", "Read-only"] },
         ],
@@ -625,8 +660,18 @@ function hasText(value: string | string[] | undefined): boolean {
 // key. That distinction is how reconciliation below tells "auto-populated,
 // keep in sync with answers" apart from "the user added this by hand, leave
 // it alone".
-function isGeneratedRowKey(key: string | undefined): boolean {
+export function isGeneratedRowKey(key: string | undefined): boolean {
   return typeof key === "string" && key.includes("::");
+}
+
+// A generated row the user has typed real content into (any column besides
+// the ones `getDefaultRows` itself seeds) has become the user's own data, not
+// just a disposable stand-in for their earlier selection — see `seedColumns`.
+function isRowEdited(question: Question, row: RepRow): boolean {
+  if (!question.seedColumns) return false;
+  return Object.entries(row).some(
+    ([key, value]) => !key.startsWith("__") && !question.seedColumns!.includes(key) && hasText(value)
+  );
 }
 
 // Single source of truth for "what rows does this rep question actually have
@@ -639,15 +684,28 @@ function isGeneratedRowKey(key: string | undefined): boolean {
 // was since deselected, adds rows for newly selected ones, and keeps every
 // other saved row (including any edits, and any row the user added by hand)
 // untouched — so going back and changing an earlier answer keeps this table
-// in sync instead of getting stuck at the first edit.
+// in sync instead of getting stuck at the first edit. A generated row the
+// user has since edited (see `isRowEdited`) is kept even if its source was
+// deselected. A generated row that already matches a hand-typed row's seed
+// values (e.g. a "Site" row someone typed in before this question had a
+// generator) isn't added a second time.
 export function reconcileRepRows(question: Question, answers: Answers, saved: RepRow[] | undefined): RepRow[] {
   const generated = question.getDefaultRows?.(answers);
   if (saved === undefined) return generated && generated.length > 0 ? generated : [];
   if (!generated) return saved;
   const generatedKeys = new Set(generated.map((r) => r.__key));
-  const kept = saved.filter((r) => !isGeneratedRowKey(r.__key as string | undefined) || generatedKeys.has(r.__key));
+  const kept = saved.filter(
+    (r) =>
+      !isGeneratedRowKey(r.__key as string | undefined) ||
+      generatedKeys.has(r.__key) ||
+      isRowEdited(question, r)
+  );
   const keptKeys = new Set(kept.map((r) => r.__key));
-  const added = generated.filter((r) => !keptKeys.has(r.__key));
+  const seedValueOf = (row: RepRow) => question.seedColumns?.map((c) => row[c]).join(" ");
+  const keptSeedValues = question.seedColumns ? new Set(kept.map(seedValueOf)) : null;
+  const added = generated.filter(
+    (r) => !keptKeys.has(r.__key) && !(keptSeedValues && keptSeedValues.has(seedValueOf(r)))
+  );
   return [...kept, ...added];
 }
 
