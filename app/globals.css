@@ -109,6 +109,7 @@
 @media (prefers-reduced-motion: reduce) {
   .simtec-pulse { animation: none !important; opacity: 0; }
   .testimonials-drift-col { animation: none; }
+  .logo-ticker-track { animation: none; }
 }
 
 /* ── Hero (Simtec Hero Section Redesign) ──────────────────────────────────
@@ -395,9 +396,10 @@ body.is-dragging * {
 }
 
 
-/* PartnerLogos — continuous marquee for mobile/tablet */
+/* PartnerLogos — continuous marquee, all breakpoints. 27.5s = 22s default +25%,
+   slowed down at the client's request. */
 .logo-ticker-track {
-  animation: problem-ticker 22s linear infinite;
+  animation: problem-ticker 27.5s linear infinite;
 }
 
 /* ── Testimonials Option C ── */
