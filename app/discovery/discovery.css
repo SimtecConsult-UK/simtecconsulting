@@ -497,6 +497,73 @@
 .dw-rinp:focus {
   border-color: #0fae9a;
 }
+select.dw-rinp {
+  cursor: pointer;
+}
+.dw-mswrap {
+  position: relative;
+}
+.dw-msbtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+.dw-mssummary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #11141d;
+}
+.dw-mssummary.dw-msempty {
+  color: #8a93a3;
+}
+.dw-mscaret {
+  flex: none;
+  color: #b6bcc8;
+}
+.dw-mspanel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 7;
+  width: max(100%, 200px);
+  background: #fff;
+  border: 1px solid #e7e9ef;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px -16px rgba(16, 30, 40, 0.35);
+  padding: 6px;
+  box-sizing: border-box;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.dw-msopt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #3a4150;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dw-msopt:hover {
+  background: #f2f7f6;
+}
+.dw-msopt.dw-on {
+  background: var(--dw-selected-bg);
+  font-weight: 600;
+  color: var(--dw-selected-text);
+}
+.dw-mscheck {
+  width: 14px;
+  flex: none;
+  color: #0fae9a;
+  font-weight: 700;
+}
 .dw-chips {
   display: flex;
   gap: 5px;
