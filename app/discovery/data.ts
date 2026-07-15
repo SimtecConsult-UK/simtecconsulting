@@ -160,8 +160,8 @@ export function userRoleOptions(repRows: Record<string, RepRow[]>): string[] {
 
 // Every module the user picked in `selectedModules` — used to section
 // per-module rep tables (e.g. dashboards/reports) so each module gets its
-// own group of rows, the same way `proposedModuleGroupHeaders` sections the
-// proposed-modules table by system.
+// own group of rows, the same way `primarySystemTypeHeaders` sections
+// per-system tables.
 export function selectedModuleHeaders(answers: Answers): string[] {
   return selectedModuleEntries(answers).map(({ module }) => module.name);
 }
@@ -180,13 +180,23 @@ export function modulesForGroup(answers: Answers, group: string | undefined): st
     .map((entry) => entry.module.name);
 }
 
-// Every system the user picked in `primarySystemType` should always get its
-// own section in `proposedModules`, even before any of its modules are
-// selected — otherwise a system with zero pre-picked catalog modules would
-// never get a place to add a custom one.
-export function proposedModuleGroupHeaders(answers: Answers): string[] {
+// Every system the user picked in `primarySystemType` (question 29) should
+// always get its own section in any rep table grouped by system, even
+// before it has any rows — otherwise a system with nothing pre-picked would
+// never get a place to add its first one.
+export function primarySystemTypeHeaders(answers: Answers): string[] {
   const selectedSystems = (answers.primarySystemType as string[] | undefined) || [];
   return MODULE_CATALOG.map((g) => g.header).filter((h) => selectedSystems.includes(h));
+}
+
+// A `getDefaultRows` for grouped rep tables that want every section to open
+// with an editable row already waiting instead of starting empty (the plain
+// "start empty, rely on + Add" behaviour every other grouped table uses) —
+// used by `documentsCreated` (question 47) and `filesToStore` (question 50),
+// both grouped by `primarySystemTypeHeaders`.
+export function blankRowPerGroup(headersFor: (answers: Answers) => string[]) {
+  return (answers: Answers): RepRow[] =>
+    headersFor(answers).map((header) => ({ __key: `blank::${header}`, __group: header }));
 }
 
 export const SECTIONS: Section[] = [
@@ -312,7 +322,7 @@ export const SECTIONS: Section[] = [
         addLabel: "Add module",
         getDefaultRows: defaultProposedModuleRows,
         groupRowsBy: "__group",
-        groupHeadersFor: proposedModuleGroupHeaders,
+        groupHeadersFor: primarySystemTypeHeaders,
         requiredColumns: ["moduleTitle", "priority"],
         columns: [
           { key: "moduleTitle", header: "Module title", placeholder: "e.g. Job tracker" },
@@ -440,7 +450,20 @@ export const SECTIONS: Section[] = [
     shortName: "Documents & templates",
     description: "Capture documents created, reused, stored or issued.",
     questions: [
-      { id: "documentsCreated", type: "long", label: "Documents created during the process", help: "Bullet points are fine.", placeholder: "" },
+      {
+        id: "documentsCreated",
+        type: "rep",
+        label: "Documents created during the process",
+        help: "One row per document, grouped by system type.",
+        addLabel: "Add other",
+        getDefaultRows: blankRowPerGroup(primarySystemTypeHeaders),
+        groupRowsBy: "__group",
+        groupHeadersFor: primarySystemTypeHeaders,
+        columns: [
+          { key: "documentCreated", header: "Document created", placeholder: "e.g. Job completion certificate" },
+          { key: "standardTemplateUsed", header: "Standard template used", placeholder: "Select", width: ".8fr", options: ["Yes", "No", "Not sure"] },
+        ],
+      },
       { id: "templatesUsed", type: "choice", label: "Standard templates used?", options: ["Yes", "No", "Some", "Not sure"] },
       {
         id: "templateDetails",
@@ -457,9 +480,28 @@ export const SECTIONS: Section[] = [
           { key: "outputType", header: "Output type", placeholder: "e.g. PDF", width: ".7fr" },
         ],
       },
-      { id: "filesToStore", type: "long", label: "Files to upload, store or link", placeholder: "" },
-      { id: "versionControl", type: "choice", label: "Version control needed?", options: ["Yes", "No", "Possibly"] },
-      { id: "storageMethod", type: "choice", label: "Store documents or link folders?", options: ["Stored", "Linked", "Hybrid", "Not sure"] },
+      {
+        id: "filesToStore",
+        type: "rep",
+        label: "Files to upload, store or link",
+        help: "One row per file, grouped by system type.",
+        addLabel: "Add other",
+        getDefaultRows: blankRowPerGroup(primarySystemTypeHeaders),
+        groupRowsBy: "__group",
+        groupHeadersFor: primarySystemTypeHeaders,
+        columns: [
+          { key: "files", header: "Files", placeholder: "e.g. Site photos" },
+          {
+            key: "module",
+            header: "Module",
+            placeholder: "Select module",
+            width: ".8fr",
+            dynamicOptions: (answers) => (answers.selectedModules as string[] | undefined) || [],
+          },
+          { key: "storeLink", header: "Store/Link", placeholder: "Select", width: ".8fr", options: ["Stored", "Linked", "Hybrid", "Not sure"] },
+          { key: "versionControl", header: "Version control", placeholder: "Select", width: ".8fr", options: ["Yes", "No", "Possibly"] },
+        ],
+      },
     ],
   },
   {
@@ -474,7 +516,7 @@ export const SECTIONS: Section[] = [
         help: "One row per task, grouped by system type.",
         addLabel: "Add task",
         groupRowsBy: "__group",
-        groupHeadersFor: proposedModuleGroupHeaders,
+        groupHeadersFor: primarySystemTypeHeaders,
         columns: [
           { key: "task", header: "Task", placeholder: "e.g. Chase overdue invoices" },
           { key: "stakeholder", header: "Stakeholder", placeholder: "Select", options: ["Internal", "External"] },
@@ -737,7 +779,7 @@ export function reconcileRepRows(question: Question, answers: Answers, saved: Re
       isRowEdited(question, r)
   );
   const keptKeys = new Set(kept.map((r) => r.__key));
-  const seedValueOf = (row: RepRow) => question.seedColumns?.map((c) => row[c]).join(" ");
+  const seedValueOf = (row: RepRow) => question.seedColumns?.map((c) => row[c]).join(" ");
   const keptSeedValues = question.seedColumns ? new Set(kept.map(seedValueOf)) : null;
   const added = generated.filter(
     (r) => !keptKeys.has(r.__key) && !(keptSeedValues && keptSeedValues.has(seedValueOf(r)))
