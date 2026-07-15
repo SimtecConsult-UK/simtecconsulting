@@ -486,17 +486,15 @@ export const SECTIONS: Section[] = [
         groupHeadersFor: primarySystemTypeHeaders,
         columns: [
           { key: "documentCreated", header: "Document created", placeholder: "e.g. Job completion certificate" },
-          { key: "standardTemplateUsed", header: "Standard template used", placeholder: "Select", width: ".8fr", options: ["Yes", "No", "Not sure"] },
+          { key: "standardTemplateUsed", header: "Standard template used", placeholder: "Select", width: ".4fr", options: ["Yes", "No", "Not sure"] },
         ],
       },
-      { id: "templatesUsed", type: "choice", label: "Standard templates used?", options: ["Yes", "No", "Some", "Not sure"] },
       {
         id: "templateDetails",
         type: "rep",
         label: "Template details",
         help: "One row per template.",
         addLabel: "Add template",
-        showIf: (a) => a.templatesUsed === "Yes" || a.templatesUsed === "Some",
         columns: [
           { key: "templateName", header: "Template name", placeholder: "" },
           { key: "format", header: "Format", placeholder: "e.g. Word", width: ".7fr" },
@@ -588,8 +586,6 @@ export const SECTIONS: Section[] = [
         placeholder: "",
         showIf: (a) => ((a.aiWhere as string[] | undefined) || []).some((x) => x !== "Not sure" && x !== "None"),
       },
-      { id: "humanApprovalNeeded", type: "long", label: "What always needs human approval?", placeholder: "" },
-      { id: "autoSend", type: "choice", label: "Should anything be sent automatically?", required: true, options: ["Yes", "No", "Not sure"] },
     ],
   },
   {
