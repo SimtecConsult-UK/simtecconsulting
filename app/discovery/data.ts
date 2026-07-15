@@ -199,6 +199,23 @@ export function blankRowPerGroup(headersFor: (answers: Answers) => string[]) {
     headersFor(answers).map((header) => ({ __key: `blank::${header}`, __group: header }));
 }
 
+// The "who's involved" + "which module" pair shared by every automation
+// table grouped by system type (`repetitiveTasks`, `repeatedEmails`,
+// `repeatedDocuments`) — each just adds its own subject and trigger columns
+// around this pair, so it's defined once here instead of copy-pasted per
+// question.
+function stakeholderAndModulesColumns(): RepColumn[] {
+  return [
+    { key: "stakeholder", header: "Stakeholder", placeholder: "Select", options: ["Internal", "External"] },
+    {
+      key: "modules",
+      header: "Modules",
+      placeholder: "Select module",
+      dynamicOptions: (answers, _repRows, row) => modulesForGroup(answers, row.__group as string | undefined),
+    },
+  ];
+}
+
 export const SECTIONS: Section[] = [
   {
     name: "Project Basics",
@@ -519,18 +536,38 @@ export const SECTIONS: Section[] = [
         groupHeadersFor: primarySystemTypeHeaders,
         columns: [
           { key: "task", header: "Task", placeholder: "e.g. Chase overdue invoices" },
-          { key: "stakeholder", header: "Stakeholder", placeholder: "Select", options: ["Internal", "External"] },
-          {
-            key: "modules",
-            header: "Modules",
-            placeholder: "Select module",
-            dynamicOptions: (answers, _repRows, row) => modulesForGroup(answers, row.__group as string | undefined),
-          },
+          ...stakeholderAndModulesColumns(),
           { key: "trigger", header: "Trigger", placeholder: "e.g. Invoice 30 days overdue" },
         ],
       },
-      { id: "repeatedEmails", type: "long", label: "Repeated emails/messages", help: "Bullet points are fine.", placeholder: "" },
-      { id: "repeatedDocuments", type: "long", label: "Repeated documents", help: "Bullet points are fine.", placeholder: "" },
+      {
+        id: "repeatedEmails",
+        type: "rep",
+        label: "Repeated emails/messages",
+        help: "One row per email/message, grouped by system type.",
+        addLabel: "Add email",
+        groupRowsBy: "__group",
+        groupHeadersFor: primarySystemTypeHeaders,
+        columns: [
+          { key: "message", header: "Email/Message", placeholder: "e.g. Job completion notice" },
+          ...stakeholderAndModulesColumns(),
+          { key: "trigger", header: "Trigger", placeholder: "e.g. Job marked complete" },
+        ],
+      },
+      {
+        id: "repeatedDocuments",
+        type: "rep",
+        label: "Repeated documents",
+        help: "One row per document, grouped by system type.",
+        addLabel: "Add document",
+        groupRowsBy: "__group",
+        groupHeadersFor: primarySystemTypeHeaders,
+        columns: [
+          { key: "document", header: "Document", placeholder: "e.g. Completion certificate" },
+          ...stakeholderAndModulesColumns(),
+          { key: "trigger", header: "Trigger", placeholder: "e.g. Certificate issued" },
+        ],
+      },
       { id: "aiWhere", type: "multi", label: "Where could AI save time?", options: ["Drafting emails", "Drafting reports", "Summarising", "Extracting", "Searching examples", "Categorising", "Notes to text", "Next actions", "Not sure", "None"] },
       {
         id: "aiNotDo",
