@@ -210,7 +210,7 @@ export function blankRowPerGroup(headersFor: (answers: Answers) => string[]) {
 // question.
 function stakeholderAndModulesColumns(): RepColumn[] {
   return [
-    { key: "stakeholder", header: "Stakeholder", placeholder: "Select", options: ["Internal", "External"] },
+    { key: "stakeholder", header: "Stakeholder", placeholder: "Select", width: ".5fr", options: ["Internal", "External"] },
     {
       key: "modules",
       header: "Modules",
@@ -219,6 +219,10 @@ function stakeholderAndModulesColumns(): RepColumn[] {
     },
   ];
 }
+
+// Trailing "who signs off on this" column shared by the same three
+// automation tables — appended after each table's own trigger column.
+const APPROVAL_COLUMN: RepColumn = { key: "approval", header: "Approval", placeholder: "Select", width: ".7fr", options: ["Human", "Auto", "Not sure"] };
 
 export const SECTIONS: Section[] = [
   {
@@ -542,6 +546,7 @@ export const SECTIONS: Section[] = [
           { key: "task", header: "Task", placeholder: "e.g. Chase overdue invoices" },
           ...stakeholderAndModulesColumns(),
           { key: "trigger", header: "Trigger", placeholder: "e.g. Invoice 30 days overdue" },
+          APPROVAL_COLUMN,
         ],
       },
       {
@@ -556,6 +561,7 @@ export const SECTIONS: Section[] = [
           { key: "message", header: "Email/Message", placeholder: "e.g. Job completion notice" },
           ...stakeholderAndModulesColumns(),
           { key: "trigger", header: "Trigger", placeholder: "e.g. Job marked complete" },
+          APPROVAL_COLUMN,
         ],
       },
       {
@@ -570,6 +576,7 @@ export const SECTIONS: Section[] = [
           { key: "document", header: "Document", placeholder: "e.g. Completion certificate" },
           ...stakeholderAndModulesColumns(),
           { key: "trigger", header: "Trigger", placeholder: "e.g. Certificate issued" },
+          APPROVAL_COLUMN,
         ],
       },
       { id: "aiWhere", type: "multi", label: "Where could AI save time?", options: ["Drafting emails", "Drafting reports", "Summarising", "Extracting", "Searching examples", "Categorising", "Notes to text", "Next actions", "Not sure", "None"] },
