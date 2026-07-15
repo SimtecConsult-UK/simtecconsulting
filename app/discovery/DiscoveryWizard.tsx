@@ -5,6 +5,7 @@ import { Logo } from "../components/Logo";
 import {
   type Answers,
   type Question,
+  type RepColumn,
   type RepRow,
   type Step,
   SECTIONS,
@@ -863,18 +864,14 @@ function RepTable({
     () => columns.map((c) => (c.chips ? "auto" : c.width || "1fr")).join(" ") + " 26px",
     [columns]
   );
-  // Dropdown options are the same for every row in the table — resolve them
-  // once per column instead of re-running `dynamicOptions` inside the
-  // per-row render below.
-  const columnOptions = useMemo(() => {
-    const map = new Map<string, string[]>();
-    columns.forEach((col) => {
-      if (col.options || col.dynamicOptions) {
-        map.set(col.key, col.dynamicOptions ? col.dynamicOptions(answers, repRows) : col.options || []);
-      }
-    });
-    return map;
-  }, [columns, answers, repRows]);
+  // A column's options can depend on the row itself (e.g. scoping the
+  // modules dropdown to just the row's own group), so this is resolved per
+  // row rather than once per column — cheap enough here since these are
+  // small in-memory filters, not I/O.
+  const getOptions = useCallback(
+    (col: RepColumn, row: RepRow): string[] => (col.dynamicOptions ? col.dynamicOptions(answers, repRows, row) : col.options || []),
+    [answers, repRows]
+  );
 
   // Header cells and row cells are flattened into ONE grid per table (rather
   // than a separate grid per row) so "auto"-sized columns — the priority
@@ -926,7 +923,7 @@ function RepTable({
           );
         }
         if (col.options || col.dynamicOptions) {
-          const opts = columnOptions.get(col.key) || [];
+          const opts = getOptions(col, row);
           if (col.multiSelect) {
             const selected = cellArray(row[col.key]);
             return (
