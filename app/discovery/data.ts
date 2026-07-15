@@ -18,9 +18,10 @@ export type RepColumn = {
   /** Render this cell as a dropdown with these fixed options. */
   options?: string[];
   /** Render this cell as a dropdown whose options are computed from the
-   * current answers and rep rows (e.g. the modules selected earlier in the
-   * form, or another rep question's entries — like user roles). */
-  dynamicOptions?: (answers: Answers, repRows: Record<string, RepRow[]>) => string[];
+   * current answers, rep rows, and the row itself (e.g. the modules
+   * selected earlier in the form, another rep question's entries — like
+   * user roles — or just the modules belonging to this row's own group). */
+  dynamicOptions?: (answers: Answers, repRows: Record<string, RepRow[]>, row: RepRow) => string[];
   /** Render the options/dynamicOptions dropdown as a multi-select (a popover
    * of checkable options) instead of a single native `<select>`. The cell's
    * value becomes a string[]. */
@@ -163,6 +164,20 @@ export function userRoleOptions(repRows: Record<string, RepRow[]>): string[] {
 // per-system tables.
 export function selectedModuleHeaders(answers: Answers): string[] {
   return selectedModuleEntries(answers).map(({ module }) => module.name);
+}
+
+// Modules belonging to just one system-type group (e.g. the group a
+// `repetitiveTasks` row is grouped under) — narrower than the flat
+// `selectedModules` list, so a row grouped under one system can't be tagged
+// with a module that actually belongs to a different system. Falls back to
+// the flat list when there's no group to scope by (e.g. a row from before
+// this column existed).
+export function modulesForGroup(answers: Answers, group: string | undefined): string[] {
+  const allSelected = (answers.selectedModules as string[] | undefined) || [];
+  if (!group) return allSelected;
+  return selectedModuleEntries(answers)
+    .filter((entry) => entry.group.header === group)
+    .map((entry) => entry.module.name);
 }
 
 // Every system the user picked in `primarySystemType` (question 29) should
@@ -494,7 +509,26 @@ export const SECTIONS: Section[] = [
     shortName: "Automation & AI",
     description: "Identify useful automation while keeping control clear.",
     questions: [
-      { id: "repetitiveTasks", type: "long", label: "Repetitive tasks to automate", help: "Bullet points are fine.", placeholder: "" },
+      {
+        id: "repetitiveTasks",
+        type: "rep",
+        label: "Repetitive tasks to automate",
+        help: "One row per task, grouped by system type.",
+        addLabel: "Add task",
+        groupRowsBy: "__group",
+        groupHeadersFor: primarySystemTypeHeaders,
+        columns: [
+          { key: "task", header: "Task", placeholder: "e.g. Chase overdue invoices" },
+          { key: "stakeholder", header: "Stakeholder", placeholder: "Select", options: ["Internal", "External"] },
+          {
+            key: "modules",
+            header: "Modules",
+            placeholder: "Select module",
+            dynamicOptions: (answers, _repRows, row) => modulesForGroup(answers, row.__group as string | undefined),
+          },
+          { key: "trigger", header: "Trigger", placeholder: "e.g. Invoice 30 days overdue" },
+        ],
+      },
       { id: "repeatedEmails", type: "long", label: "Repeated emails/messages", help: "Bullet points are fine.", placeholder: "" },
       { id: "repeatedDocuments", type: "long", label: "Repeated documents", help: "Bullet points are fine.", placeholder: "" },
       { id: "aiWhere", type: "multi", label: "Where could AI save time?", options: ["Drafting emails", "Drafting reports", "Summarising", "Extracting", "Searching examples", "Categorising", "Notes to text", "Next actions", "Not sure", "None"] },
