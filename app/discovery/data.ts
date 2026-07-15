@@ -14,7 +14,13 @@ export type RepColumn = {
   placeholder?: string;
   width?: string;
   chips?: boolean;
-  file?: boolean;
+  /** Render this cell as a link input with an inline "upload a file instead"
+   * button — either fills the same `key` value (a pasted URL or an uploaded
+   * filename). The renderer also stamps a structural `__<key>Kind: "link" |
+   * "file"` field on the row recording which one produced the value, so a
+   * later feature (e.g. a link icon vs. a file icon) can tell them apart
+   * instead of guessing from the string's shape. */
+  linkOrFile?: boolean;
   /** Render this cell as a dropdown with these fixed options. */
   options?: string[];
   /** Render this cell as a dropdown whose options are computed from the
@@ -39,7 +45,7 @@ export type ModuleGroup = {
   options: string[];
 };
 
-export type QuestionType = "text" | "long" | "choice" | "multi" | "group" | "rep" | "groupedMulti";
+export type QuestionType = "text" | "number" | "long" | "choice" | "multi" | "group" | "rep" | "groupedMulti";
 
 export type Question = {
   id: string;
@@ -223,6 +229,17 @@ function stakeholderAndModulesColumns(): RepColumn[] {
 // Trailing "who signs off on this" column shared by the same three
 // automation tables — appended after each table's own trigger column.
 const APPROVAL_COLUMN: RepColumn = { key: "approval", header: "Approval", placeholder: "Select", width: ".7fr", options: ["Human", "Auto", "Not sure"] };
+
+// The "what it shows" + "link or uploaded file" pair shared by the Links and
+// Document uploads tables — each just uses its own row-data key names around
+// this shared shape, so it's defined once here instead of copy-pasted per
+// question.
+function descriptionAndLinkColumns(descriptionKey: string, linkKey: string): RepColumn[] {
+  return [
+    { key: descriptionKey, header: "Document description", placeholder: "What it shows", width: "1.4fr" },
+    { key: linkKey, header: "Link / Upload doc", linkOrFile: true },
+  ];
+}
 
 export const SECTIONS: Section[] = [
   {
@@ -675,12 +692,10 @@ export const SECTIONS: Section[] = [
     description: "Capture how the system will be used and quality expectations.",
     questions: [
       { id: "devicesRequired", type: "multi", label: "Devices required", required: true, options: ["Desktop/web", "Tablet", "Mobile", "Offline mobile", "Not sure"] },
-      { id: "expectedUsers", type: "text", label: "Expected users", placeholder: "e.g. 12 internal users" },
-      { id: "expectedExternalUsers", type: "text", label: "Expected external users", placeholder: "e.g. 30 client users", showIf: (a) => a.external !== "No" },
+      { id: "expectedUsers", type: "number", label: "Expected users", placeholder: "e.g. 12" },
+      { id: "expectedExternalUsers", type: "number", label: "Expected external users", placeholder: "e.g. 30", showIf: (a) => a.external !== "No" },
       { id: "expectedUsage", type: "choice", label: "Expected usage", options: ["Occasional", "Daily", "Heavy daily", "High-volume operational", "Not sure"] },
       { id: "performanceExpectations", type: "long", label: "Performance/reliability expectations", placeholder: "" },
-      { id: "hostingPreference", type: "choice", label: "Hosting preference", options: ["Cloud", "On-premise", "No preference", "Not sure"] },
-      { id: "techStackPreference", type: "choice", label: "Preferred tech stack", help: "Do you have one?", options: ["Yes", "No", "No preference"] },
     ],
   },
   {
@@ -693,20 +708,14 @@ export const SECTIONS: Section[] = [
         type: "rep",
         label: "Links",
         addLabel: "Add link",
-        columns: [
-          { key: "url", header: "URL", placeholder: "https://…" },
-          { key: "description", header: "Description", placeholder: "What it shows", width: "1.4fr" },
-        ],
+        columns: descriptionAndLinkColumns("description", "url"),
       },
       {
         id: "documentUploads",
         type: "rep",
         label: "Document uploads",
         addLabel: "Add document",
-        columns: [
-          { key: "documentDescription", header: "Document description", placeholder: "What it shows", width: "1.4fr" },
-          { key: "file", header: "File", file: true, width: "180px" },
-        ],
+        columns: descriptionAndLinkColumns("documentDescription", "file"),
       },
     ],
   },
@@ -895,6 +904,7 @@ export function isRepFullyAnswered(question: Question, rows: RepRow[]): boolean 
 export function isQuestionComplete(question: Question, answers: Answers, rows: RepRow[]): boolean {
   switch (question.type) {
     case "text":
+    case "number":
     case "long":
       return hasText(answers[question.id] as string | undefined);
     case "choice":
