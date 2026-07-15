@@ -56,6 +56,13 @@ function rowsFor(map: Record<string, RepRow[]>, question: Question, answers: Ans
   // would land in an ungrouped "Other modules" catch-all instead, so skip
   // that fallback and let each section start empty with its own "+ Add".
   if (question.groupRowsBy) return reconciled;
+  // Questions with `getDefaultRows` are seeded from another answer (e.g.
+  // question 20's rows come from question 19's selections) — an empty
+  // reconcile means "nothing selected yet", not "needs blank placeholders".
+  // Padding here would get baked into saved state the moment the user types
+  // into a cell or clicks "+ Add" (see setRepCell/addRepRow below), leaving
+  // permanent blank rows the reconciler can never clean up.
+  if (question.getDefaultRows) return reconciled;
   return reconciled.length > 0 ? reconciled : defaultRows();
 }
 
