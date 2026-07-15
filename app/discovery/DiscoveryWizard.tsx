@@ -15,6 +15,7 @@ import {
   isSectionAnswered,
   isSectionJumpVisible,
   isStepVisible,
+  reconcileDynamicMultiAnswers,
   reconcileRepRows,
   sanitizeAnswers,
 } from "./data";
@@ -169,6 +170,16 @@ export function DiscoveryWizard() {
       flushSave();
     };
   }, [flushSave]);
+
+  // Keep dynamicOptions-driven multi answers in sync with whatever they
+  // mirror — e.g. deselecting a tool from "Current tools" also drops it from
+  // "Must connect from day one"/"Can stay manual" immediately, instead of
+  // leaving an invisible stale pick that could silently reappear pre-checked
+  // if the tool is added back later.
+  useEffect(() => {
+    if (!hydrated) return;
+    setAnswers((prev) => reconcileDynamicMultiAnswers(prev));
+  }, [hydrated, answers]);
 
   const visibleSteps = useMemo(
     () => STEPS.filter((step) => isStepVisible(step, answers)),
@@ -762,7 +773,7 @@ function QuestionScreen({
 
         {question.type === "multi" && (
           <PillRow
-            options={question.options || []}
+            options={question.dynamicOptions ? question.dynamicOptions(answers) : question.options || []}
             selected={(answers[question.id] as string[] | undefined) || []}
             onToggle={(option) => onToggleMulti(question.id, option)}
           />
