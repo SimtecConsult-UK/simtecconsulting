@@ -618,6 +618,20 @@ select.dw-rinp {
   background: none;
   width: 100%;
 }
+.dw-linkfile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dw-linkfile .dw-rinp {
+  flex: 1;
+  min-width: 0;
+}
+.dw-fbtn-icon {
+  flex: none;
+  width: 42px;
+  font-size: 15px;
+}
 
 .dw-btn {
   display: inline-flex;

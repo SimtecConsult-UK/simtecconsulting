@@ -738,12 +738,16 @@ function QuestionScreen({
       </div>
 
       <div className="dw-qanswer">
-        {question.type === "text" && (
+        {(question.type === "text" || question.type === "number") && (
           <input
             className="dw-input"
+            inputMode={question.type === "number" ? "numeric" : undefined}
+            pattern={question.type === "number" ? "[0-9]*" : undefined}
             placeholder={question.placeholder}
             value={(answers[question.id] as string) || ""}
-            onChange={(e) => onSetAnswer(question.id, e.target.value)}
+            onChange={(e) =>
+              onSetAnswer(question.id, question.type === "number" ? e.target.value.replace(/[^0-9]/g, "") : e.target.value)
+            }
           />
         )}
 
@@ -918,19 +922,34 @@ function RepTable({
             </div>
           );
         }
-        if (col.file) {
-          const fileName = row[col.key];
+        if (col.linkOrFile) {
           const inputId = `${question.id}-${rowIndex}-${col.key}`;
+          const kindKey = `__${col.key}Kind`;
           return (
-            <label className="dw-fbtn" key={col.key} htmlFor={inputId}>
-              {fileName ? fileName : "⬆ CHOOSE FILE"}
+            <div className="dw-linkfile" key={col.key}>
               <input
-                id={inputId}
-                type="file"
-                style={{ display: "none" }}
-                onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.files?.[0]?.name || "")}
+                className="dw-rinp"
+                placeholder={col.placeholder || "https://…"}
+                value={cellText(row[col.key])}
+                onChange={(e) => {
+                  onSetCell(question, rowIndex, col.key, e.target.value);
+                  onSetCell(question, rowIndex, kindKey, "link");
+                }}
               />
-            </label>
+              <label className="dw-fbtn dw-fbtn-icon" htmlFor={inputId} title="Upload a file instead">
+                ⬆
+                <input
+                  id={inputId}
+                  type="file"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const fileName = e.target.files?.[0]?.name || "";
+                    onSetCell(question, rowIndex, col.key, fileName);
+                    if (fileName) onSetCell(question, rowIndex, kindKey, "file");
+                  }}
+                />
+              </label>
+            </div>
           );
         }
         if (col.options || col.dynamicOptions) {
