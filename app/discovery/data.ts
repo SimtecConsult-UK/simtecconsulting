@@ -49,6 +49,10 @@ export type Question = {
   placeholder?: string;
   required?: boolean;
   options?: string[];
+  /** multi only: compute the option list from other answers instead of the
+   * fixed `options` list — e.g. mirroring another multi-select's current
+   * selection (chips selected there reappear here as choosable options). */
+  dynamicOptions?: (answers: Answers) => string[];
   fields?: GroupField[];
   columns?: RepColumn[];
   addLabel?: string;
@@ -604,8 +608,22 @@ export const SECTIONS: Section[] = [
           { key: "notes", header: "Notes", placeholder: "" },
         ],
       },
-      { id: "mustConnectDayOne", type: "long", label: "Must connect from day one", placeholder: "" },
-      { id: "canStayManual", type: "long", label: "Can stay manual for Phase 1", placeholder: "" },
+      {
+        id: "mustConnectDayOne",
+        type: "multi",
+        label: "Must connect from day one",
+        help: "Of the tools selected above, which need to be connected as soon as the new solution goes live?",
+        showIf: (a) => a.integrationsNeeded === "Yes" && ((a.currentTools as string[] | undefined) || []).length > 0,
+        dynamicOptions: (a) => (a.currentTools as string[] | undefined) || [],
+      },
+      {
+        id: "canStayManual",
+        type: "multi",
+        label: "Can stay manual for Phase 1",
+        help: "Of the tools selected above, which can stay a manual, non-integrated process for now?",
+        showIf: (a) => a.integrationsNeeded === "Yes" && ((a.currentTools as string[] | undefined) || []).length > 0,
+        dynamicOptions: (a) => (a.currentTools as string[] | undefined) || [],
+      },
     ],
   },
   {
@@ -765,6 +783,33 @@ export function sanitizeAnswers(raw: Answers): Answers {
   return sanitized;
 }
 
+const DYNAMIC_MULTI_QUESTIONS = SECTIONS.flatMap((s) => s.questions).filter(
+  (q): q is Question & { dynamicOptions: (answers: Answers) => string[] } => q.type === "multi" && !!q.dynamicOptions
+);
+
+// A `multi` question whose choices mirror another answer via `dynamicOptions`
+// (e.g. "Must connect from day one" mirroring "Current tools") can end up
+// holding a selection that's no longer offered once the source answer
+// changes. Pruning it immediately — rather than leaving it to linger
+// invisibly in storage — means removing a tool from "Current tools" cleanly
+// forgets any downstream picks tied to it, instead of the pick silently
+// reappearing pre-selected if the tool is added back later.
+export function reconcileDynamicMultiAnswers(answers: Answers): Answers {
+  let changed = false;
+  const next: Answers = { ...answers };
+  DYNAMIC_MULTI_QUESTIONS.forEach((question) => {
+    const value = answers[question.id] as string[] | undefined;
+    if (!value || value.length === 0) return;
+    const visible = new Set(question.dynamicOptions(answers));
+    const pruned = value.filter((v) => visible.has(v));
+    if (pruned.length !== value.length) {
+      next[question.id] = pruned;
+      changed = true;
+    }
+  });
+  return changed ? next : answers;
+}
+
 function hasText(value: string | string[] | undefined): boolean {
   if (Array.isArray(value)) return value.length > 0;
   return typeof value === "string" && value.trim().length > 0;
@@ -853,7 +898,14 @@ export function isQuestionComplete(question: Question, answers: Answers, rows: R
       return hasText(answers[question.id] as string | undefined);
     case "multi": {
       const value = answers[question.id] as string[] | undefined;
-      return !!value && value.length > 0;
+      if (!value || value.length === 0) return false;
+      // dynamicOptions questions (e.g. "Must connect from day one" mirroring
+      // "Current tools") don't prune stale selections when their source
+      // answer changes — so a value only counts as answered if at least one
+      // selected option is still actually offered.
+      if (!question.dynamicOptions) return true;
+      const visibleOptions = new Set(question.dynamicOptions(answers));
+      return value.some((v) => visibleOptions.has(v));
     }
     case "groupedMulti": {
       const value = (answers[question.id] as string[] | undefined) || [];
