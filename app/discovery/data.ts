@@ -47,11 +47,20 @@ export type ModuleGroup = {
 
 export type QuestionType = "text" | "number" | "long" | "choice" | "multi" | "group" | "rep" | "groupedMulti";
 
+export type NeedHelp = {
+  whatToInclude: string;
+  whyWeAsk: string;
+  whoMayKnow: string;
+};
+
 export type Question = {
   id: string;
   type: QuestionType;
   label: string;
   help?: string;
+  /** Optional "Need help?" panel — collapsed by default, expanded beneath the
+   * question. Omit for obvious fields (name, email, phone, etc.). */
+  needHelp?: NeedHelp;
   placeholder?: string;
   required?: boolean;
   options?: string[];
@@ -276,13 +285,91 @@ export const SECTIONS: Section[] = [
     shortName: "Business context",
     description: "Understand the business background and why the project matters.",
     questions: [
-      { id: "businessDescription", type: "long", label: "What does your business do?", placeholder: "A sentence or two is plenty…" },
-      { id: "trigger", type: "long", label: "What has triggered the need now?", required: true, help: "Bullet points are fine.", placeholder: "" },
-      { id: "problem", type: "long", label: "What problem are you trying to solve?", required: true, placeholder: "" },
-      { id: "painPoints", type: "long", label: "Current pain points", required: true, help: "Bullet points are fine.", placeholder: "e.g. double data entry, chasing paperwork, no live status…" },
-      { id: "costOfInaction", type: "long", label: "What happens if nothing changes?", placeholder: "" },
-      { id: "successDefinition", type: "long", label: "What does success look like 3-6 months after go-live?", required: true, help: "Bullet points are fine.", placeholder: "" },
-      { id: "successMetrics", type: "long", label: "How will success be measured?", help: "Bullet points are fine — TBC if unsure.", placeholder: "" },
+      {
+        id: "businessDescription",
+        type: "long",
+        label: "What does your business do?",
+        placeholder: "A sentence or two is plenty…",
+        needHelp: {
+          whatToInclude: "Briefly explain the services you provide, who your customers are and the type of work this system will support.",
+          whyWeAsk: "This helps us understand the setting in which the system will be used.",
+          whoMayKnow: "The business owner, Managing Director, Operations Manager or Sales Manager.",
+        },
+      },
+      {
+        id: "problem",
+        type: "long",
+        label: "What is the main problem you want this system to solve?",
+        required: true,
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Describe the main issue in plain English and how it affects the business.",
+          whyWeAsk: "This keeps the project focused on solving the right problem.",
+          whoMayKnow: "The project lead, department manager or people affected by the problem.",
+        },
+      },
+      {
+        id: "trigger",
+        type: "long",
+        label: "What has made this a priority now?",
+        required: true,
+        help: "Bullet points are fine.",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Tell us what has changed or happened. For example, business growth, a lost contract, new rules, system failure or increasing administration.",
+          whyWeAsk: "This helps us understand the urgency and any deadlines affecting the project.",
+          whoMayKnow: "The project lead, business owner, Operations Manager or Compliance Manager.",
+        },
+      },
+      {
+        id: "painPoints",
+        type: "long",
+        label: "Where does the current way of working cause problems?",
+        required: true,
+        help: "Bullet points are fine.",
+        placeholder: "e.g. double data entry, chasing paperwork, no live status…",
+        needHelp: {
+          whatToInclude: "List the delays, mistakes, repeated work and frustrations people currently experience.",
+          whyWeAsk: "These are the problems the new system should remove or reduce.",
+          whoMayKnow: "The people doing the work day to day, their manager and anyone who checks or reports on it.",
+        },
+      },
+      {
+        id: "costOfInaction",
+        type: "long",
+        label: "What will happen if the problem is not fixed?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Describe the likely effect on time, cost, customers, compliance, safety or business growth.",
+          whyWeAsk: "This helps us understand the importance of the project and which risks should be addressed first.",
+          whoMayKnow: "The business owner, Finance Director, Operations Manager or Compliance Manager.",
+        },
+      },
+      {
+        id: "successDefinition",
+        type: "long",
+        label: "What should be better 3-6 months after the system launches?",
+        required: true,
+        help: "Bullet points are fine.",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Describe what people should be able to do more quickly, easily or accurately.",
+          whyWeAsk: "This gives the project a clear result to work towards.",
+          whoMayKnow: "The project lead, senior management and the people who will use the system.",
+        },
+      },
+      {
+        id: "successMetrics",
+        type: "long",
+        label: "How will you know the project has worked?",
+        help: "Bullet points are fine. Enter TBC if you are unsure.",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Add any numbers or evidence you can use, such as time saved, fewer errors, faster invoicing or less paperwork.",
+          whyWeAsk: "This allows us to check whether the system has delivered the expected improvement.",
+          whoMayKnow: "The project lead, Finance team, Operations Manager or department manager.",
+        },
+      },
     ],
   },
   {
@@ -290,14 +377,29 @@ export const SECTIONS: Section[] = [
     shortName: "Users & access",
     description: "Identify who uses the system and what permissions are needed.",
     questions: [
-      { id: "dayOneUsers", type: "multi", label: "Day-one users", required: true, help: "Select everyone who will use the system from day one.", options: ["Admin", "Manager", "Director", "Office", "Site", "Field", "Client", "Consultant", "Supplier", "Finance", "Other"] },
+      {
+        id: "dayOneUsers",
+        type: "multi",
+        label: "Who will use the system when it first launches?",
+        required: true,
+        options: ["Admin", "Manager", "Director", "Office", "Site", "Field", "Client", "Consultant", "Supplier", "Finance", "Other"],
+        needHelp: {
+          whatToInclude: "Select every type of person who will need access from the start.",
+          whyWeAsk: "Different users may need different screens, tasks and levels of access.",
+          whoMayKnow: "The project lead, department managers, HR or IT.",
+        },
+      },
       {
         id: "userRoles",
         type: "rep",
-        label: "User roles",
+        label: "What types of users will there be?",
         required: true,
-        help: "One row per user type.",
         addLabel: "Add user type",
+        needHelp: {
+          whatToInclude: "Add one row for each type of user, such as Administrator, Site Manager, Driver or Customer. Describe what they need to do and the access they require. Do not list individual people.",
+          whyWeAsk: "This helps us give each user the correct tools and access.",
+          whoMayKnow: "Department managers, HR, IT and the people doing the work.",
+        },
         getDefaultRows: defaultUserRoleRows,
         seedColumns: ["userType"],
         requiredColumns: ["userType", "mainTasks", "accessLevel"],
@@ -309,8 +411,29 @@ export const SECTIONS: Section[] = [
           { key: "accessLevel", header: "Access level", placeholder: "Select", options: ["Full", "Read-only"] },
         ],
       },
-      { id: "external", type: "choice", label: "External access needed?", required: true, options: ["Yes", "No", "Possibly later"] },
-      { id: "permissionRestrictions", type: "long", label: "Permission restrictions", help: "Anything certain users must not see or do.", placeholder: "" },
+      {
+        id: "external",
+        type: "choice",
+        label: "Will anyone outside your business need access?",
+        required: true,
+        options: ["Yes", "No", "Possibly later"],
+        needHelp: {
+          whatToInclude: "Select 'Yes' if customers, suppliers, subcontractors or consultants need to log in. Select 'Possibly later' if this is not required for the first version.",
+          whyWeAsk: "External users normally need different access, security and screens.",
+          whoMayKnow: "The project lead, Account Manager, Operations Manager or IT.",
+        },
+      },
+      {
+        id: "permissionRestrictions",
+        type: "long",
+        label: "Is there anything certain users must not see or change?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Describe any private information, restricted actions or records that should only be available to specific people.",
+          whyWeAsk: "This helps protect sensitive information and prevents unauthorised changes.",
+          whoMayKnow: "Department managers, HR, Finance, Compliance or IT.",
+        },
+      },
     ],
   },
   {
@@ -318,16 +441,52 @@ export const SECTIONS: Section[] = [
     shortName: "Current workflow",
     description: "Capture the real workflow from start to finish.",
     questions: [
-      { id: "mainProcess", type: "long", label: "Main process the system supports", required: true, help: "In plain words, start to finish.", placeholder: "" },
-      { id: "processStart", type: "text", label: "Where does the process start?", required: true, placeholder: "e.g. Enquiry arrives by email" },
-      { id: "processEnd", type: "text", label: "Where does the process end?", placeholder: "e.g. Invoice paid" },
+      {
+        id: "mainProcess",
+        type: "long",
+        label: "What main piece of work should the system manage?",
+        required: true,
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Briefly describe the process from the first request or action through to completion.",
+          whyWeAsk: "This identifies the main journey the system needs to support.",
+          whoMayKnow: "The Operations Manager, process owner or people completing the work.",
+        },
+      },
+      {
+        id: "processStart",
+        type: "text",
+        label: "What starts the process?",
+        required: true,
+        placeholder: "e.g. Enquiry arrives by email",
+        needHelp: {
+          whatToInclude: "Tell us the first event or request. For example, a customer enquiry, new order, site instruction or uploaded document.",
+          whyWeAsk: "The system needs a clear starting point for each new piece of work.",
+          whoMayKnow: "Sales, Operations, Customer Service or the person who receives the initial request.",
+        },
+      },
+      {
+        id: "processEnd",
+        type: "text",
+        label: "When is the process considered complete?",
+        placeholder: "e.g. Invoice paid",
+        needHelp: {
+          whatToInclude: "Describe the final action, such as approval, delivery, report issued, job closed or invoice paid.",
+          whyWeAsk: "This tells us what 'finished' means and what must happen before a record can be closed.",
+          whoMayKnow: "Operations, Finance, the department manager or the process owner.",
+        },
+      },
       {
         id: "workflowSteps",
         type: "rep",
-        label: "Workflow steps",
+        label: "List the steps in the current process.",
         required: true,
-        help: "One row per step, in order.",
         addLabel: "Add step",
+        needHelp: {
+          whatToInclude: "Add each step in the order it happens. For every step, tell us what happens, who does it, what tool they use and any current problems.",
+          whyWeAsk: "This allows us to understand the real process before deciding how the new system should work.",
+          whoMayKnow: "The people completing each step and the manager responsible for the full process.",
+        },
         columns: [
           { key: "stepNumber", header: "No.", placeholder: "1", width: "48px" },
           { key: "stepName", header: "Step name", placeholder: "e.g. Quote" },
@@ -337,8 +496,30 @@ export const SECTIONS: Section[] = [
           { key: "painPoint", header: "Pain point", placeholder: "" },
         ],
       },
-      { id: "processBreakdown", type: "long", label: "Where does it slow down or go wrong?", required: true, placeholder: "" },
-      { id: "manualOrRepeated", type: "long", label: "What is manual or repeated?", required: true, placeholder: "" },
+      {
+        id: "processBreakdown",
+        type: "long",
+        label: "Where do delays, mistakes or problems usually happen?",
+        required: true,
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Tell us which steps cause waiting, rework, missed information, complaints or errors.",
+          whyWeAsk: "These are the areas the new system should improve first.",
+          whoMayKnow: "Day-to-day users, supervisors, customers and anyone who checks the completed work.",
+        },
+      },
+      {
+        id: "manualOrRepeated",
+        type: "long",
+        label: "What work is completed manually or repeated regularly?",
+        required: true,
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "List anything people copy, re-enter, chase, calculate or create again and again.",
+          whyWeAsk: "These tasks may be suitable for automation.",
+          whoMayKnow: "The people completing the work and their team manager.",
+        },
+      },
     ],
   },
   {
@@ -346,26 +527,46 @@ export const SECTIONS: Section[] = [
     shortName: "Scope & modules",
     description: "Break the project into functional areas and prioritise Phase 1.",
     questions: [
-      { id: "primarySystemType", type: "multi", label: "Primary system type", required: true, options: ["Project Management & Field Productivity", "Fleet, Asset & Logistics", "Compliance, HSEQ & Environmental", "Commercial, Finance & Client", "Admin Systems & Integrations"] },
+      {
+        id: "primarySystemType",
+        type: "multi",
+        label: "Which part of the business is this system mainly for?",
+        required: true,
+        options: ["Project Management & Field Productivity", "Fleet, Asset & Logistics", "Compliance, HSEQ & Environmental", "Commercial, Finance & Client", "Admin Systems & Integrations"],
+        needHelp: {
+          whatToInclude: "Select the area that most closely matches the project. You can choose more detailed functions on the next page.",
+          whyWeAsk: "This helps us show the most relevant features and questions.",
+          whoMayKnow: "The project lead or Operations Manager.",
+        },
+      },
       {
         id: "selectedModules",
         type: "groupedMulti",
-        label: "Choose the modules that you want",
+        label: "Which areas should the system cover?",
         required: true,
         filterBy: "primarySystemType",
         groups: MODULE_CATALOG.map((g) => ({ header: g.header, options: g.modules.map((m) => m.name) })),
+        needHelp: {
+          whatToInclude: "Select the parts of the business you want the system to manage. Only choose areas that are genuinely relevant.",
+          whyWeAsk: "Your choices form the starting point for the system's scope.",
+          whoMayKnow: "The project lead, department managers and day-to-day users.",
+        },
       },
       {
         id: "proposedModules",
         type: "rep",
-        label: "Proposed modules",
+        label: "Review and prioritise the parts of the system.",
         required: true,
-        help: "One row per module. Priority: Must for Phase 1, Nice, or Future.",
         addLabel: "Add module",
         getDefaultRows: defaultProposedModuleRows,
         groupRowsBy: "__group",
         groupHeadersFor: primarySystemTypeHeaders,
         requiredColumns: ["moduleTitle", "priority"],
+        needHelp: {
+          whatToInclude: "Add or amend each area and select: Must - required in the first version; Nice - useful if the budget and timescale allow; Future - not needed in the first version.",
+          whyWeAsk: "This helps us define a realistic first version without losing useful ideas for later.",
+          whoMayKnow: "The project sponsor, Operations Manager and department managers.",
+        },
         columns: [
           { key: "moduleTitle", header: "Module title", placeholder: "e.g. Job tracker" },
           { key: "description", header: "Description", placeholder: "What it does, in a sentence", width: "1.5fr" },
@@ -373,8 +574,29 @@ export const SECTIONS: Section[] = [
           { key: "notes", header: "Notes", placeholder: "Optional" },
         ],
       },
-      { id: "smallestUsefulVersion", type: "long", label: "Smallest useful first version", required: true, help: "If we could only build one thing first, what would be genuinely useful?", placeholder: "" },
-      { id: "phase1Exclusions", type: "long", label: "Explicit Phase 1 exclusions", help: "Anything we should deliberately leave out for now.", placeholder: "" },
+      {
+        id: "smallestUsefulVersion",
+        type: "long",
+        label: "What is the smallest version that would still be useful?",
+        required: true,
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Describe the most important process or result the first version must deliver.",
+          whyWeAsk: "This helps us identify a practical starting point if the project needs to be reduced or delivered in stages.",
+          whoMayKnow: "The project sponsor, Operations Manager and main users.",
+        },
+      },
+      {
+        id: "phase1Exclusions",
+        type: "long",
+        label: "What should we deliberately leave out of the first version?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "List features, departments, integrations or processes that should wait until later.",
+          whyWeAsk: "Clear exclusions prevent assumptions and help control cost and delivery time.",
+          whoMayKnow: "The project sponsor and department managers.",
+        },
+      },
     ],
   },
   {
@@ -382,13 +604,29 @@ export const SECTIONS: Section[] = [
     shortName: "Records & data",
     description: "Identify what the system needs to track and how records relate.",
     questions: [
-      { id: "mainRecords", type: "multi", label: "Main records to track", required: true, options: ["Clients", "Sites", "Projects", "Jobs", "Enquiries", "Tasks", "Documents", "Users", "Vehicles", "Plant", "Materials", "Forms", "Quotes", "Invoices", "Emails", "Compliance records", "Other"] },
+      {
+        id: "mainRecords",
+        type: "multi",
+        label: "What information does the system need to keep track of?",
+        required: true,
+        options: ["Clients", "Sites", "Projects", "Jobs", "Enquiries", "Tasks", "Documents", "Users", "Vehicles", "Plant", "Materials", "Forms", "Quotes", "Invoices", "Emails", "Compliance records", "Other"],
+        needHelp: {
+          whatToInclude: "Select the main things the system needs to store and manage, such as customers, sites, projects, jobs, vehicles or documents.",
+          whyWeAsk: "These will become the main records within the system.",
+          whoMayKnow: "Operations, administration and the people maintaining current spreadsheets or systems.",
+        },
+      },
       {
         id: "dataEntities",
         type: "rep",
-        label: "Data entities",
-        help: "Optional — skip if unsure, we'll map this together in the workshop.",
+        label: "How should the different records be linked?",
+        help: "Enter TBC if you are unsure.",
         addLabel: "Add entity",
+        needHelp: {
+          whatToInclude: "Describe simple relationships, such as 'a customer can have several sites' or 'a project can contain several jobs'.",
+          whyWeAsk: "This helps us organise the information correctly and avoid entering it more than once.",
+          whoMayKnow: "Your system administrator, IT provider, Operations Manager or spreadsheet owner.",
+        },
         columns: [
           { key: "entityName", header: "Entity name", placeholder: "e.g. Job" },
           { key: "uniqueId", header: "Unique ID/reference", placeholder: "e.g. Job number" },
@@ -397,8 +635,28 @@ export const SECTIONS: Section[] = [
           { key: "notes", header: "Notes", placeholder: "" },
         ],
       },
-      { id: "searchableFields", type: "long", label: "What must be searchable?", placeholder: "" },
-      { id: "mandatoryFields", type: "long", label: "Mandatory fields", help: "Fields that must be completed before a record can be saved.", placeholder: "" },
+      {
+        id: "searchableFields",
+        type: "long",
+        label: "What should users be able to search for?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "List the information people commonly use to find a record, such as job number, customer, postcode, vehicle registration or document reference.",
+          whyWeAsk: "This helps us design useful searches and filters.",
+          whoMayKnow: "Day-to-day users, administration staff and Customer Service.",
+        },
+      },
+      {
+        id: "mandatoryFields",
+        type: "long",
+        label: "What information must always be completed?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "List information that cannot be left blank when a record is created, completed or approved.",
+          whyWeAsk: "This prevents incomplete records and makes sure important information is collected.",
+          whoMayKnow: "Operations, Compliance, Finance and the people checking completed work.",
+        },
+      },
       { id: "sensitiveData", type: "multi", label: "Sensitive data involved?", required: true, options: ["Personal", "Financial", "H&S", "Confidential", "Employee", "Location/site", "None", "Not sure"] },
     ],
   },
@@ -410,10 +668,14 @@ export const SECTIONS: Section[] = [
       {
         id: "statuses",
         type: "rep",
-        label: "Statuses",
+        label: "How does each type of record move through the process?",
         required: true,
-        help: "e.g. Job — In progress — work has started — next: schedule inspection.",
         addLabel: "Add status",
+        needHelp: {
+          whatToInclude: "For each record, list the statuses it can have, what each status means and what should happen next.",
+          whyWeAsk: "Statuses allow users to see progress and help the system control the next action.",
+          whoMayKnow: "The process owner, Operations Manager and day-to-day users.",
+        },
         columns: [
           { key: "recordType", header: "Record type", placeholder: "e.g. Job", width: ".8fr" },
           { key: "status", header: "Status", placeholder: "e.g. In progress", width: ".8fr" },
@@ -424,9 +686,14 @@ export const SECTIONS: Section[] = [
       {
         id: "importantDates",
         type: "rep",
-        label: "Important dates/deadlines",
+        label: "Which dates and deadlines must the system track?",
         required: true,
         addLabel: "Add date",
+        needHelp: {
+          whatToInclude: "Add important dates such as start dates, due dates, inspections, renewals, expiry dates and payment dates.",
+          whyWeAsk: "This allows the system to show upcoming work and warn users before deadlines are missed.",
+          whoMayKnow: "Project Managers, Operations, Compliance, Finance or administration staff.",
+        },
         columns: [
           { key: "dateDeadline", header: "Date/deadline", placeholder: "e.g. Licence expiry" },
           {
@@ -441,8 +708,29 @@ export const SECTIONS: Section[] = [
           { key: "timing", header: "Timing", placeholder: "e.g. 30 days before", width: ".9fr" },
         ],
       },
-      { id: "triggers", type: "long", label: "Triggers for reminders, tasks or notifications", required: true, help: "What should the system chase automatically?", placeholder: "" },
-      { id: "calculatedDates", type: "long", label: "Automatically calculated dates", help: "e.g. Expiry = issue date + 12 months.", placeholder: "" },
+      {
+        id: "triggers",
+        type: "long",
+        label: "What should the system remind people about automatically?",
+        required: true,
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Tell us what event should create the reminder, who should receive it and when it should be sent.",
+          whyWeAsk: "This helps prevent missed deadlines and removes manual chasing.",
+          whoMayKnow: "Team managers, administration staff and the people currently sending reminders.",
+        },
+      },
+      {
+        id: "calculatedDates",
+        type: "long",
+        label: "Are any dates worked out automatically?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "List any dates calculated from another date, such as an expiry date 12 months after issue.",
+          whyWeAsk: "The system may be able to calculate these dates and reduce mistakes.",
+          whoMayKnow: "Compliance, Operations, HR or the person currently calculating the dates.",
+        },
+      },
       { id: "urgentRules", type: "long", label: "Urgent/overdue rules", help: "When should something turn red?", placeholder: "" },
     ],
   },
@@ -451,14 +739,29 @@ export const SECTIONS: Section[] = [
     shortName: "Dashboards & KPIs",
     description: "Define what users need to see to manage the business.",
     questions: [
-      { id: "firstThingUsersSee", type: "long", label: "First thing users need to see", required: true, help: "When they log in on a normal morning.", placeholder: "" },
+      {
+        id: "firstThingUsersSee",
+        type: "long",
+        label: "What should users see when they first log in?",
+        required: true,
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Describe the work, warnings, figures or actions that matter most at the start of a normal day.",
+          whyWeAsk: "This helps us design a useful home screen for each type of user.",
+          whoMayKnow: "Day-to-day users and their managers.",
+        },
+      },
       {
         id: "dashboardsReports",
         type: "rep",
-        label: "Dashboards/reports",
+        label: "What dashboards or reports do you need?",
         required: true,
-        help: "One row per report, grouped by the module it belongs to.",
         addLabel: "Add report",
+        needHelp: {
+          whatToInclude: "Add one row for each dashboard or report. Tell us who needs it, what it should show, how often it is used and whether it must be downloaded.",
+          whyWeAsk: "This ensures the system provides the information people need to manage the business.",
+          whoMayKnow: "Senior management, Operations, Finance, Compliance and customers who receive reports.",
+        },
         groupRowsBy: "__group",
         groupHeadersFor: selectedModuleHeaders,
         requiredColumns: ["views"],
@@ -484,7 +787,19 @@ export const SECTIONS: Section[] = [
           { key: "exportRequired", header: "Export required", placeholder: "Yes/No", width: ".7fr" },
         ],
       },
-      { id: "kpis", type: "long", label: "KPIs/key numbers", required: true, help: "Bullet points are fine.", placeholder: "" },
+      {
+        id: "kpis",
+        type: "long",
+        label: "Which numbers do you need to monitor?",
+        required: true,
+        help: "Bullet points are fine.",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "List the figures that show whether work is on track, such as open jobs, overdue actions, turnaround time, costs or completed inspections.",
+          whyWeAsk: "These numbers can be shown on dashboards and used to measure performance.",
+          whoMayKnow: "Senior management, Finance, Operations and department managers.",
+        },
+      },
     ],
   },
   {
@@ -495,12 +810,16 @@ export const SECTIONS: Section[] = [
       {
         id: "documentsCreated",
         type: "rep",
-        label: "Documents created during the process",
-        help: "One row per document, grouped by system type.",
+        label: "Which documents should the system create?",
         addLabel: "Add other",
         getDefaultRows: blankRowPerGroup(primarySystemTypeHeaders),
         groupRowsBy: "__group",
         groupHeadersFor: primarySystemTypeHeaders,
+        needHelp: {
+          whatToInclude: "List documents the system should produce, such as quotations, job sheets, reports, certificates or invoices.",
+          whyWeAsk: "This helps us understand what information and layouts the system must generate.",
+          whoMayKnow: "The people creating the documents, administration staff, Finance or Compliance.",
+        },
         columns: [
           { key: "documentCreated", header: "Document created", placeholder: "e.g. Job completion certificate" },
           { key: "standardTemplateUsed", header: "Standard template used", placeholder: "Select", width: ".4fr", options: ["Yes", "No", "Not sure"] },
@@ -509,9 +828,13 @@ export const SECTIONS: Section[] = [
       {
         id: "templateDetails",
         type: "rep",
-        label: "Template details",
-        help: "One row per template.",
+        label: "Which existing templates should the system use?",
         addLabel: "Add template",
+        needHelp: {
+          whatToInclude: "Add each Word, Excel, PDF or other template that must be recreated or used by the new system. Tell us what it is used for and whether it needs approval.",
+          whyWeAsk: "This helps us retain the documents and layouts your business already relies on.",
+          whoMayKnow: "Administration, Compliance, Finance, Marketing or the template owner.",
+        },
         columns: [
           { key: "templateName", header: "Template name", placeholder: "" },
           { key: "format", header: "Format", placeholder: "e.g. Word", width: ".7fr" },
@@ -523,12 +846,16 @@ export const SECTIONS: Section[] = [
       {
         id: "filesToStore",
         type: "rep",
-        label: "Files to upload, store or link",
-        help: "One row per file, grouped by system type.",
+        label: "Which files will users need to attach or view?",
         addLabel: "Add other",
         getDefaultRows: blankRowPerGroup(primarySystemTypeHeaders),
         groupRowsBy: "__group",
         groupHeadersFor: primarySystemTypeHeaders,
+        needHelp: {
+          whatToInclude: "List files people need to upload, store or link to a record, such as photographs, drawings, signed forms or supplier documents.",
+          whyWeAsk: "This helps us plan where files are stored and who can access them.",
+          whoMayKnow: "Day-to-day users, project teams, administration staff or IT.",
+        },
         columns: [
           { key: "files", header: "Files", placeholder: "e.g. Site photos" },
           {
@@ -552,11 +879,15 @@ export const SECTIONS: Section[] = [
       {
         id: "repetitiveTasks",
         type: "rep",
-        label: "Repetitive tasks to automate",
-        help: "One row per task, grouped by system type.",
+        label: "Which repeated tasks should the system do automatically?",
         addLabel: "Add task",
         groupRowsBy: "__group",
         groupHeadersFor: primarySystemTypeHeaders,
+        needHelp: {
+          whatToInclude: "List tasks people currently repeat, what starts each task and what the result should be.",
+          whyWeAsk: "Automating suitable tasks can save time and reduce mistakes.",
+          whoMayKnow: "The people doing the work and their team manager.",
+        },
         columns: [
           { key: "task", header: "Task", placeholder: "e.g. Chase overdue invoices" },
           ...stakeholderAndModulesColumns(),
@@ -567,11 +898,15 @@ export const SECTIONS: Section[] = [
       {
         id: "repeatedEmails",
         type: "rep",
-        label: "Repeated emails/messages",
-        help: "One row per email/message, grouped by system type.",
+        label: "Which emails or messages are sent repeatedly?",
         addLabel: "Add email",
         groupRowsBy: "__group",
         groupHeadersFor: primarySystemTypeHeaders,
+        needHelp: {
+          whatToInclude: "Tell us what is sent, who receives it, what causes it to be sent and whether someone must approve it first.",
+          whyWeAsk: "The system may be able to prepare or send these messages automatically.",
+          whoMayKnow: "Administration, Customer Service, Operations and the people currently sending them.",
+        },
         columns: [
           { key: "message", header: "Email/Message", placeholder: "e.g. Job completion notice" },
           ...stakeholderAndModulesColumns(),
@@ -582,11 +917,15 @@ export const SECTIONS: Section[] = [
       {
         id: "repeatedDocuments",
         type: "rep",
-        label: "Repeated documents",
-        help: "One row per document, grouped by system type.",
+        label: "Which documents are created repeatedly?",
         addLabel: "Add document",
         groupRowsBy: "__group",
         groupHeadersFor: primarySystemTypeHeaders,
+        needHelp: {
+          whatToInclude: "List documents people regularly recreate, who they are for, what causes them to be created and whether approval is required.",
+          whyWeAsk: "The system may be able to create these documents automatically using information already entered.",
+          whoMayKnow: "Administration, Operations, Finance or Compliance.",
+        },
         columns: [
           { key: "document", header: "Document", placeholder: "e.g. Completion certificate" },
           ...stakeholderAndModulesColumns(),
@@ -594,14 +933,28 @@ export const SECTIONS: Section[] = [
           APPROVAL_COLUMN,
         ],
       },
-      { id: "aiWhere", type: "multi", label: "Where could AI save time?", options: ["Drafting emails", "Drafting reports", "Summarising", "Extracting", "Searching examples", "Categorising", "Notes to text", "Next actions", "Not sure", "None"] },
+      {
+        id: "aiWhere",
+        type: "multi",
+        label: "Could AI help with any of these tasks?",
+        options: ["Drafting emails", "Drafting reports", "Summarising", "Extracting", "Searching examples", "Categorising", "Notes to text", "Next actions", "Not sure", "None"],
+        needHelp: {
+          whatToInclude: "Select tasks where AI could prepare a first draft, summary or suggestion for a person to review. Select 'None' if AI is not required.",
+          whyWeAsk: "This identifies possible time-saving opportunities without assuming AI should make final decisions.",
+          whoMayKnow: "The people doing the work, their manager and the project lead.",
+        },
+      },
       {
         id: "aiNotDo",
         type: "long",
-        label: "What should AI not do?",
-        help: "Keeping control clear.",
+        label: "Where must a person remain in control?",
         placeholder: "",
         showIf: (a) => ((a.aiWhere as string[] | undefined) || []).some((x) => x !== "Not sure" && x !== "None"),
+        needHelp: {
+          whatToInclude: "List any decisions, approvals, messages or documents that AI must never complete or send without a person checking them.",
+          whyWeAsk: "This establishes clear limits and protects important business decisions.",
+          whoMayKnow: "Senior management, Compliance, Legal, HR and the relevant department manager.",
+        },
       },
     ],
   },
@@ -611,14 +964,29 @@ export const SECTIONS: Section[] = [
     description: "Understand what the new solution needs to connect with.",
     questions: [
       { id: "currentTools", type: "multi", label: "Current tools", required: true, options: ["Outlook", "Gmail", "Word", "Excel", "SharePoint", "OneDrive", "Google Drive", "Xero", "Sage", "QuickBooks", "CRM", "Planning Portal", "GIS", "Field app", "Existing database", "Spreadsheet tracker", "Other"] },
-      { id: "integrationsNeeded", type: "choice", label: "Integrations needed?", required: true, options: ["Yes", "No", "Possibly later"] },
+      {
+        id: "integrationsNeeded",
+        type: "choice",
+        label: "Does the new system need to share information with another system?",
+        required: true,
+        options: ["Yes", "No", "Possibly later"],
+        needHelp: {
+          whatToInclude: "Select 'Yes' if information must pass automatically between systems. Select 'Possibly later' if this is not required in the first version.",
+          whyWeAsk: "Connecting systems can significantly affect the project's scope, cost and timescale.",
+          whoMayKnow: "IT, Finance, your software administrator or the person responsible for the existing system.",
+        },
+      },
       {
         id: "integrations",
         type: "rep",
-        label: "Integrations",
-        help: "One row per system to connect.",
+        label: "Which systems need to be connected?",
         addLabel: "Add integration",
         showIf: (a) => a.integrationsNeeded === "Yes" || a.integrationsNeeded === "Possibly later",
+        needHelp: {
+          whatToInclude: "Add each system, what information needs to move, which direction it travels and how often it should update.",
+          whyWeAsk: "This allows us to confirm whether the connection is possible and what work will be required.",
+          whoMayKnow: "IT, your software provider, Finance or the existing system administrator.",
+        },
         columns: [
           { key: "system", header: "System", placeholder: "e.g. Xero" },
           { key: "direction", header: "Direction", placeholder: "In / out / both", width: ".8fr" },
@@ -651,14 +1019,29 @@ export const SECTIONS: Section[] = [
     shortName: "Data migration",
     description: "Understand whether historic or live data needs importing.",
     questions: [
-      { id: "migrationRequired", type: "choice", label: "Data migration required?", required: true, options: ["Yes", "No", "Possibly", "Not sure"] },
+      {
+        id: "migrationRequired",
+        type: "choice",
+        label: "Do you need existing information moved into the new system?",
+        required: true,
+        options: ["Yes", "No", "Possibly", "Not sure"],
+        needHelp: {
+          whatToInclude: "Select 'Yes' if information from spreadsheets, files or another system must be imported.",
+          whyWeAsk: "Moving existing data requires preparation, checking and additional development work.",
+          whoMayKnow: "IT, administration staff, Finance or the owner of the current system or spreadsheet.",
+        },
+      },
       {
         id: "dataSources",
         type: "rep",
-        label: "Data sources",
-        help: "One row per source.",
+        label: "Where is the existing information currently held?",
         addLabel: "Add source",
         showIf: (a) => a.migrationRequired === "Yes" || a.migrationRequired === "Possibly",
+        needHelp: {
+          whatToInclude: "Add each spreadsheet, database, folder or existing system. Include the approximate amount of information and its condition if known.",
+          whyWeAsk: "This helps us understand what can be imported and how much preparation is needed.",
+          whoMayKnow: "IT, system administrators, Finance or the people maintaining the existing information.",
+        },
         columns: [
           { key: "source", header: "Source", placeholder: "e.g. Jobs spreadsheet" },
           { key: "format", header: "Format", placeholder: "e.g. Excel", width: ".7fr" },
@@ -667,9 +1050,39 @@ export const SECTIONS: Section[] = [
           { key: "migrationPriority", header: "Migration priority", placeholder: "High / low", width: ".8fr" },
         ],
       },
-      { id: "liveJobsImport", type: "choice", label: "Live/open jobs need importing?", options: ["Yes", "No", "Not sure"] },
-      { id: "historicRecordsImport", type: "choice", label: "Historic/closed records need importing?", options: ["Yes", "No", "Possibly later"] },
-      { id: "dataQualityNotes", type: "long", label: "Data quality/mapping notes", placeholder: "" },
+      {
+        id: "liveJobsImport",
+        type: "choice",
+        label: "Should work that is still in progress be moved into the new system?",
+        options: ["Yes", "No", "Not sure"],
+        needHelp: {
+          whatToInclude: "Select the answer that best reflects whether live jobs or projects must continue in the new system after launch.",
+          whyWeAsk: "Live work may need special handling so nothing is lost or disrupted during launch.",
+          whoMayKnow: "Operations, Project Managers and administration staff.",
+        },
+      },
+      {
+        id: "historicRecordsImport",
+        type: "choice",
+        label: "Should completed or historic records be moved into the new system?",
+        options: ["Yes", "No", "Possibly later"],
+        needHelp: {
+          whatToInclude: "Select 'Possibly later' if historic information is useful but is not needed for launch.",
+          whyWeAsk: "Importing historic information can be useful, but it may add time and cost without helping day-to-day work.",
+          whoMayKnow: "Senior management, Compliance, Finance, IT or the records owner.",
+        },
+      },
+      {
+        id: "dataQualityNotes",
+        type: "long",
+        label: "Is there anything we should know about the existing information?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Tell us about missing information, duplicates, inconsistent names, old records or anything that may need cleaning.",
+          whyWeAsk: "Poor-quality information can cause problems when it is moved into the new system.",
+          whoMayKnow: "The people maintaining the data, IT or the current system administrator.",
+        },
+      },
     ],
   },
   {
@@ -677,13 +1090,86 @@ export const SECTIONS: Section[] = [
     shortName: "Security & compliance",
     description: "Capture approval, audit, access and regulatory requirements.",
     questions: [
-      { id: "complianceRequirements", type: "long", label: "Compliance/regulatory requirements", placeholder: "" },
-      { id: "approvalsRequired", type: "choice", label: "Approval/sign-off steps required?", required: true, options: ["Yes", "No", "Not sure"] },
-      { id: "approvalProcess", type: "long", label: "Approval process", help: "Who approves what, and when.", placeholder: "", showIf: (a) => a.approvalsRequired === "Yes" },
-      { id: "auditTrail", type: "choice", label: "Audit trail needed?", options: ["Yes", "No", "Not sure"] },
-      { id: "finalRecordsLocked", type: "choice", label: "Final records/documents locked?", options: ["Yes", "No", "Not sure"] },
-      { id: "businessRules", type: "long", label: "Business rules to enforce", help: "e.g. A job cannot be invoiced until it's signed off.", placeholder: "" },
-      { id: "riskIfWrong", type: "long", label: "What creates risk if wrong?", required: true, placeholder: "" },
+      {
+        id: "complianceRequirements",
+        type: "long",
+        label: "Are there any rules or standards the system must support?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "List any legal, industry, customer or internal requirements, such as ISO standards, GDPR or record-retention rules.",
+          whyWeAsk: "These requirements may affect how information is collected, approved, stored and deleted.",
+          whoMayKnow: "Compliance, HSEQ, Legal, HR, IT or your Data Protection lead.",
+        },
+      },
+      {
+        id: "approvalsRequired",
+        type: "choice",
+        label: "Does any work need to be checked or approved before it can continue?",
+        required: true,
+        options: ["Yes", "No", "Not sure"],
+        needHelp: {
+          whatToInclude: "Select 'Yes' if a person must review or approve work, documents or decisions before the next step.",
+          whyWeAsk: "Approval stages may control who can complete, issue or change important records.",
+          whoMayKnow: "Department managers, Compliance, Finance or senior management.",
+        },
+      },
+      {
+        id: "approvalProcess",
+        type: "long",
+        label: "Who needs to approve each important action?",
+        placeholder: "",
+        showIf: (a) => a.approvalsRequired === "Yes",
+        needHelp: {
+          whatToInclude: "List what needs approval, who approves it and at what point in the process.",
+          whyWeAsk: "This allows us to build the correct checks and prevent work progressing too early.",
+          whoMayKnow: "Department managers, Compliance, Finance and senior management.",
+        },
+      },
+      {
+        id: "auditTrail",
+        type: "choice",
+        label: "Do you need a record of who changed what and when?",
+        options: ["Yes", "No", "Not sure"],
+        needHelp: {
+          whatToInclude: "Select 'Yes' if the system must record changes, approvals or user actions for later review.",
+          whyWeAsk: "This may be required for compliance, accountability or investigating mistakes.",
+          whoMayKnow: "Compliance, HSEQ, Legal, Finance or IT.",
+        },
+      },
+      {
+        id: "finalRecordsLocked",
+        type: "choice",
+        label: "Should approved records or documents be locked from further changes?",
+        options: ["Yes", "No", "Not sure"],
+        needHelp: {
+          whatToInclude: "Select 'Yes' if approved or issued records must not be changed without being reopened or creating a new version.",
+          whyWeAsk: "Locking final records protects the agreed version and prevents accidental changes.",
+          whoMayKnow: "Compliance, Legal, Finance or the document owner.",
+        },
+      },
+      {
+        id: "businessRules",
+        type: "long",
+        label: "Which rules must the system prevent users from breaking?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "List any conditions that must be met before an action can happen. For example, a job cannot be invoiced until it has been approved.",
+          whyWeAsk: "These rules help prevent mistakes and keep the correct process in place.",
+          whoMayKnow: "Operations, Finance, Compliance and department managers.",
+        },
+      },
+      {
+        id: "riskIfWrong",
+        type: "long",
+        label: "Which information or actions could cause a serious problem if they are wrong?",
+        required: true,
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Identify anything that could create a safety, legal, financial, compliance or customer risk.",
+          whyWeAsk: "These areas may need additional checks, warnings or approvals.",
+          whoMayKnow: "Senior management, Compliance, HSEQ, Finance and Legal.",
+        },
+      },
     ],
   },
   {
@@ -691,11 +1177,43 @@ export const SECTIONS: Section[] = [
     shortName: "Devices & performance",
     description: "Capture how the system will be used and quality expectations.",
     questions: [
-      { id: "devicesRequired", type: "multi", label: "Devices required", required: true, options: ["Desktop/web", "Tablet", "Mobile", "Offline mobile", "Not sure"] },
-      { id: "expectedUsers", type: "number", label: "Expected users", placeholder: "e.g. 12" },
+      {
+        id: "devicesRequired",
+        type: "multi",
+        label: "Which devices will people use?",
+        required: true,
+        options: ["Desktop/web", "Tablet", "Mobile", "Offline mobile", "Not sure"],
+        needHelp: {
+          whatToInclude: "Select every device that users will need, including office computers, tablets and mobile phones. Select offline mobile if people work without a reliable signal.",
+          whyWeAsk: "Different devices and working conditions affect how the system must be designed.",
+          whoMayKnow: "Day-to-day users, site teams, Operations and IT.",
+        },
+      },
+      {
+        id: "expectedUsers",
+        type: "number",
+        label: "Approximately how many people will use the system when it launches?",
+        help: "An estimate is fine.",
+        placeholder: "e.g. 12",
+        needHelp: {
+          whatToInclude: "Enter the expected total number of users at launch.",
+          whyWeAsk: "This helps us plan access, performance, support and hosting.",
+          whoMayKnow: "HR, IT, department managers or the project lead.",
+        },
+      },
       { id: "expectedExternalUsers", type: "number", label: "Expected external users", placeholder: "e.g. 30", showIf: (a) => a.external !== "No" },
       { id: "expectedUsage", type: "choice", label: "Expected usage", options: ["Occasional", "Daily", "Heavy daily", "High-volume operational", "Not sure"] },
-      { id: "performanceExpectations", type: "long", label: "Performance/reliability expectations", placeholder: "" },
+      {
+        id: "performanceExpectations",
+        type: "long",
+        label: "When and where must the system work reliably?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Tell us about working hours, busy periods, poor-signal locations, urgent processes or any times when the system being unavailable would cause a serious problem.",
+          whyWeAsk: "This helps us plan the appropriate performance, hosting and availability.",
+          whoMayKnow: "Operations, IT, site teams and senior management.",
+        },
+      },
     ],
   },
   {
@@ -706,15 +1224,25 @@ export const SECTIONS: Section[] = [
       {
         id: "supportingLinks",
         type: "rep",
-        label: "Links",
+        label: "Add links that will help us understand the project.",
         addLabel: "Add link",
+        needHelp: {
+          whatToInclude: "Link to existing systems, shared documents, example forms or other relevant information. Do not include passwords or private login details.",
+          whyWeAsk: "Examples help us understand the current process and expected result.",
+          whoMayKnow: "The project lead, document owners, IT or department managers.",
+        },
         columns: descriptionAndLinkColumns("description", "url"),
       },
       {
         id: "documentUploads",
         type: "rep",
-        label: "Document uploads",
+        label: "Upload documents that will help us understand the project.",
         addLabel: "Add document",
+        needHelp: {
+          whatToInclude: "Add useful forms, spreadsheets, reports, process maps, screenshots or example outputs. Remove sensitive information if it is not needed.",
+          whyWeAsk: "Real examples help us scope the system accurately and avoid assumptions.",
+          whoMayKnow: "The people who use or own the documents, administration staff and department managers.",
+        },
         columns: descriptionAndLinkColumns("documentDescription", "file"),
       },
     ],
@@ -727,18 +1255,56 @@ export const SECTIONS: Section[] = [
       {
         id: "topOutcomes",
         type: "group",
-        label: "Top 3 outcomes Phase 1 must deliver",
+        label: "Final check: what are the three most important results the first version must deliver?",
         required: true,
+        needHelp: {
+          whatToInclude: "Review your earlier answers and list only the three outcomes that matter most.",
+          whyWeAsk: "These outcomes will be used to keep the first version focused.",
+          whoMayKnow: "The project sponsor, senior management and Operations Manager.",
+        },
         fields: [
           { key: "outcome1", label: "Outcome 1", placeholder: "e.g. One place to see the status of every job" },
           { key: "outcome2", label: "Outcome 2" },
           { key: "outcome3", label: "Outcome 3" },
         ],
       },
-      { id: "mustHaveFeatures", type: "long", label: "Must-have features", required: true, help: "Bullet points are fine.", placeholder: "" },
-      { id: "niceToHaveFeatures", type: "long", label: "Nice-to-have features", help: "Bullet points are fine.", placeholder: "" },
+      {
+        id: "mustHaveFeatures",
+        type: "long",
+        label: "Final check: which features must be included in the first version?",
+        required: true,
+        help: "Bullet points are fine.",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Only list features without which the first version would not be usable or successful.",
+          whyWeAsk: "These features will receive the highest priority when the scope is prepared.",
+          whoMayKnow: "The project sponsor, department managers and main users.",
+        },
+      },
+      {
+        id: "niceToHaveFeatures",
+        type: "long",
+        label: "Which features would be useful but are not essential?",
+        help: "Bullet points are fine.",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "List anything that could be delayed if the budget or timescale requires it.",
+          whyWeAsk: "This gives us flexibility while protecting the essential parts of the project.",
+          whoMayKnow: "Department managers and day-to-day users.",
+        },
+      },
       { id: "futurePhaseIdeas", type: "long", label: "Future phase ideas", help: "Bullet points are fine.", placeholder: "" },
-      { id: "outOfScope", type: "long", label: "Explicitly out of scope", placeholder: "" },
+      {
+        id: "outOfScope",
+        type: "long",
+        label: "Final check: what must not be included in the first version?",
+        placeholder: "",
+        needHelp: {
+          whatToInclude: "Confirm any features, departments, processes or integrations that should be left until later.",
+          whyWeAsk: "This prevents assumptions and makes the boundary of the project clear.",
+          whoMayKnow: "The project sponsor and department managers.",
+        },
+      },
       { id: "openQuestions", type: "long", label: "Open questions or concerns", placeholder: "" },
     ],
   },

@@ -234,6 +234,64 @@
   margin-top: 10px;
   min-height: 46px;
 }
+
+.dw-needhelp {
+  margin-top: 14px;
+}
+.dw-needhelp-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: none;
+  padding: 4px 0;
+  font: 600 14.5px var(--font-ibm-plex-sans), sans-serif;
+  color: #0fae9a;
+  cursor: pointer;
+}
+.dw-needhelp-toggle:hover {
+  color: #0b8c7c;
+}
+.dw-needhelp-caret {
+  display: inline-flex;
+  font-size: 10px;
+  transition: transform 0.2s ease;
+}
+.dw-needhelp-caret.dw-open {
+  transform: rotate(90deg);
+}
+.dw-needhelp-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+.dw-needhelp-collapse.dw-open {
+  grid-template-rows: 1fr;
+}
+.dw-needhelp-inner {
+  overflow: hidden;
+}
+.dw-needhelp-panel {
+  background: var(--dw-selected-bg);
+  border: 1px solid rgba(15, 174, 154, 0.3);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 10px 0 4px;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dw-needhelp-panel p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #0b4f45;
+}
+.dw-needhelp-label {
+  font-weight: 700;
+  color: var(--dw-selected-text);
+}
 .dw-qanswer {
   margin-top: 20px;
   display: flex;
@@ -662,18 +720,6 @@ select.dw-rinp {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.dw-skipbtn {
-  background: none;
-  border: none;
-  color: #8a93a3;
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-weight: 600;
-  font-size: 12px;
-  cursor: pointer;
-  letter-spacing: 0.06em;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
 .dw-enter {
   font-family: var(--font-jetbrains-mono), monospace;
   font-weight: 500;
@@ -722,19 +768,6 @@ select.dw-rinp {
   background: #0fae9a;
 }
 
-.dw-introli {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 16.5px;
-  color: #3a4150;
-}
-.dw-itick {
-  color: #0fae9a;
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-weight: 600;
-  font-size: 13px;
-}
 .dw-sentmsg {
   font-family: var(--font-jetbrains-mono), monospace;
   font-weight: 600;
