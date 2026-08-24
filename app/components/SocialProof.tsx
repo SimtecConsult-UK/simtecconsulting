@@ -130,8 +130,8 @@ export function SocialProof() {
               &ldquo;Joe and Andrew have been instrumental in helping us realise our vision and move our business further into the digital world. Collaboration has been key throughout the process, and with Simtec there is always someone available to help drive the next solution forward.&rdquo;
             </p>
             <div className="mt-4">
-              <p className="text-[12px] font-semibold text-white">Jonathan Evans</p>
-              <p className="text-[10px] text-white/40">Director of Operational Sales, Jacobs</p>
+              <p className="text-[12px] font-semibold text-white">Jacob Loats</p>
+              <p className="text-[10px] text-white/40">Head of Data & Visualisations, Vertase FLI</p>
             </div>
           </div>
 
@@ -201,8 +201,8 @@ export function SocialProof() {
                 &ldquo;Joe and Andrew have been instrumental in helping us realise our vision and move our business further into the digital world. Collaboration has been key throughout the process, and with Simtec there is always someone available to help drive the next solution forward.&rdquo;
               </p>
               <div className="mt-4 lg:mt-6">
-                <p className="text-[11px] font-semibold text-white lg:text-[14px]">Jonathan Evans</p>
-                <p className="text-[10px] text-white/40 lg:text-[12px]">Director of Operational Sales, Jacobs</p>
+                <p className="text-[11px] font-semibold text-white lg:text-[14px]">Jacob Loats</p>
+                <p className="text-[10px] text-white/40 lg:text-[12px]">Head of Data & Visualisations, Vertase FLI</p>
               </div>
             </div>
           </div>
