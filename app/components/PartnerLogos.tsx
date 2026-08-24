@@ -36,7 +36,7 @@ function LogoTile({ logo, isDuplicate }: { logo: (typeof logos)[number]; isDupli
         alt={isDuplicate ? "" : logo.name}
         width={logo.width}
         height={logo.height}
-        className={`w-auto object-contain ${isBadgeMark ? "max-h-9" : "max-h-8"}`}
+        className={`w-auto object-contain ${isBadgeMark ? "h-9" : "h-8"}`}
       />
     </div>
   );
