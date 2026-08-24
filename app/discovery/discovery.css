@@ -216,6 +216,31 @@
   padding: clamp(48px, 7vh, 104px) 0 40px;
 }
 
+.dw-robot-frame {
+  display: none;
+  position: absolute;
+  right: clamp(-12px, 1vw, 16px);
+  top: 0;
+  bottom: 0;
+  width: 515px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+@media (min-width: 1280px) {
+  .dw-robot-frame {
+    display: block;
+  }
+}
+.dw-robot-img {
+  pointer-events: none;
+  position: absolute;
+  left: -180px;
+  top: -114px;
+  max-width: none;
+  filter: drop-shadow(0 0 26px rgba(45, 212, 191, 0.35));
+}
+
 .dw-qtop {
   display: flex;
   flex-direction: column;

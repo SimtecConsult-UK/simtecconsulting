@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { Logo } from "../components/Logo";
 import {
   type Answers,
@@ -11,6 +12,7 @@ import {
   type Step,
   SECTIONS,
   STEPS,
+  isBottomBarVisible,
   isGeneratedRowKey,
   isQuestionComplete,
   isSectionAnswered,
@@ -118,11 +120,14 @@ export function DiscoveryWizard() {
   const [submitted, setSubmitted] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [robotTop, setRobotTop] = useState<number | null>(null);
 
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pendingSave = useRef<PersistedState | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const introHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const flushSave = useCallback(() => {
     if (!pendingSave.current) return;
@@ -306,6 +311,24 @@ export function DiscoveryWizard() {
 
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
+  // The robot graphic on the intro screen is pinned to the top of the
+  // heading text rather than a fixed offset, since the heading's position
+  // varies with viewport width (line wrapping) and the box is vertically
+  // centered. Re-measure whenever the main content area's size changes
+  // (covers window resizes and the intro heading wrapping differently).
+  useLayoutEffect(() => {
+    const mainEl = mainRef.current;
+    const headingEl = introHeadingRef.current;
+    if (!mainEl || !headingEl) return;
+    const measure = () => {
+      setRobotTop(headingEl.getBoundingClientRect().top - mainEl.getBoundingClientRect().top);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(mainEl);
+    return () => observer.disconnect();
+  }, [current?.kind]);
+
   const setAnswer = useCallback((id: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [id]: value }));
   }, []);
@@ -383,6 +406,7 @@ export function DiscoveryWizard() {
 
   const isTealScreen = current.kind === "intro" || current.kind === "sintro";
   const isCenteredBox = current.kind === "intro" || current.kind === "sintro" || current.kind === "end";
+
   // Only grouped rep tables (e.g. proposedModules) get the wider box — that's
   // the only shape `.dw-modgroups-rep` (below) actually widens further; an
   // ungrouped rep table would just stretch its plain 1fr columns unevenly.
@@ -511,9 +535,25 @@ export function DiscoveryWizard() {
         </div>
       )}
 
-      <div className="dw-main">
+      <div className="dw-main" ref={mainRef}>
+        {current.kind === "intro" && (
+          <div
+            className="dw-robot-frame"
+            aria-hidden="true"
+            style={robotTop != null ? { top: robotTop } : undefined}
+          >
+            <Image
+              src="/3.png"
+              alt=""
+              width={785}
+              height={1325}
+              className="dw-robot-img"
+            />
+          </div>
+        )}
+
         <div className={`dw-box ${isCenteredBox ? "dw-center" : "dw-anchor"}${isGroupedRepQuestion ? " dw-box-rep" : ""}`}>
-          {current.kind === "intro" && <IntroScreen onStart={next} />}
+          {current.kind === "intro" && <IntroScreen onStart={next} headingRef={introHeadingRef} />}
 
           {current.kind === "sintro" && section && (
             <SectionIntroScreen sectionNumber={current.sectionIndex + 1} section={section} onContinue={next} />
@@ -551,31 +591,41 @@ export function DiscoveryWizard() {
         </div>
       </div>
 
-      <div className="dw-bottom">
-        <span className="dw-count">{bottomLabel}</span>
-        <div style={{ display: "flex", gap: 2 }}>
-          <button className="dw-arr" style={{ borderRadius: "8px 0 0 8px" }} onClick={prev} aria-label="Previous">
-            ▲
-          </button>
-          <button
-            className="dw-arr"
-            style={{ borderRadius: "0 8px 8px 0" }}
-            onClick={next}
-            disabled={blockedForward}
-            aria-label="Next"
-          >
-            ▼
-          </button>
+      {isBottomBarVisible(current) && (
+        <div className="dw-bottom">
+          <span className="dw-count">{bottomLabel}</span>
+          <div style={{ display: "flex", gap: 2 }}>
+            <button className="dw-arr" style={{ borderRadius: "8px 0 0 8px" }} onClick={prev} aria-label="Previous">
+              ▲
+            </button>
+            <button
+              className="dw-arr"
+              style={{ borderRadius: "0 8px 8px 0" }}
+              onClick={next}
+              disabled={blockedForward}
+              aria-label="Next"
+            >
+              ▼
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
-function IntroScreen({ onStart }: { onStart: () => void }) {
+function IntroScreen({
+  onStart,
+  headingRef,
+}: {
+  onStart: () => void;
+  headingRef: RefObject<HTMLHeadingElement | null>;
+}) {
   return (
     <>
-      <h1 className="dw-h1 dw-h1-intro">Tell us how your business works and what you need the system to do.</h1>
+      <h1 ref={headingRef} className="dw-h1 dw-h1-intro">
+        Tell us how your business works and what you need the system to do.
+      </h1>
       <p className="dw-help" style={{ margin: "18px 0 32px" }}>
         This should take you around 15 minutes to complete. You do not need to use technical language. Short answers and
         bullet points are fine. If you are unsure, enter TBC. If a question does not apply, enter N/A. You can ask other
