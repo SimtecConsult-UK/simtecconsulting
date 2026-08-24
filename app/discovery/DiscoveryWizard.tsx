@@ -4,6 +4,7 @@ import { Fragment, type RefObject, useCallback, useEffect, useMemo, useRef, useS
 import { Logo } from "../components/Logo";
 import {
   type Answers,
+  type NeedHelp,
   type Question,
   type RepColumn,
   type RepRow,
@@ -572,27 +573,15 @@ export function DiscoveryWizard() {
 }
 
 function IntroScreen({ onStart }: { onStart: () => void }) {
-  const items = [
-    "Bullet points are fine",
-    "Not sure? Write TBC",
-    "Not applicable? Write N/A",
-    "Add links and files at the end",
-    "Your answers auto-save — finish any time",
-  ];
   return (
     <>
-      <h1 className="dw-h1 dw-h1-intro">Scope your project in about 15 minutes.</h1>
-      <p className="dw-help">
-        Short questions, one at a time — focus on what the system needs to help you achieve, not perfect technical wording.
+      <h1 className="dw-h1 dw-h1-intro">Tell us how your business works and what you need the system to do.</h1>
+      <p className="dw-help" style={{ margin: "18px 0 32px" }}>
+        This should take you around 15 minutes to complete. You do not need to use technical language. Short answers and
+        bullet points are fine. If you are unsure, enter TBC. If a question does not apply, enter N/A. You can ask other
+        people in your business for help. You can add useful documents and links near the end. Your answers save
+        automatically, so you can leave and return at any time.
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 11, margin: "26px 0 32px" }}>
-        {items.map((item) => (
-          <div className="dw-introli" key={item}>
-            <span className="dw-itick">✓</span>
-            {item}
-          </div>
-        ))}
-      </div>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <button className="dw-btn-teal" onClick={onStart}>
           Start →
@@ -687,6 +676,41 @@ function PillRow({
   );
 }
 
+function NeedHelpPanel({ questionId, needHelp }: { questionId: string; needHelp: NeedHelp }) {
+  const [open, setOpen] = useState(false);
+  const panelId = `dw-needhelp-${questionId}`;
+
+  return (
+    <div className="dw-needhelp">
+      <button
+        type="button"
+        className="dw-needhelp-toggle"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className={`dw-needhelp-caret${open ? " dw-open" : ""}`}>▸</span>
+        Need help?
+      </button>
+      <div className={`dw-needhelp-collapse${open ? " dw-open" : ""}`}>
+        <div className="dw-needhelp-inner">
+          <div id={panelId} className="dw-needhelp-panel" aria-hidden={!open}>
+            <p>
+              <span className="dw-needhelp-label">What to include:</span> {needHelp.whatToInclude}
+            </p>
+            <p>
+              <span className="dw-needhelp-label">Why we ask:</span> {needHelp.whyWeAsk}
+            </p>
+            <p>
+              <span className="dw-needhelp-label">Who may know:</span> {needHelp.whoMayKnow}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function QuestionScreen({
   question,
   secLabel,
@@ -717,9 +741,8 @@ function QuestionScreen({
   onNext: () => void;
 }) {
   const showOk = question.type !== "choice";
-  const showSkip = !question.required;
   const enterHint = blocked
-    ? "Answer to continue"
+    ? "Add an answer to continue"
     : question.type === "long"
       ? "Enter to continue · ⌘+Enter for new line"
       : ENTER_HINT;
@@ -730,11 +753,18 @@ function QuestionScreen({
         <div className="dw-qhead">
           <p className="dw-kick dw-kick-sec">{secLabel}</p>
           <span className={`dw-reqtag ${question.required ? "dw-req1" : "dw-req0"}`}>
-            {question.required ? "Required" : "Optional · TBC is fine"}
+            {question.required ? "Required" : "Optional"}
           </span>
         </div>
         <h2 className="dw-h1 dw-qtitle">{question.label}</h2>
-        <p className="dw-help dw-qhelp">{question.help || ""}</p>
+        {question.needHelp ? (
+          <>
+            {question.help && <p className="dw-help">{question.help}</p>}
+            <NeedHelpPanel questionId={question.id} needHelp={question.needHelp} />
+          </>
+        ) : (
+          <p className="dw-help dw-qhelp">{question.help || ""}</p>
+        )}
       </div>
 
       <div className="dw-qanswer">
@@ -842,15 +872,10 @@ function QuestionScreen({
         {showOk && (
           <>
             <button className="dw-btn" onClick={onNext} disabled={blocked}>
-              OK ✓
+              Continue ✓
             </button>
             <span className="dw-enter">{enterHint}</span>
           </>
-        )}
-        {showSkip && (
-          <button className="dw-skipbtn" onClick={onNext}>
-            SKIP — TBC
-          </button>
         )}
       </div>
     </>
@@ -1106,25 +1131,20 @@ function EndScreen({
   return (
     <>
       <p className="dw-kick dw-kick-lone">Final step</p>
-      <h2 className="dw-h1 dw-h1-sintro">That&rsquo;s everything we need.</h2>
+      <h2 className="dw-h1 dw-h1-sintro">You&rsquo;ve completed the discovery questionnaire.</h2>
       <p className="dw-help">
-        Use the ▲ arrow to review any answer. When you&rsquo;re ready, confirm below and we&rsquo;ll prepare your Phase 1 scope
-        and workshop agenda.
+        Please review your answers before submitting them. We&rsquo;ll use this information to prepare a draft Phase 1
+        scope and a focused workshop agenda. Your answers are a starting point for discussion. The final scope, price and
+        delivery timescale will be agreed separately.
       </p>
       <div className="dw-consent" onClick={onToggleConsent}>
         <span className={`dw-cbx${consent ? " dw-on" : ""}`}>✓</span>
-        <span>
-          <strong>Consent to prepare Phase 1 scope</strong> — I&rsquo;m happy for Simtec to prepare a Phase 1 scope and
-          workshop agenda from these answers.
-        </span>
+        <span>I&rsquo;m happy for Simtec to use these answers to prepare a draft Phase 1 scope and workshop agenda.</span>
       </div>
       {!submitted ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <button className={`dw-btn-teal${consent ? "" : " dw-dis"}`} onClick={onSubmit} disabled={!consent}>
-            Submit &amp; book workshop →
-          </button>
-          <span className="dw-enter">We reply within one working day</span>
-        </div>
+        <button className={`dw-btn-teal${consent ? "" : " dw-dis"}`} onClick={onSubmit} disabled={!consent}>
+          Submit &amp; book workshop →
+        </button>
       ) : (
         <div className="dw-sentmsg">✓ SENT — WE&rsquo;LL REPLY WITHIN ONE WORKING DAY.</div>
       )}
