@@ -20,6 +20,10 @@ const logos = [
 ];
 
 function LogoTile({ logo, isDuplicate }: { logo: (typeof logos)[number]; isDuplicate: boolean }) {
+  // Squarish icon/badge marks (vs. wide wordmarks) render tiny under a flat height cap,
+  // leaving them looking lost in the fixed side padding — give them a bit more height to compensate.
+  const isBadgeMark = logo.width / logo.height < 2;
+
   return (
     <div
       key={isDuplicate ? `${logo.name}-dup` : logo.name}
@@ -32,7 +36,7 @@ function LogoTile({ logo, isDuplicate }: { logo: (typeof logos)[number]; isDupli
         alt={isDuplicate ? "" : logo.name}
         width={logo.width}
         height={logo.height}
-        className="max-h-8 w-auto object-contain"
+        className={`w-auto object-contain ${isBadgeMark ? "max-h-9" : "max-h-8"}`}
       />
     </div>
   );
