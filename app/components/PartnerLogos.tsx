@@ -3,9 +3,9 @@ import { TickerFades } from "./TickerFades";
 
 const logos = [
   { name: "Balfour Beatty", src: "/logos/balfour-beatty.png", width: 500, height: 83 },
-  { name: "Booth Group", src: "/logos/booth-group.png", width: 185, height: 96 },
-  { name: "Collins", src: "/logos/collins.png", width: 259, height: 107 },
-  { name: "Ecofficiency", src: "/logos/ecofficiency.png", width: 500, height: 113 },
+  { name: "Booth Group", src: "/logos/booth-group.png", width: 183, height: 96 },
+  { name: "Collins", src: "/logos/collins.png", width: 600, height: 211 },
+  { name: "Ecofficiency", src: "/logos/ecofficiency.png", width: 484, height: 99 },
   { name: "Eurofins", src: "/logos/eurofins.png", width: 500, height: 102 },
   { name: "RRM", src: "/logos/rrm.svg", width: 417, height: 62 },
   { name: "SoilEx", src: "/logos/soilex.png", width: 225, height: 111 },
@@ -15,16 +15,15 @@ const logos = [
   { name: "Geotechnical", src: "/logos/geotechnical.png", width: 159, height: 96 },
   { name: "Jackson Drilling", src: "/logos/jackson-drilling.svg", width: 519, height: 171 },
   { name: "Jackson Geo Services", src: "/logos/jackson-geo-services.svg", width: 470, height: 166 },
-  { name: "CL:AIRE", src: "/logos/claire.png", width: 246, height: 70 },
   { name: "Murray Environmental", src: "/logos/murray-environmental.png", width: 181, height: 96 },
-  { name: "Prichard's", src: "/logos/prichards.png", width: 500, height: 91 },
+  { name: "Prichard's", src: "/logos/prichards.png", width: 567, height: 65 },
 ];
 
 function LogoTile({ logo, isDuplicate }: { logo: (typeof logos)[number]; isDuplicate: boolean }) {
   return (
     <div
       key={isDuplicate ? `${logo.name}-dup` : logo.name}
-      className="flex h-10 w-40 flex-shrink-0 items-center justify-center px-3 opacity-80"
+      className="flex h-10 flex-shrink-0 items-center px-6 opacity-80"
       aria-label={isDuplicate ? undefined : logo.name}
       aria-hidden={isDuplicate || undefined}
     >
@@ -33,7 +32,7 @@ function LogoTile({ logo, isDuplicate }: { logo: (typeof logos)[number]; isDupli
         alt={isDuplicate ? "" : logo.name}
         width={logo.width}
         height={logo.height}
-        className="max-h-8 w-auto max-w-full object-contain"
+        className="max-h-8 w-auto object-contain"
       />
     </div>
   );

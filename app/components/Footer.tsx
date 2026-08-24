@@ -28,6 +28,14 @@ export function Footer() {
               className="w-[300px] h-auto object-contain"
               style={{ filter: "grayscale(1)", mixBlendMode: "multiply" }}
             />
+            <Image
+              src="/logos/claire.png"
+              alt="CL:AIRE - Leading Sustainable Land Reuse"
+              width={246}
+              height={70}
+              className="w-[160px] h-auto object-contain"
+              style={{ filter: "invert(1)" }}
+            />
           </div>
         </div>
 
