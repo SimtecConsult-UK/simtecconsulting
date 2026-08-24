@@ -1339,6 +1339,12 @@ export function isSectionJumpVisible(step: Step): boolean {
   return !(step.kind === "intro" || (step.kind === "sintro" && step.sectionIndex === 0));
 }
 
+// The opening screen has its own "Start →" button, so the count/prev-next
+// bar would be redundant there.
+export function isBottomBarVisible(step: Step): boolean {
+  return step.kind !== "intro";
+}
+
 const MULTI_ANSWER_QUESTION_IDS = new Set(
   SECTIONS.flatMap((s) => s.questions).filter((q) => q.type === "multi" || q.type === "groupedMulti").map((q) => q.id)
 );
