@@ -53,8 +53,16 @@ export function DiscoveryBrief({
               Print
             </button>
             {!submitted ? (
-              <button className="dw-tbtn dw-tbtn-teal" onClick={() => (consent ? onSubmit() : onClose())}>
-                Looks right — submit →
+              // Consent lives on the review sheet behind this preview, so the
+              // button says what's missing instead of looking broken when it's
+              // clicked without it.
+              <button
+                className="dw-tbtn dw-tbtn-teal"
+                onClick={onSubmit}
+                disabled={!consent}
+                title={consent ? undefined : "Tick the consent box on the review screen"}
+              >
+                {consent ? "Looks right — submit →" : "Tick consent to submit"}
               </button>
             ) : (
               <span className="dw-tbtn dw-tbtn-teal dw-tbtn-static">✓ Sent</span>
