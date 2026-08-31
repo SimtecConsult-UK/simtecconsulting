@@ -22,6 +22,7 @@ import {
   isQuestionComplete,
   isSectionAnswered,
   isSectionJumpVisible,
+  isSectionRequiredComplete,
   isStepVisible,
   padSectionNumber,
   reconcileDynamicMultiAnswers,
@@ -276,7 +277,7 @@ export function DiscoveryWizard() {
       // depends on an earlier answer (e.g. a dropdown fed by modules chosen
       // in "Scope & modules") can be reached in a broken, unusable state.
       // Redirect to that earlier section instead of the requested target.
-      const firstIncompleteSection = SECTIONS.findIndex((sec) => !isSectionAnswered(sec, answers, repRows));
+      const firstIncompleteSection = SECTIONS.findIndex((sec) => !isSectionRequiredComplete(sec, answers, repRows));
       const resolvedSectionIndex =
         firstIncompleteSection !== -1 && firstIncompleteSection < sectionIndex ? firstIncompleteSection : sectionIndex;
       const target =
