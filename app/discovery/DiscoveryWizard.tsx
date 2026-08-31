@@ -3,6 +3,8 @@
 import { Fragment, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Logo } from "../components/Logo";
+import { DiscoveryBrief } from "./DiscoveryBrief";
+import { ReviewSheet } from "./ReviewSheet";
 import {
   type Answers,
   type NeedHelp,
@@ -12,12 +14,16 @@ import {
   type Step,
   SECTIONS,
   STEPS,
+  buildReviewData,
+  cellArray,
+  cellText,
   isBottomBarVisible,
   isGeneratedRowKey,
   isQuestionComplete,
   isSectionAnswered,
   isSectionJumpVisible,
   isStepVisible,
+  padSectionNumber,
   reconcileDynamicMultiAnswers,
   reconcileRepRows,
   sanitizeAnswers,
@@ -75,16 +81,6 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-// RepRow cells are string for most columns, string[] for multiSelect ones —
-// these normalize a cell to the shape the caller expects instead of
-// scattering `as string`/`as string[]` casts at each read site.
-function cellText(value: string | string[] | undefined): string {
-  return typeof value === "string" ? value : "";
-}
-function cellArray(value: string | string[] | undefined): string[] {
-  return Array.isArray(value) ? value : [];
-}
-
 // Closes a popover/flyout on any click outside `ref` — shared by the
 // section-jump flyout and the rep-table multi-select cell, both of which
 // need "click elsewhere to dismiss" without swallowing the closing click.
@@ -108,10 +104,6 @@ const MINUTES_PER_QUESTION = 0.6;
 // sintro screen), before any of its questions have been answered.
 const MIN_SECTION_FILL_PCT = 8;
 
-function padSectionNumber(sectionIndex: number) {
-  return String(sectionIndex + 1).padStart(2, "0");
-}
-
 export function DiscoveryWizard() {
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
@@ -121,6 +113,12 @@ export function DiscoveryWizard() {
   const [hydrated, setHydrated] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [robotTop, setRobotTop] = useState<number | null>(null);
+  // "brief" (the download/print view) only ever opens from within "review"
+  // (the review sheet's "Download a copy" button), so a single three-state
+  // value — rather than two independent booleans — is what the actual state
+  // space is: there's no such thing as the brief being open with the sheet
+  // closed.
+  const [overlay, setOverlay] = useState<"none" | "review" | "brief">("none");
 
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -221,6 +219,15 @@ export function DiscoveryWizard() {
     return map;
   }, [repRows, answers]);
 
+  // Built once here (rather than separately inside each of the review sheet
+  // and discovery brief) so switching between them — "Download a copy" and
+  // back — reuses the same transcript instead of re-deriving it from
+  // scratch on every open.
+  const reviewSections = useMemo(
+    () => buildReviewData(answers, reconciledRepRows),
+    [answers, reconciledRepRows]
+  );
+
   const currentIndex = clamp(idx, 0, visibleSteps.length - 1);
   const current = visibleSteps[currentIndex];
   const currentRows = current?.kind === "question" ? getRows(current.question) : [];
@@ -287,9 +294,17 @@ export function DiscoveryWizard() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toUpperCase();
+      // The review sheet/brief overlay (rendered on top of the wizard) owns
+      // Escape and its own close behavior while open — this listener just
+      // has to stay out of its way, so every wizard shortcut is a no-op
+      // rather than silently navigating the wizard underneath it.
+      if (overlay !== "none") return;
       if (e.key === "Escape" && navOpen) {
         e.preventDefault();
         setNavOpen(false);
+      } else if (e.key === "Enter" && current?.kind === "end" && !submitted && tag !== "BUTTON") {
+        e.preventDefault();
+        setOverlay("review");
       } else if (e.key === "Enter" && tag !== "BUTTON" && !(tag === "TEXTAREA" && (e.metaKey || e.ctrlKey || e.shiftKey))) {
         e.preventDefault();
         nav(1);
@@ -303,11 +318,28 @@ export function DiscoveryWizard() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [nav, navOpen]);
+  }, [nav, navOpen, overlay, current, submitted]);
 
   // Close the jump flyout on any click outside it, so it doesn't sit on top
   // of the page intercepting clicks meant for the content underneath.
   useClickOutside(navRef, navOpen, () => setNavOpen(false));
+
+  // Closes the review overlay and jumps the wizard to the given question —
+  // shared by the review sheet's "EDIT ↗" row action.
+  const jumpToQuestion = useCallback(
+    (question: Question) => {
+      const target = visibleSteps.findIndex((step) => step.kind === "question" && step.question.id === question.id);
+      if (target < 0) return;
+      clearTimeout(advanceTimer.current);
+      setOverlay("none");
+      setIdx(target);
+    },
+    [visibleSteps]
+  );
+
+  const handleSubmit = useCallback(() => {
+    if (consent) setSubmitted(true);
+  }, [consent]);
 
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
@@ -463,6 +495,7 @@ export function DiscoveryWizard() {
       : `QUESTION ${qNum} OF ${qTotal}`;
 
   return (
+    <>
     <div className={`dw-wiz${isTealScreen ? " dw-teal" : ""}`}>
       <div className="dw-glow" />
 
@@ -578,16 +611,7 @@ export function DiscoveryWizard() {
             />
           )}
 
-          {current.kind === "end" && (
-            <EndScreen
-              consent={consent}
-              submitted={submitted}
-              onToggleConsent={() => setConsent((c) => !c)}
-              onSubmit={() => {
-                if (consent) setSubmitted(true);
-              }}
-            />
-          )}
+          {current.kind === "end" && <EndScreen submitted={submitted} onReview={() => setOverlay("review")} />}
         </div>
       </div>
 
@@ -610,7 +634,32 @@ export function DiscoveryWizard() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      {overlay === "review" && (
+        <ReviewSheet
+          answers={answers}
+          sections={reviewSections}
+          consent={consent}
+          submitted={submitted}
+          onClose={() => setOverlay("none")}
+          onEditQuestion={jumpToQuestion}
+          onDownload={() => setOverlay("brief")}
+          onToggleConsent={() => setConsent((c) => !c)}
+          onSubmit={handleSubmit}
+        />
+      )}
+      {overlay === "brief" && (
+        <DiscoveryBrief
+          answers={answers}
+          sections={reviewSections}
+          consent={consent}
+          submitted={submitted}
+          onClose={() => setOverlay("review")}
+          onSubmit={handleSubmit}
+        />
+      )}
+    </>
   );
 }
 
@@ -1168,15 +1217,11 @@ function MultiSelectCell({
 }
 
 function EndScreen({
-  consent,
   submitted,
-  onToggleConsent,
-  onSubmit,
+  onReview,
 }: {
-  consent: boolean;
   submitted: boolean;
-  onToggleConsent: () => void;
-  onSubmit: () => void;
+  onReview: () => void;
 }) {
   return (
     <>
@@ -1187,16 +1232,15 @@ function EndScreen({
         scope and a focused workshop agenda. Your answers are a starting point for discussion. The final scope, price and
         delivery timescale will be agreed separately.
       </p>
-      <div className="dw-consent" onClick={onToggleConsent}>
-        <span className={`dw-cbx${consent ? " dw-on" : ""}`}>✓</span>
-        <span>I&rsquo;m happy for Simtec to use these answers to prepare a draft Phase 1 scope and workshop agenda.</span>
-      </div>
       {!submitted ? (
-        <button className={`dw-btn-teal${consent ? "" : " dw-dis"}`} onClick={onSubmit} disabled={!consent}>
-          Submit &amp; book workshop →
-        </button>
+        <div className="dw-endaction">
+          <button className="dw-btn-teal" onClick={onReview}>
+            Review all answers →
+          </button>
+          <span className="dw-enter">{ENTER_HINT}</span>
+        </div>
       ) : (
-        <div className="dw-sentmsg">✓ SENT — WE&rsquo;LL REPLY WITHIN ONE WORKING DAY.</div>
+        <div className="dw-sentmsg dw-endaction">✓ SENT — WE&rsquo;LL REPLY WITHIN ONE WORKING DAY.</div>
       )}
     </>
   );

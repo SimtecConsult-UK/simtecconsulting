@@ -1480,7 +1480,7 @@ export function reconcileDynamicMultiAnswers(answers: Answers): Answers {
   return changed ? next : answers;
 }
 
-function hasText(value: string | string[] | undefined): boolean {
+export function hasText(value: string | string[] | undefined): boolean {
   if (Array.isArray(value)) return value.length > 0;
   return typeof value === "string" && value.trim().length > 0;
 }
@@ -1541,7 +1541,7 @@ export function reconcileRepRows(question: Question, answers: Answers, saved: Re
 
 // `__`-prefixed keys (`__key`, `__group`, …) are structural bookkeeping the
 // renderer needs, not user-typed content, and never count toward "answered".
-function hasNonKeyValue(row: RepRow): boolean {
+export function hasNonKeyValue(row: RepRow): boolean {
   return Object.entries(row).some(([key, value]) => !key.startsWith("__") && hasText(value));
 }
 
@@ -1554,6 +1554,21 @@ export function isRepFullyAnswered(question: Question, rows: RepRow[]): boolean 
     return rows.length > 0 && rows.every((row) => question.requiredColumns!.every((key) => hasText(row[key])));
   }
   return rows.some(hasNonKeyValue);
+}
+
+// A `groupedMulti` question's options are scoped to whichever `filterBy`
+// groups are currently selected (e.g. only modules under a chosen system
+// type) — this is the one calculation both "is it answered" and "what do we
+// show in review" need, so it's shared instead of each re-deriving it.
+// Returns null when the question has no `filterBy` (every option is always
+// visible, so there's nothing to filter against).
+function groupedMultiVisibleOptions(question: Question, answers: Answers): Set<string> | null {
+  if (!question.filterBy) return null;
+  return new Set(
+    (question.groups || [])
+      .filter((g) => ((answers[question.filterBy!] as string[] | undefined) || []).includes(g.header))
+      .flatMap((g) => g.options)
+  );
 }
 
 // Shared answered-check for a question given its (already-resolved, for rep
@@ -1581,19 +1596,14 @@ export function isQuestionComplete(question: Question, answers: Answers, rows: R
     case "groupedMulti": {
       const value = (answers[question.id] as string[] | undefined) || [];
       if (value.length === 0) return false;
-      if (!question.filterBy) return true;
+      const visibleOptions = groupedMultiVisibleOptions(question, answers);
       // A selection only counts if it's still one of the currently-visible
       // options — `filterBy` (e.g. which systems are picked) isn't pruned
       // from this answer when it changes later, so without this a stale
       // selection from a since-deselected group would still read as
       // "answered" even though nothing the user can currently see is
       // actually selected.
-      const visibleOptions = new Set(
-        (question.groups || [])
-          .filter((g) => ((answers[question.filterBy!] as string[] | undefined) || []).includes(g.header))
-          .flatMap((g) => g.options)
-      );
-      return value.some((v) => visibleOptions.has(v));
+      return !visibleOptions || value.some((v) => visibleOptions.has(v));
     }
     case "group":
       return (question.fields || []).some((field) => hasText(answers[`${question.id}.${field.key}`] as string | undefined));
@@ -1629,4 +1639,99 @@ export function isSectionAnswered(
   return requiredQuestions.length > 0
     ? toCheck.every((q) => isQuestionAnswered(q, answers, repRows))
     : toCheck.some((q) => isQuestionAnswered(q, answers, repRows));
+}
+
+// --- Review sheet / discovery brief -----------------------------------
+
+// Shared display formatting — used by the wizard's own section nav as well
+// as the review sheet (1a) and discovery brief (1c).
+export function padSectionNumber(sectionIndex: number): string {
+  return String(sectionIndex + 1).padStart(2, "0");
+}
+
+// RepRow cells are string for most columns, string[] for multiSelect ones —
+// these normalize a cell to the shape the caller expects instead of
+// scattering `as string`/`as string[]` casts at each read site.
+export function cellText(value: string | string[] | undefined): string {
+  return typeof value === "string" ? value : "";
+}
+export function cellArray(value: string | string[] | undefined): string[] {
+  return Array.isArray(value) ? value : [];
+}
+
+// How a single question's current answer should render in the review sheet
+// (1a) and the discovery brief (1c) — both read this the same way, so the
+// two views never disagree about what counts as "skipped".
+export type ReviewValue =
+  | { kind: "text"; text: string }
+  | { kind: "chips"; chips: string[] }
+  | { kind: "table"; columns: RepColumn[]; rows: RepRow[] }
+  | { kind: "skipped" };
+
+// `repRows` here should be the *reconciled* map (rows already synced against
+// `answers` for every `getDefaultRows` question) — see `reconciledRepRows` in
+// DiscoveryWizard.tsx — since a rep question's generated rows can otherwise
+// lag behind an answer that was just changed.
+export function getReviewValue(question: Question, answers: Answers, repRows: Record<string, RepRow[]>): ReviewValue {
+  switch (question.type) {
+    case "text":
+    case "number":
+    case "long":
+    case "choice": {
+      const text = (answers[question.id] as string | undefined) || "";
+      return hasText(text) ? { kind: "text", text } : { kind: "skipped" };
+    }
+    case "multi": {
+      const chips = (answers[question.id] as string[] | undefined) || [];
+      return chips.length > 0 ? { kind: "chips", chips } : { kind: "skipped" };
+    }
+    case "groupedMulti": {
+      const selected = (answers[question.id] as string[] | undefined) || [];
+      // Drop any selection whose group is no longer visible (its
+      // `filterBy` source was since deselected) — same rule
+      // `isQuestionComplete` uses to decide "answered".
+      const visibleOptions = groupedMultiVisibleOptions(question, answers);
+      const chips = visibleOptions ? selected.filter((v) => visibleOptions.has(v)) : selected;
+      return chips.length > 0 ? { kind: "chips", chips } : { kind: "skipped" };
+    }
+    case "group": {
+      const parts = (question.fields || [])
+        .map((field) => (answers[`${question.id}.${field.key}`] as string | undefined) || "")
+        .filter(hasText);
+      return parts.length > 0 ? { kind: "text", text: parts.join(" · ") } : { kind: "skipped" };
+    }
+    case "rep": {
+      // `repRows` is already the reconciled map (see the note above), so
+      // there's no need to run it through `reconcileRepRows` a second time.
+      const rows = (repRows[question.id] || []).filter(hasNonKeyValue);
+      return rows.length > 0 ? { kind: "table", columns: question.columns || [], rows } : { kind: "skipped" };
+    }
+    default:
+      return { kind: "skipped" };
+  }
+}
+
+export type ReviewItem = { question: Question; value: ReviewValue };
+
+export type ReviewSectionData = {
+  section: Section;
+  sectionIndex: number;
+  items: ReviewItem[];
+  total: number;
+  answeredCount: number;
+  tbcCount: number;
+};
+
+// Full transcript for the review sheet (1a) and discovery brief (1c): every
+// section, in wizard order, with only its currently-visible questions (a
+// hidden `showIf` question is excluded exactly as it is from the wizard's
+// own navigation) and each question's renderable value.
+export function buildReviewData(answers: Answers, repRows: Record<string, RepRow[]>): ReviewSectionData[] {
+  return SECTIONS.map((section, sectionIndex) => {
+    const items = section.questions
+      .filter((q) => !q.showIf || q.showIf(answers))
+      .map((question) => ({ question, value: getReviewValue(question, answers, repRows) }));
+    const tbcCount = items.filter((i) => i.value.kind === "skipped").length;
+    return { section, sectionIndex, items, total: items.length, answeredCount: items.length - tbcCount, tbcCount };
+  });
 }
