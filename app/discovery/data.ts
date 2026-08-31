@@ -1641,6 +1641,19 @@ export function isSectionAnswered(
     : toCheck.some((q) => isQuestionAnswered(q, answers, repRows));
 }
 
+// Unlike `isSectionAnswered`, a section with no required questions is always
+// considered complete here — used to gate forward navigation, where an
+// all-optional section (e.g. "Supporting documents") must never block a jump
+// to a later section just because nothing in it has been filled in yet.
+export function isSectionRequiredComplete(
+  section: Section,
+  answers: Answers,
+  repRows: Record<string, RepRow[]>
+): boolean {
+  const requiredQuestions = section.questions.filter((q) => (!q.showIf || q.showIf(answers)) && q.required);
+  return requiredQuestions.every((q) => isQuestionAnswered(q, answers, repRows));
+}
+
 // --- Review sheet / discovery brief -----------------------------------
 
 // Shared display formatting — used by the wizard's own section nav as well
