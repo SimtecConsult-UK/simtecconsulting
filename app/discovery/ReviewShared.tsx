@@ -4,7 +4,7 @@
 // surrounding layout (a `.dw-qrow` grid vs. a `.dw-dl` definition list).
 
 import { Fragment, useEffect } from "react";
-import { type RepColumn, type RepRow, type ReviewValue, cellArray, cellText } from "./data";
+import { type RepColumn, type RepRow, type ReviewValue, UNGROUPED_ROWS_HEADER, cellArray, cellText } from "./data";
 
 // Both overlays are full-screen and modal over the wizard behind them, so
 // each locks body scroll for as long as it's mounted — mount/unmount already
@@ -43,7 +43,23 @@ function cellDisplay(column: RepColumn, row: RepRow): string {
   return text || "—";
 }
 
-export function ReviewTable({ columns, rows }: { columns: RepColumn[]; rows: RepRow[] }) {
+// Rows in first-appearance order, split into the same buckets the wizard's own
+// table shows for a `groupRowsBy` repeater (see DiscoveryWizard's RepTable).
+// An ungrouped table is one headerless bucket, so the render below has a
+// single path either way.
+function groupRows(rows: RepRow[], groupBy?: string): { header: string | null; rows: RepRow[] }[] {
+  if (!groupBy) return [{ header: null, rows }];
+  const groups: { header: string; rows: RepRow[] }[] = [];
+  rows.forEach((row) => {
+    const header = cellText(row[groupBy]) || UNGROUPED_ROWS_HEADER;
+    const existing = groups.find((g) => g.header === header);
+    if (existing) existing.rows.push(row);
+    else groups.push({ header, rows: [row] });
+  });
+  return groups;
+}
+
+export function ReviewTable({ columns, rows, groupBy }: { columns: RepColumn[]; rows: RepRow[]; groupBy?: string }) {
   return (
     <table className="dw-tbl">
       <thead>
@@ -54,12 +70,21 @@ export function ReviewTable({ columns, rows }: { columns: RepColumn[]; rows: Rep
         </tr>
       </thead>
       <tbody>
-        {rows.map((row, i) => (
-          <tr key={cellText(row.__key) || i}>
-            {columns.map((c) => (
-              <td key={c.key}>{cellDisplay(c, row)}</td>
+        {groupRows(rows, groupBy).map((group) => (
+          <Fragment key={group.header ?? ""}>
+            {group.header && (
+              <tr className="dw-tgrp">
+                <td colSpan={columns.length}>{group.header}</td>
+              </tr>
+            )}
+            {group.rows.map((row, i) => (
+              <tr key={cellText(row.__key) || `${group.header ?? ""}:${i}`}>
+                {columns.map((c) => (
+                  <td key={c.key}>{cellDisplay(c, row)}</td>
+                ))}
+              </tr>
             ))}
-          </tr>
+          </Fragment>
         ))}
       </tbody>
     </table>
@@ -81,7 +106,7 @@ export function ReviewValueView({ value }: { value: ReviewValue }) {
         </Fragment>
       );
     case "table":
-      return <ReviewTable columns={value.columns} rows={value.rows} />;
+      return <ReviewTable columns={value.columns} rows={value.rows} groupBy={value.groupBy} />;
     case "skipped":
       return <span className="dw-tbc">NOT ANSWERED — TBC</span>;
   }

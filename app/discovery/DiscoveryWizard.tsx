@@ -14,6 +14,7 @@ import {
   type Step,
   SECTIONS,
   STEPS,
+  UNGROUPED_ROWS_HEADER,
   buildReviewData,
   cellArray,
   cellText,
@@ -1150,7 +1151,7 @@ function RepTable({
   const groups = new Map<string, number[]>();
   (question.groupHeadersFor?.(answers) || []).forEach((header) => groups.set(header, []));
   rows.forEach((row, rowIndex) => {
-    const header = cellText(row[groupBy]) || "Other modules";
+    const header = cellText(row[groupBy]) || UNGROUPED_ROWS_HEADER;
     if (!groups.has(header)) groups.set(header, []);
     groups.get(header)!.push(rowIndex);
   });

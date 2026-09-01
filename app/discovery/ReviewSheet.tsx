@@ -101,7 +101,9 @@ export function ReviewSheet({
               >
                 <span className={`dw-raildot${s.tbcCount > 0 ? " dw-miss" : ""}`} />
                 {s.section.shortName}
-                <span className="dw-railcnt">{s.answeredCount > 0 ? s.total : `${s.tbcCount} TBC`}</span>
+                <span className="dw-railcnt">
+                  {s.answeredCount}/{s.total}
+                </span>
               </div>
             ))}
           </div>

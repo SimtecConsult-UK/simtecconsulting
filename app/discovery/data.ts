@@ -1656,6 +1656,11 @@ export function isSectionRequiredComplete(
 
 // --- Review sheet / discovery brief -----------------------------------
 
+// Group heading for a grouped repeater row that has no group of its own —
+// shared so the wizard's table, the review sheet and the brief all bucket
+// stray rows under the same label.
+export const UNGROUPED_ROWS_HEADER = "Other modules";
+
 // Shared display formatting — used by the wizard's own section nav as well
 // as the review sheet (1a) and discovery brief (1c).
 export function padSectionNumber(sectionIndex: number): string {
@@ -1678,7 +1683,7 @@ export function cellArray(value: string | string[] | undefined): string[] {
 export type ReviewValue =
   | { kind: "text"; text: string }
   | { kind: "chips"; chips: string[] }
-  | { kind: "table"; columns: RepColumn[]; rows: RepRow[] }
+  | { kind: "table"; columns: RepColumn[]; rows: RepRow[]; groupBy?: string }
   | { kind: "skipped" };
 
 // `repRows` here should be the *reconciled* map (rows already synced against
@@ -1717,7 +1722,14 @@ export function getReviewValue(question: Question, answers: Answers, repRows: Re
       // `repRows` is already the reconciled map (see the note above), so
       // there's no need to run it through `reconcileRepRows` a second time.
       const rows = (repRows[question.id] || []).filter(hasNonKeyValue);
-      return rows.length > 0 ? { kind: "table", columns: question.columns || [], rows } : { kind: "skipped" };
+      // `groupRowsBy` names a row key that is deliberately *not* one of the
+      // visible `columns` (it's `__group` bookkeeping), so the grouping the
+      // wizard renders has to be carried through explicitly — otherwise rows
+      // from different groups (e.g. modules under two different system types)
+      // collapse into one undifferentiated table here and in the brief.
+      return rows.length > 0
+        ? { kind: "table", columns: question.columns || [], rows, groupBy: question.groupRowsBy }
+        : { kind: "skipped" };
     }
     default:
       return { kind: "skipped" };
