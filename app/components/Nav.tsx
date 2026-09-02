@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useScrollEffect } from "../hooks/useScrollEffect";
 import { ROUTES, SECTION_IDS } from "../lib/sections";
 
@@ -11,7 +12,14 @@ const links = [
   { label: "Testimonials", href: `#${SECTION_IDS.testimonials}` },
 ];
 
-export function Nav() {
+type NavProps = {
+  /** Force the scrolled (opaque) treatment. Needed on the light legal pages,
+      where the transparent bar would leave the white logo invisible. */
+  solid?: boolean;
+};
+
+export function Nav({ solid = false }: NavProps) {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -19,6 +27,12 @@ export function Nav() {
   const prevFocusRef = useRef<HTMLElement | null>(null);
 
   useScrollEffect(() => setScrolled(window.scrollY > 12));
+
+  // The section links are same-page anchors on the homepage and cross-page
+  // links everywhere else.
+  const onHome = pathname === "/";
+  const sectionHref = (href: string) => (onHome ? href : `/${href}`);
+  const opaque = solid || scrolled;
 
   // Scroll lock that works on iOS Safari: position:fixed + saved scroll offset.
   // Also saves/restores the previous overflow value so other overlays aren't clobbered.
@@ -80,10 +94,10 @@ export function Nav() {
         className="fixed top-0 left-0 right-0 z-50"
         style={{
           transition: "background 300ms ease, border-color 300ms ease, backdrop-filter 300ms ease",
-          background: scrolled ? "rgba(11,10,12,0.86)" : "transparent",
-          backdropFilter: scrolled ? "blur(14px)" : "none",
-          WebkitBackdropFilter: scrolled ? "blur(14px)" : "none",
-          borderBottom: scrolled ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
+          background: solid ? "#1b1b1d" : opaque ? "rgba(11,10,12,0.86)" : "transparent",
+          backdropFilter: !solid && opaque ? "blur(14px)" : "none",
+          WebkitBackdropFilter: !solid && opaque ? "blur(14px)" : "none",
+          borderBottom: opaque ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
         }}
       >
         <div className="mx-auto flex max-w-[var(--container-content)] items-center justify-between px-[22px] py-4 min-[900px]:px-10 min-[900px]:py-[22px] xl:px-16">
@@ -101,7 +115,7 @@ export function Nav() {
             {links.map((link) => (
               <li key={link.href}>
                 <a
-                  href={link.href}
+                  href={sectionHref(link.href)}
                   className="text-[15px] font-semibold text-white/70 transition-colors duration-150 hover:text-white"
                 >
                   {link.label}
@@ -175,7 +189,7 @@ export function Nav() {
             {links.map((link) => (
               <li key={link.href}>
                 <a
-                  href={link.href}
+                  href={sectionHref(link.href)}
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-3 py-[17px] text-[24px] font-bold text-white"
                   style={{

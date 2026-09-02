@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Logo } from "./Logo";
+import { ROUTES } from "../lib/sections";
 
 export function Footer() {
   return (
@@ -67,18 +68,18 @@ export function Footer() {
             </h4>
             <ul className="mt-4 space-y-3">
               <li>
-                <a href="#" className="text-black/60 hover:text-black">
-                  Privacy &amp; Cookies Policy
+                <a href={ROUTES.terms} className="text-black/60 hover:text-black">
+                  General Terms
+                </a>
+              </li>
+              <li>
+                <a href={ROUTES.policies} className="text-black/60 hover:text-black">
+                  Policies
                 </a>
               </li>
               <li>
                 <a href="#" className="text-black/60 hover:text-black">
                   Cookie Settings
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-black/60 hover:text-black">
-                  Client Terms &amp; Conditions
                 </a>
               </li>
             </ul>

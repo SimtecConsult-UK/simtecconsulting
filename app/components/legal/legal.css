@@ -1,0 +1,899 @@
+/* Policies & Terms pages — see "Additional pages handover/README.md" for the source spec.
+   Three templates share this sheet:
+     .lg-t  Terms & Conditions      (handover screen 1a)
+     .lg-p  single policy document  (handover screen 1c)
+     .lg-x  policies contents page  (handover screen 1c-index)
+   Palette differences between 1a and the 1c family are expressed as custom
+   properties on the template root, so the block-level rules below are shared. */
+
+.lg-root {
+  font-family: var(--font-ibm-plex-sans), "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  /* the site nav is fixed; the handover's nav is in flow */
+  padding-top: var(--nav-height);
+  --lg-accent: #0fae9a;
+  --lg-accent-deep: #0b8d7d;
+  --lg-gutter: 56px;
+}
+
+.lg-t {
+  background: #ffffff;
+  --lg-ink: #11141d;
+  --lg-body: #444a57;
+  --lg-muted: #9aa0ad;
+  --lg-rule: #eef0f4;
+  --lg-rule-strong: #e7e9ef;
+  --lg-tint: #f6fbfa;
+  --lg-tint-border: #d6ebe7;
+}
+
+.lg-p,
+.lg-x {
+  background: #f2f5f6;
+  --lg-ink: #0d1a19;
+  --lg-body: #4b5655;
+  --lg-muted: #8d9a99;
+  --lg-crumb: #7b8b8a;
+  --lg-secondary: #5a6a69;
+  --lg-lede: #3f4b4a;
+  --lg-rule: #e2e7ea;
+  --lg-rule-strong: #eaeef0;
+  --lg-rule-soft: #eef2f3;
+  --lg-tint: #f4faf9;
+  --lg-tint-border: #d6ebe7;
+}
+
+/* ── shared type roles ─────────────────────────────────────────────────── */
+
+.lg-eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lg-muted);
+}
+
+.lg-crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.lg-crumbs a {
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+.lg-crumbs a:hover {
+  color: var(--lg-ink);
+}
+.lg-crumb-current {
+  color: var(--lg-accent-deep);
+}
+.lg-t .lg-crumbs,
+.lg-t .lg-crumbs a {
+  color: var(--lg-muted);
+}
+.lg-t .lg-crumb-current {
+  color: var(--lg-accent);
+}
+.lg-p .lg-crumbs,
+.lg-x .lg-crumbs,
+.lg-p .lg-crumbs a,
+.lg-x .lg-crumbs a {
+  color: var(--lg-crumb);
+}
+
+/* ── shared document blocks ────────────────────────────────────────────── */
+
+.lg-para {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--lg-body);
+  text-wrap: pretty;
+}
+
+.lg-h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--lg-ink);
+  margin-top: 8px;
+}
+
+.lg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.lg-t .lg-list {
+  gap: 10px;
+}
+.lg-list-item {
+  display: flex;
+  gap: 12px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--lg-body);
+  text-wrap: pretty;
+}
+.lg-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lg-accent);
+  flex: none;
+  margin-top: 9px;
+}
+.lg-list-item strong,
+.lg-para strong {
+  color: var(--lg-ink);
+  font-weight: 600;
+}
+.lg-para a,
+.lg-list-item a {
+  font-weight: 600;
+  color: var(--lg-accent);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.lg-para a:hover,
+.lg-list-item a:hover {
+  text-decoration: underline;
+}
+
+/* clause paragraphs (Terms) — the number hangs in the left margin. The column
+   is just wide enough for the longest number in either document ("6.3.1",
+   39px), so the text sits as close to it as alignment allows. */
+.lg-clause {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 8px;
+  align-items: baseline;
+}
+.lg-clause-num {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--lg-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.lg-callout {
+  background: var(--lg-tint);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lg-t .lg-callout {
+  border-left: 2px solid var(--lg-accent);
+  padding: 20px 24px;
+}
+.lg-p .lg-callout {
+  border: 1px solid var(--lg-tint-border);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-top: 6px;
+}
+.lg-callout p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--lg-body);
+  text-wrap: pretty;
+}
+.lg-callout .lg-eyebrow {
+  color: var(--lg-accent-deep);
+}
+.lg-t .lg-callout .lg-eyebrow {
+  color: var(--lg-accent);
+}
+
+.lg-table-scroll {
+  overflow-x: auto;
+  margin-top: 6px;
+}
+.lg-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--lg-body);
+  text-align: left;
+}
+.lg-table th,
+.lg-table td {
+  border-bottom: 1px solid var(--lg-rule);
+  padding: 11px 14px 11px 0;
+  vertical-align: top;
+}
+.lg-table .lg-nowrap {
+  white-space: nowrap;
+}
+.lg-table th {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lg-muted);
+}
+
+/* document metadata printed at the foot of a policy */
+.lg-details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 20px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--lg-body);
+}
+.lg-details dt {
+  color: var(--lg-muted);
+}
+
+.lg-download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--lg-accent);
+  text-decoration: none;
+}
+.lg-download-link:hover {
+  text-decoration: underline;
+}
+
+/* ── 1a — Terms & Conditions ───────────────────────────────────────────── */
+
+.lg-t-head {
+  padding: 64px var(--lg-gutter) 40px;
+  border-bottom: 1px solid var(--lg-rule);
+}
+.lg-t-head .lg-crumbs {
+  margin-bottom: 22px;
+}
+.lg-t-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--lg-ink);
+}
+.lg-t-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin-top: 26px;
+}
+.lg-t-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.lg-t-meta-item span:last-child {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--lg-ink);
+}
+.lg-t-meta-sep {
+  width: 1px;
+  background: var(--lg-rule-strong);
+}
+
+.lg-t-body {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 72px;
+  padding: 52px var(--lg-gutter) 80px;
+}
+.lg-t-rail {
+  position: sticky;
+  top: calc(var(--nav-height) + 24px);
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.lg-t-rail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.lg-t-rail-link {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #5a6070;
+  text-decoration: none;
+  padding: 9px 14px;
+  border-left: 2px solid var(--lg-rule);
+  background: transparent;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+.lg-t-rail-link:hover {
+  color: var(--lg-ink);
+}
+.lg-t-rail-link.is-active {
+  color: var(--lg-ink);
+  font-weight: 600;
+  border-left-color: var(--lg-accent);
+  background: #f4fbfa;
+}
+
+/* Several clause headings are a full sentence long. Clamping an inner span
+   keeps the overflow inside the text box rather than bleeding into the padding. */
+.lg-t-rail-link > span,
+.lg-p-side-link > span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lg-t-article {
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+}
+.lg-t-clause {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lg-t-h2 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--lg-ink);
+  text-wrap: pretty;
+}
+.lg-t-close {
+  border-top: 1px solid var(--lg-rule);
+  padding-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lg-t-close h2 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--lg-ink);
+}
+.lg-t-close p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--lg-body);
+}
+.lg-t-close a {
+  font-weight: 600;
+  color: var(--lg-accent);
+  text-decoration: none;
+}
+.lg-t-close a:hover {
+  text-decoration: underline;
+}
+
+/* ── 1c / 1c-index — tinted header band ────────────────────────────────── */
+
+.lg-band {
+  background: linear-gradient(180deg, #e4f2f0 0%, #f2f5f6 100%);
+  padding: 56px var(--lg-gutter) 0;
+}
+.lg-x .lg-band {
+  padding-bottom: 40px;
+}
+.lg-band-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.lg-band-spacer {
+  height: 32px;
+}
+
+.lg-p-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.lg-p-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--lg-ink);
+  max-width: 620px;
+  text-wrap: pretty;
+}
+.lg-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--lg-ink);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px 22px;
+  border-radius: 8px;
+  text-decoration: none;
+  flex: none;
+  transition: background 150ms ease;
+}
+.lg-download-btn:hover {
+  background: #12302d;
+}
+
+.lg-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.lg-chip {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--lg-secondary);
+  background: #ffffff;
+  border: 1px solid #dde5e6;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+.lg-chip.is-primary {
+  color: var(--lg-accent-deep);
+  border-color: #c3e3de;
+}
+
+/* ── 1c — policy document ──────────────────────────────────────────────── */
+
+.lg-p-content {
+  padding: 0 var(--lg-gutter) 80px;
+}
+.lg-p-grid {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 40px;
+  align-items: start;
+}
+.lg-p-card {
+  background: #ffffff;
+  border: 1px solid var(--lg-rule);
+  border-radius: 16px;
+  padding: 56px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  min-width: 0;
+}
+.lg-p-lede {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lg-p-lede .lg-para {
+  font-size: 19px;
+  line-height: 1.65;
+  color: var(--lg-lede);
+}
+.lg-t-lede {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lg-t-lede .lg-para {
+  font-size: 19px;
+  line-height: 1.65;
+}
+.lg-p-section {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.lg-p-h2 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--lg-ink);
+  text-wrap: pretty;
+}
+.lg-p-foot {
+  border-top: 1px solid var(--lg-rule-strong);
+  padding-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lg-p-side {
+  position: sticky;
+  top: calc(var(--nav-height) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.lg-p-sidecard {
+  background: #ffffff;
+  border: 1px solid var(--lg-rule);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lg-p-sidecard .lg-eyebrow {
+  letter-spacing: 0.16em;
+}
+.lg-p-side-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lg-p-side-link {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--lg-secondary);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+.lg-p-side-link:hover,
+.lg-p-side-link.is-active {
+  color: var(--lg-ink);
+}
+.lg-p-side-link.is-active {
+  font-weight: 600;
+}
+
+.lg-p-other {
+  gap: 12px;
+}
+.lg-p-other-list {
+  display: flex;
+  flex-direction: column;
+}
+.lg-p-other-link {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--lg-body);
+  text-decoration: none;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--lg-rule-soft);
+  transition: color 150ms ease;
+}
+.lg-p-other-link:hover {
+  color: var(--lg-accent-deep);
+}
+.lg-p-other-all {
+  font-size: 14px;
+  color: var(--lg-accent-deep);
+  font-weight: 600;
+  text-decoration: none;
+  padding: 10px 0;
+}
+
+/* ── 1c-index — policies contents ──────────────────────────────────────── */
+
+.lg-x-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--lg-ink);
+}
+.lg-x-intro {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--lg-lede);
+  max-width: 640px;
+  text-wrap: pretty;
+}
+.lg-x-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+.lg-x-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #cfe0dd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  width: 340px;
+  max-width: 100%;
+}
+.lg-x-search:focus-within {
+  border-color: var(--lg-accent);
+}
+.lg-x-search input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  color: var(--lg-ink);
+  width: 100%;
+  min-width: 0;
+}
+.lg-x-search input::placeholder {
+  color: var(--lg-crumb);
+}
+.lg-x-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lg-x-chip {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--lg-lede);
+  background: #ffffff;
+  border: 1px solid #dde5e6;
+  padding: 11px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.lg-x-chip:hover {
+  border-color: var(--lg-accent);
+}
+.lg-x-chip.is-active {
+  color: #04231f;
+  background: var(--lg-accent);
+  border-color: var(--lg-accent);
+}
+
+.lg-x-list {
+  padding: 8px var(--lg-gutter) 80px;
+}
+.lg-x-groups {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+.lg-x-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lg-x-group-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lg-x-group-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.lg-x-group-title h2 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+  color: var(--lg-ink);
+}
+.lg-x-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--lg-rule);
+}
+.lg-x-group-sub {
+  font-size: 15px;
+  color: var(--lg-secondary);
+}
+.lg-x-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.lg-x-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid var(--lg-rule);
+  border-radius: 12px;
+  padding: 19px 22px;
+  text-decoration: none;
+  transition: border-color 150ms ease;
+}
+.lg-x-card:hover {
+  border-color: var(--lg-accent);
+}
+.lg-x-card span {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--lg-ink);
+}
+.lg-x-card svg {
+  flex: none;
+}
+.lg-x-empty {
+  background: #ffffff;
+  border: 1px solid var(--lg-rule);
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lg-x-empty p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--lg-body);
+}
+.lg-x-empty strong {
+  font-weight: 600;
+  color: var(--lg-ink);
+}
+
+/* ── phone / tablet ────────────────────────────────────────────────────────
+   The handover designs are desktop only. Below 900px the two-column layouts
+   collapse and the contents list moves above the document as a disclosure. */
+
+@media (max-width: 899px) {
+  .lg-root {
+    --lg-gutter: 24px;
+  }
+  .lg-t-head {
+    padding-top: 40px;
+    padding-bottom: 28px;
+  }
+  .lg-t-title {
+    font-size: 38px;
+  }
+  .lg-t-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding-top: 32px;
+    padding-bottom: 56px;
+  }
+  .lg-t-article {
+    gap: 36px;
+  }
+  .lg-t-h2 {
+    font-size: 24px;
+  }
+  .lg-band {
+    padding-top: 36px;
+  }
+  .lg-p-title,
+  .lg-x-title {
+    font-size: 36px;
+  }
+
+  .lg-p-card {
+    padding: 32px 24px;
+    gap: 32px;
+    border-radius: 14px;
+  }
+  .lg-p-h2 {
+    font-size: 22px;
+  }
+  .lg-x-list {
+    padding-bottom: 56px;
+  }
+  .lg-x-intro {
+    font-size: 17px;
+  }
+
+  /* Contents becomes a collapsible block above the document; "Other policies"
+     drops below it, so the document itself stays near the top of the page. */
+  .lg-p-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    /* the desktop rule sets align-items:start for the grid, which would make
+       these flex items shrink to their content width */
+    align-items: stretch;
+  }
+  .lg-p-side {
+    display: contents;
+  }
+  .lg-p-contents {
+    order: -1;
+  }
+  .lg-p-other {
+    order: 1;
+  }
+  .lg-p-sidecard .lg-toggle {
+    border: 0;
+    padding: 0;
+    background: none;
+  }
+
+  .lg-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid var(--lg-rule);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+  }
+  .lg-toggle svg {
+    flex: none;
+    transition: transform 150ms ease;
+  }
+  .lg-toggle[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+  .lg-collapsed {
+    display: none;
+  }
+  .lg-t-rail {
+    position: static;
+    order: -1;
+  }
+  .lg-clause {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+}
+
+@media (min-width: 900px) {
+  .lg-toggle {
+    display: none;
+  }
+}
+
+@media (max-width: 699px) {
+  .lg-x-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lg-t-meta {
+    gap: 18px;
+  }
+  .lg-t-meta-sep {
+    display: none;
+  }
+}
+
+.lg-x-reset {
+  font: inherit;
+  color: var(--lg-accent-deep);
+  font-weight: 600;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
