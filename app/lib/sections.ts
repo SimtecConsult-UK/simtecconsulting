@@ -7,4 +7,8 @@ export const SECTION_IDS = {
 
 export const ROUTES = {
   discovery: "/discovery",
+  policies: "/policies",
+  terms: "/terms",
+  /** Unlisted variant issued to specific support customers. */
+  termsProject: "/terms-2",
 } as const;
