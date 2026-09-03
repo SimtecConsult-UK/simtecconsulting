@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { SECTION_IDS } from "../lib/sections";
 
 const testimonials = [
@@ -138,7 +140,119 @@ const d3base = [
 ];
 const driftCards = [...d3base, ...d3base];
 
+/* Seconds for one full pass through the six cards — matches the pace of the
+   CSS animation this replaced (32s for a 50% translate of the doubled list). */
+const DRIFT_SECONDS = 32;
+
+/* Drives the drifting list: a rAF loop moves `offset` down the doubled card
+   list, wrapping at the height of one set so the seam is invisible. Hovering
+   pauses the drift, and a wheel/trackpad gesture over the list adds straight
+   into the same offset — so you can scan the testimonials by hand and the
+   drift picks up again from wherever you left it when the pointer leaves.
+   The wheel is consumed while the pointer is over the list, so the page does
+   not scroll at the same time. */
+function useDrift() {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const colRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const col = colRef.current;
+    if (!viewport || !col) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let offset = 0;
+    let loop = 0; // height of one set of cards, incl. the gap after the last
+    let onScreen = false;
+    let hovering = false;
+    let prev = 0;
+    let raf = 0;
+
+    const measure = () => {
+      const first = col.children[0] as HTMLElement | undefined;
+      const seam = col.children[d3base.length] as HTMLElement | undefined;
+      loop = first && seam ? seam.offsetTop - first.offsetTop : 0;
+    };
+
+    const advance = (dy: number) => {
+      if (loop <= 0) return;
+      offset = (((offset + dy) % loop) + loop) % loop;
+      col.style.transform = `translate3d(0,${-offset}px,0)`;
+    };
+
+    const tick = (time: number) => {
+      const dt = prev ? Math.min(time - prev, 50) : 0;
+      prev = time;
+      advance((loop / DRIFT_SECONDS) * (dt / 1000));
+      raf = requestAnimationFrame(tick);
+    };
+
+    /* A CSS animation was the browser's problem to schedule; a rAF loop is
+       ours, so it only runs while the drift can actually be seen — the
+       section is on screen, the pointer is not parked on it, and the visitor
+       has not asked for reduced motion. Wheel scrubbing keeps working in all
+       of those states. */
+    const sync = () => {
+      const drifting = onScreen && !hovering && !reduceMotion.matches;
+      if (drifting === Boolean(raf)) return;
+      if (drifting) {
+        prev = 0; // first frame back measures no elapsed time, so it can't jump
+        raf = requestAnimationFrame(tick);
+      } else {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      if (loop <= 0) return;
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      // Firefox reports line-based deltas; everything else is already pixels.
+      const dy = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+      if (!dy) return;
+      event.preventDefault();
+      advance(dy);
+    };
+
+    const onEnter = () => { hovering = true; sync(); };
+    const onLeave = () => { hovering = false; sync(); };
+
+    // observe() delivers an initial observation, so both observers measure and
+    // position the list before the first frame without a separate setup pass.
+    const resizeObserver = new ResizeObserver(() => {
+      measure();
+      advance(0);
+    });
+    resizeObserver.observe(col);
+
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      sync();
+    });
+    visibilityObserver.observe(viewport);
+
+    reduceMotion.addEventListener("change", sync);
+    viewport.addEventListener("wheel", onWheel, { passive: false });
+    viewport.addEventListener("mouseenter", onEnter);
+    viewport.addEventListener("mouseleave", onLeave);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      resizeObserver.disconnect();
+      visibilityObserver.disconnect();
+      reduceMotion.removeEventListener("change", sync);
+      viewport.removeEventListener("wheel", onWheel);
+      viewport.removeEventListener("mouseenter", onEnter);
+      viewport.removeEventListener("mouseleave", onLeave);
+    };
+  }, []);
+
+  return { viewportRef, colRef };
+}
+
 export function Testimonials() {
+  const { viewportRef, colRef } = useDrift();
+
   return (
     <section id={SECTION_IDS.testimonials} style={{ background: "#ffffff", overflow: "hidden" }}>
       <div
@@ -190,6 +304,7 @@ export function Testimonials() {
 
           {/* Drifting compact list */}
           <div
+            ref={viewportRef}
             className="testimonials-drift"
             style={{
               position: "relative",
@@ -199,7 +314,7 @@ export function Testimonials() {
             }}
           >
             <div
-              className="testimonials-drift-col"
+              ref={colRef}
               style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", flexDirection: "column", gap: 16 }}
             >
               {driftCards.map((card, i) => (

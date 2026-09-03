@@ -108,8 +108,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .simtec-pulse { animation: none !important; opacity: 0; }
-  .testimonials-drift-col { animation: none; }
   .logo-ticker-track { animation: none; }
+  /* The testimonials drift has no rule here because JS owns its transform —
+     useDrift in Testimonials.tsx honours this same query directly. */
 }
 
 /* ── Hero (Simtec Hero Section Redesign) ──────────────────────────────────
@@ -402,19 +403,12 @@ body.is-dragging * {
   animation: problem-ticker 27.5s linear infinite;
 }
 
-/* ── Testimonials Option C ── */
-@keyframes driftUp {
-  from { transform: translateY(0); }
-  to   { transform: translateY(-50%); }
-}
-
-.testimonials-drift-col {
-  animation: driftUp 32s linear infinite;
-}
-
-.testimonials-drift:hover .testimonials-drift-col {
-  animation-play-state: paused;
-}
+/* ── Testimonials Option C ──
+   The compact list drifts upward continuously, pauses on hover, and can be
+   scrolled by hand with the wheel/trackpad while the pointer is over it. Both
+   the drift and the wheel feed the same offset, so the JS in Testimonials.tsx
+   owns the transform (see useDrift there) and there are no drift styles here.
+   Without JS the list simply sits still, showing the first cards. */
 
 .testimonials-feat-grid {
   display: grid;
