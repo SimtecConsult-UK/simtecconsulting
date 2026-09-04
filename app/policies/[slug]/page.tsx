@@ -56,7 +56,7 @@ export default async function PolicyPage(props: PageProps<"/policies/[slug]">) {
         <div className="lg-band">
           <div className="lg-band-inner">
             <div className="lg-crumbs">
-              <Link href="/">Home</Link>
+              <Link href={ROUTES.home}>Home</Link>
               <span aria-hidden="true">/</span>
               <Link href={ROUTES.policies}>Policies</Link>
               <span aria-hidden="true">/</span>

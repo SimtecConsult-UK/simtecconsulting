@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useScrollEffect } from "../hooks/useScrollEffect";
 import { ROUTES, SECTION_IDS } from "../lib/sections";
@@ -11,6 +12,42 @@ const links = [
   { label: "Case Studies", href: `#${SECTION_IDS.productDemo}` },
   { label: "Testimonials", href: `#${SECTION_IDS.testimonials}` },
 ];
+
+/** The white wordmark, linking home. Both nav surfaces render the same asset
+    and accessible name; only the size hints and the menu-closing click differ. */
+function NavLogo({
+  className,
+  sizes,
+  priority = false,
+  prefetch,
+  onClick,
+}: {
+  className: string;
+  sizes: string;
+  priority?: boolean;
+  prefetch?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={ROUTES.home}
+      aria-label="Simtec home"
+      className="inline-flex"
+      prefetch={prefetch}
+      onClick={onClick}
+    >
+      <Image
+        src="/simtec-logo-white.png"
+        alt="Simtec"
+        width={2699}
+        height={668}
+        className={className}
+        sizes={sizes}
+        priority={priority}
+      />
+    </Link>
+  );
+}
 
 type NavProps = {
   /** Force the scrolled (opaque) treatment. Needed on the light legal pages,
@@ -29,9 +66,14 @@ export function Nav({ solid = false }: NavProps) {
   useScrollEffect(() => setScrolled(window.scrollY > 12));
 
   // The section links are same-page anchors on the homepage and cross-page
-  // links everywhere else.
-  const onHome = pathname === "/";
+  // links everywhere else. They stay plain <a> on purpose: next/link disables
+  // smooth scrolling for hash targets, which would turn the glide down to a
+  // section into an abrupt jump.
+  const onHome = pathname === ROUTES.home;
   const sectionHref = (href: string) => (onHome ? href : `/${href}`);
+  // On the homepage the logo points at the page we are already on, so skip the
+  // viewport prefetch that would re-download the home payload for nothing.
+  const logoPrefetch = onHome ? false : undefined;
   const opaque = solid || scrolled;
 
   // Scroll lock that works on iOS Safari: position:fixed + saved scroll offset.
@@ -101,14 +143,11 @@ export function Nav({ solid = false }: NavProps) {
         }}
       >
         <div className="mx-auto flex max-w-[var(--container-content)] items-center justify-between px-[22px] py-4 min-[900px]:px-10 min-[900px]:py-[22px] xl:px-16">
-          <Image
-            src="/simtec-logo-white.png"
-            alt="Simtec"
-            width={2699}
-            height={668}
+          <NavLogo
             className="h-[22px] w-auto min-[521px]:h-[26px]"
             sizes="(min-width: 521px) 105px, 89px"
             priority
+            prefetch={logoPrefetch}
           />
 
           <ul className="hidden min-[900px]:flex items-center gap-[38px]">
@@ -125,12 +164,12 @@ export function Nav({ solid = false }: NavProps) {
           </ul>
 
           <div className="flex items-center gap-3.5">
-            <a
+            <Link
               href={ROUTES.discovery}
               className="hidden min-[521px]:inline-flex items-center justify-center gap-2 rounded-full border border-[#2dd4bf] px-6 py-[11px] text-[14px] font-semibold text-[#2dd4bf] transition-colors duration-150 hover:bg-[#2dd4bf] hover:text-[#06241f]"
             >
               Book a Workshop
-            </a>
+            </Link>
 
             <button
               type="button"
@@ -164,13 +203,11 @@ export function Nav({ solid = false }: NavProps) {
           onKeyDown={handleOverlayKeyDown}
         >
           <div className="flex items-center justify-between">
-            <Image
-              src="/simtec-logo-white.png"
-              alt="Simtec"
-              width={2699}
-              height={668}
+            <NavLogo
               className="h-[22px] w-auto"
               sizes="89px"
+              prefetch={logoPrefetch}
+              onClick={() => setMenuOpen(false)}
             />
             <button
               ref={closeButtonRef}
@@ -204,7 +241,7 @@ export function Nav({ solid = false }: NavProps) {
             ))}
           </ul>
 
-          <a
+          <Link
             href={ROUTES.discovery}
             onClick={() => setMenuOpen(false)}
             className="mt-auto flex items-center justify-center gap-2 rounded-[14px] border border-[#2dd4bf] py-4 text-[16px] font-semibold text-[#2dd4bf]"
@@ -213,7 +250,7 @@ export function Nav({ solid = false }: NavProps) {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 8h10M9 4l4 4-4 4" />
             </svg>
-          </a>
+          </Link>
         </div>
       )}
     </>
