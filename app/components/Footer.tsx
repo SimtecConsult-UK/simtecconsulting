@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CookieSettingsLink } from "./CookieSettingsLink";
-import { Logo } from "./Logo";
+import { FooterLogoLink } from "./FooterLogoLink";
 import { ROUTES } from "../lib/sections";
 
 export function Footer() {
@@ -9,9 +9,7 @@ export function Footer() {
     <footer className="px-4 py-16 text-black md:px-16 md:py-24" style={{ background: "#ffffff" }}>
       <div className="mx-auto max-w-[var(--container-content)]">
         <div>
-          <Link href={ROUTES.home} aria-label="Simtec home" className="inline-flex">
-            <Logo />
-          </Link>
+          <FooterLogoLink />
           <p className="mt-6 max-w-xs text-sm text-black/60">
             Construction management software that helps teams deliver
             projects faster, safer, and on budget.
