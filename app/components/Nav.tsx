@@ -1,9 +1,10 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useScrollEffect } from "../hooks/useScrollEffect";
+import { useModalOverlay } from "../hooks/useModalOverlay";
 import { ROUTES, SECTION_IDS } from "../lib/sections";
 
 const links = [
@@ -59,9 +60,8 @@ export function Nav({ solid = false }: NavProps) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const prevFocusRef = useRef<HTMLElement | null>(null);
+  const { containerRef, initialFocusRef, onKeyDown } =
+    useModalOverlay<HTMLButtonElement>(menuOpen, () => setMenuOpen(false));
 
   useScrollEffect(() => setScrolled(window.scrollY > 12));
 
@@ -75,60 +75,6 @@ export function Nav({ solid = false }: NavProps) {
   // viewport prefetch that would re-download the home payload for nothing.
   const logoPrefetch = onHome ? false : undefined;
   const opaque = solid || scrolled;
-
-  // Scroll lock that works on iOS Safari: position:fixed + saved scroll offset.
-  // Also saves/restores the previous overflow value so other overlays aren't clobbered.
-  useEffect(() => {
-    if (!menuOpen) return;
-    const scrollY = window.scrollY;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollY);
-    };
-  }, [menuOpen]);
-
-  // Focus management: move focus in on open, restore it on close.
-  useEffect(() => {
-    if (menuOpen) {
-      prevFocusRef.current = document.activeElement as HTMLElement;
-      closeButtonRef.current?.focus();
-    } else {
-      prevFocusRef.current?.focus();
-    }
-  }, [menuOpen]);
-
-  const handleOverlayKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      setMenuOpen(false);
-      return;
-    }
-    if (e.key !== "Tab") return;
-    const focusable = overlayRef.current?.querySelectorAll<HTMLElement>(
-      'button, a[href], [tabindex]:not([tabindex="-1"])'
-    );
-    if (!focusable || focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey) {
-      if (document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      }
-    } else {
-      if (document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-  };
 
   return (
     <>
@@ -190,7 +136,7 @@ export function Nav({ solid = false }: NavProps) {
       {menuOpen && (
         <div
           id="mobile-menu"
-          ref={overlayRef}
+          ref={containerRef}
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
@@ -200,7 +146,7 @@ export function Nav({ solid = false }: NavProps) {
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
           }}
-          onKeyDown={handleOverlayKeyDown}
+          onKeyDown={onKeyDown}
         >
           <div className="flex items-center justify-between">
             <NavLogo
@@ -210,7 +156,7 @@ export function Nav({ solid = false }: NavProps) {
               onClick={() => setMenuOpen(false)}
             />
             <button
-              ref={closeButtonRef}
+              ref={initialFocusRef}
               type="button"
               className="inline-flex p-1.5 text-white"
               onClick={() => setMenuOpen(false)}

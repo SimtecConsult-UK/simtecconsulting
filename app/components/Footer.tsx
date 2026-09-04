@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CookieSettingsLink } from "./CookieSettingsLink";
 import { Logo } from "./Logo";
 import { ROUTES } from "../lib/sections";
 
@@ -88,9 +89,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-black/60 hover:text-black">
-                  Cookie Settings
-                </a>
+                <CookieSettingsLink className="text-black/60 hover:text-black" />
               </li>
             </ul>
           </div>
