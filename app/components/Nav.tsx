@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useScrollEffect } from "../hooks/useScrollEffect";
 import { useModalOverlay } from "../hooks/useModalOverlay";
+import { useHomeLinkClick } from "../hooks/useHomeLinkClick";
 import { ROUTES, SECTION_IDS } from "../lib/sections";
 
 const links = [
@@ -27,7 +28,7 @@ function NavLogo({
   sizes: string;
   priority?: boolean;
   prefetch?: boolean;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }) {
   return (
     <Link
@@ -60,8 +61,9 @@ export function Nav({ solid = false }: NavProps) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { containerRef, initialFocusRef, onKeyDown } =
+  const { containerRef, initialFocusRef, onKeyDown, restoreScrollYRef } =
     useModalOverlay<HTMLButtonElement>(menuOpen, () => setMenuOpen(false));
+  const { onHome, scrollToHero } = useHomeLinkClick();
 
   useScrollEffect(() => setScrolled(window.scrollY > 12));
 
@@ -69,12 +71,22 @@ export function Nav({ solid = false }: NavProps) {
   // links everywhere else. They stay plain <a> on purpose: next/link disables
   // smooth scrolling for hash targets, which would turn the glide down to a
   // section into an abrupt jump.
-  const onHome = pathname === ROUTES.home;
   const sectionHref = (href: string) => (onHome ? href : `/${href}`);
   // On the homepage the logo points at the page we are already on, so skip the
   // viewport prefetch that would re-download the home payload for nothing.
   const logoPrefetch = onHome ? false : undefined;
   const opaque = solid || scrolled;
+
+  // The mobile menu covers the page, so closing it is what makes the scroll
+  // visible — hand the overlay a landing spot of 0 instead of the position it
+  // captured on open, and let its own close animation carry us there.
+  const onMobileLogoClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (onHome) {
+      event.preventDefault();
+      restoreScrollYRef.current = 0;
+    }
+    setMenuOpen(false);
+  };
 
   return (
     <>
@@ -94,6 +106,7 @@ export function Nav({ solid = false }: NavProps) {
             sizes="(min-width: 521px) 105px, 89px"
             priority
             prefetch={logoPrefetch}
+            onClick={onHome ? scrollToHero : undefined}
           />
 
           <ul className="hidden min-[900px]:flex items-center gap-[38px]">
@@ -153,7 +166,7 @@ export function Nav({ solid = false }: NavProps) {
               className="h-[22px] w-auto"
               sizes="89px"
               prefetch={logoPrefetch}
-              onClick={() => setMenuOpen(false)}
+              onClick={onMobileLogoClick}
             />
             <button
               ref={initialFocusRef}

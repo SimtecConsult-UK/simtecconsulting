@@ -20,23 +20,27 @@ export function useModalOverlay<T extends HTMLElement>(
   // Kept current so callers can pass a fresh closure without useCallback.
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  // Where closing scrolls back to. Recomputed fresh from window.scrollY each time
+  // the overlay opens; a caller can override it (e.g. to land on the hero
+  // instead of wherever the page happened to be scrolled to) before closing.
+  const restoreScrollYRef = useRef(0);
 
   // Scroll lock that works on iOS Safari: position:fixed + saved scroll offset.
   // Also saves/restores the previous overflow value so other overlays aren't clobbered.
   useEffect(() => {
     if (!open) return;
-    const scrollY = window.scrollY;
+    restoreScrollYRef.current = window.scrollY;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
+    document.body.style.top = `-${restoreScrollYRef.current}px`;
     document.body.style.width = '100%';
     return () => {
       document.body.style.overflow = prevOverflow;
       document.body.style.position = '';
       document.body.style.top = '';
       document.body.style.width = '';
-      window.scrollTo(0, scrollY);
+      window.scrollTo(0, restoreScrollYRef.current);
     };
   }, [open]);
 
@@ -75,5 +79,5 @@ export function useModalOverlay<T extends HTMLElement>(
     }
   };
 
-  return { containerRef, initialFocusRef, onKeyDown };
+  return { containerRef, initialFocusRef, onKeyDown, restoreScrollYRef };
 }
