@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { POLICY_CATEGORIES, POLICY_COUNT } from "../lib/legal/catalog";
+import { ROUTES } from "../lib/sections";
 import { ArrowIcon, SearchIcon } from "../components/legal/icons";
 
 /** Handover screen 1c-index: browse and choose one of the policies. */
@@ -31,7 +32,7 @@ export function PoliciesBrowser() {
       <div className="lg-band">
         <div className="lg-band-inner">
           <div className="lg-crumbs">
-            <Link href="/">Home</Link>
+            <Link href={ROUTES.home}>Home</Link>
             <span aria-hidden="true">/</span>
             <span className="lg-crumb-current">Policies</span>
           </div>

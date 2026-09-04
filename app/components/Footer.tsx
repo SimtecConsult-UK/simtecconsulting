@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Logo } from "./Logo";
 import { ROUTES } from "../lib/sections";
 
@@ -7,7 +8,9 @@ export function Footer() {
     <footer className="px-4 py-16 text-black md:px-16 md:py-24" style={{ background: "#ffffff" }}>
       <div className="mx-auto max-w-[var(--container-content)]">
         <div>
-          <Logo />
+          <Link href={ROUTES.home} aria-label="Simtec home" className="inline-flex">
+            <Logo />
+          </Link>
           <p className="mt-6 max-w-xs text-sm text-black/60">
             Construction management software that helps teams deliver
             projects faster, safer, and on budget.
@@ -68,14 +71,21 @@ export function Footer() {
             </h4>
             <ul className="mt-4 space-y-3">
               <li>
-                <a href={ROUTES.terms} className="text-black/60 hover:text-black">
+                {/* The terms page inlines the whole agreement (~39kB compressed),
+                    so it is not worth pulling in the background for every
+                    visitor who merely scrolls to the footer. */}
+                <Link
+                  href={ROUTES.terms}
+                  prefetch={false}
+                  className="text-black/60 hover:text-black"
+                >
                   General Terms
-                </a>
+                </Link>
               </li>
               <li>
-                <a href={ROUTES.policies} className="text-black/60 hover:text-black">
+                <Link href={ROUTES.policies} className="text-black/60 hover:text-black">
                   Policies
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="text-black/60 hover:text-black">

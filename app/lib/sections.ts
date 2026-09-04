@@ -6,6 +6,7 @@ export const SECTION_IDS = {
 } as const;
 
 export const ROUTES = {
+  home: "/",
   discovery: "/discovery",
   policies: "/policies",
   terms: "/terms",
