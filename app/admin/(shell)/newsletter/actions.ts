@@ -37,10 +37,20 @@ export type PostInput = {
   schemaType: Post["seo"]["schemaType"];
 };
 
-/** Publishing is what changes the live site, so those pages are refreshed. */
-function refreshPublicPages(slug: string) {
+/**
+ * Publishing is what changes the live site, so those pages are refreshed.
+ *
+ * `previousSlug` matters when a post's address has been changed: the page at
+ * the old address would otherwise keep serving the article from cache until its
+ * own timer ran out, so a link or a search result pointing there showed a post
+ * that had supposedly moved.
+ */
+function refreshPublicPages(slug: string, previousSlug?: string | null) {
   revalidatePath("/blog");
   revalidatePath(`/blog/${slug}`);
+  if (previousSlug && previousSlug !== slug) {
+    revalidatePath(`/blog/${previousSlug}`);
+  }
 }
 
 export async function savePost(input: PostInput): Promise<SaveState> {
@@ -53,6 +63,17 @@ export async function savePost(input: PostInput): Promise<SaveState> {
   if (!slug) return { error: "That title does not make a usable web address. Add some letters or numbers." };
 
   const supabase = await createClient();
+
+  // Read before writing, so a change of address can clear the old one too.
+  let previousSlug: string | null = null;
+  if (input.id) {
+    const { data: existing } = await supabase
+      .from("posts")
+      .select("slug")
+      .eq("id", input.id)
+      .maybeSingle();
+    previousSlug = (existing as { slug: string } | null)?.slug ?? null;
+  }
 
   const row = {
     slug,
@@ -93,7 +114,7 @@ export async function savePost(input: PostInput): Promise<SaveState> {
     return { error: `Could not save: ${error.message}` };
   }
 
-  refreshPublicPages(slug);
+  refreshPublicPages(slug, previousSlug);
   revalidatePath("/admin/newsletter");
 
   // A new post gets its own URL so a refresh does not create a second copy.

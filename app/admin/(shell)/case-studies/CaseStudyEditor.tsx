@@ -11,11 +11,11 @@ import type { EditableCaseStudy } from "./data";
 import { BUCKETS, publicUrl } from "../../../lib/supabase/storage";
 import { uploadFile, uploadImage, videoInfo } from "../../upload";
 import { checkVideo, describeFailures, type Check } from "./video-checks";
+import { chapterToText, textToChapter } from "./chapter-text";
 import {
   CHAPTERS,
   DEFAULT_CHAPTER,
   EMPTY_CHAPTERS,
-  type CaseStudyChapter,
   type ChapterKey,
 } from "../../../lib/caseStudies";
 
@@ -25,16 +25,9 @@ type Props = {
   nextPosition: number;
 };
 
-/** Paragraphs are written one per blank-separated block; bullets one per line. */
-const linesToList = (text: string) =>
-  text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-const listToLines = (list: string[]) => list.join("\n");
-
 export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
+  const initialChapters = caseStudy?.chapters ?? EMPTY_CHAPTERS;
+
   const {
     draft,
     set,
@@ -63,7 +56,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
           posterPath: caseStudy.poster.path,
           quote: caseStudy.quote,
           quoteAttribution: caseStudy.quoteAttribution,
-          chapters: caseStudy.chapters,
+          chapters: initialChapters,
         }
       : {
           id: null,
@@ -80,7 +73,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
           posterPath: null,
           quote: "",
           quoteAttribution: "",
-          chapters: EMPTY_CHAPTERS,
+          chapters: initialChapters,
         }
   );
 
@@ -91,11 +84,24 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
   const [tab, setTab] = useState<ChapterKey>(DEFAULT_CHAPTER);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const setChapter = (key: ChapterKey, fields: Partial<CaseStudyChapter>) => {
-    set("chapters", {
-      ...draft.chapters,
-      [key]: { ...draft.chapters[key], ...fields },
-    });
+  /**
+   * What is actually in the box, per chapter, kept exactly as typed.
+   *
+   * The stored chapter is derived from it rather than the other way round.
+   * Feeding the parsed version back into the box would rewrite the text under
+   * the cursor on every keystroke, which swallowed trailing spaces and made it
+   * impossible to press Enter at all.
+   */
+  const [chapterText, setChapterText] = useState<Record<ChapterKey, string>>(
+    () =>
+      Object.fromEntries(
+        CHAPTERS.map(({ key }) => [key, chapterToText(initialChapters[key])])
+      ) as Record<ChapterKey, string>
+  );
+
+  const onChapterText = (value: string) => {
+    setChapterText((current) => ({ ...current, [tab]: value }));
+    set("chapters", { ...draft.chapters, [tab]: textToChapter(value) });
   };
 
   /** The same sentence the server would send back, so Save explains itself. */
@@ -394,48 +400,24 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
         <div className="cms-field-head" style={{ marginTop: 8 }}>
           <span className="cms-help">
             {tab === "summary"
-              ? "Summary is paragraphs only — it has no bullet list in the design."
-              : "Enter bullets as one list, one per line. The site splits them into two columns on desktop and tablet, and one on phones."}
+              ? "Summary is paragraphs only in the design — write it as plain lines."
+              : "One line each. Start a line with a dash to make it a bullet; the site splits the bullets into two columns on desktop and tablet, and one on phones. Anything written after the bullets closes the chapter."}
           </span>
           <CharCount value={chapterCount} limit={LIMITS.chapter} />
         </div>
 
-        <label className="cms-field">
-          <span className="cms-label">Opening paragraphs</span>
-          <textarea
-            className="cms-textarea"
-            rows={4}
-            value={listToLines(chapter.paragraphs)}
-            onChange={(event) => setChapter(tab, { paragraphs: linesToList(event.target.value) })}
-            placeholder="One paragraph per line."
-          />
-        </label>
-
-        {tab !== "summary" && (
-          <>
-            <label className="cms-field">
-              <span className="cms-label">Bullets</span>
-              <textarea
-                className="cms-textarea"
-                rows={6}
-                value={listToLines(chapter.bullets)}
-                onChange={(event) => setChapter(tab, { bullets: linesToList(event.target.value) })}
-                placeholder="One bullet per line."
-              />
-            </label>
-
-            <label className="cms-field">
-              <span className="cms-label">Closing paragraphs</span>
-              <textarea
-                className="cms-textarea"
-                rows={3}
-                value={listToLines(chapter.closing)}
-                onChange={(event) => setChapter(tab, { closing: linesToList(event.target.value) })}
-                placeholder="Optional. One paragraph per line."
-              />
-            </label>
-          </>
-        )}
+        <textarea
+          className={`cms-textarea${chapterCount > LIMITS.chapter ? " cms-textarea--over" : ""}`}
+          rows={14}
+          value={chapterText[tab]}
+          onChange={(event) => onChapterText(event.target.value)}
+          aria-label={`${CHAPTERS.find(({ key }) => key === tab)?.label} chapter`}
+          placeholder={
+            tab === "summary"
+              ? "One paragraph per line."
+              : "An opening paragraph.\n\n- a bullet\n- another bullet\n\nAnything after the bullets closes the chapter."
+          }
+        />
       </div>
 
       {caseStudy && (

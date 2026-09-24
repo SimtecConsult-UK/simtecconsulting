@@ -22,6 +22,16 @@ export const ROUTES = {
  * both have to be absolute. Set NEXT_PUBLIC_SITE_URL per environment so
  * previews do not advertise the production address.
  */
+/**
+ * A site path as an absolute URL, for the places that cannot use a relative one
+ * — JSON-LD and share links. Anything already absolute is left alone: images
+ * stored in Supabase come back as full URLs, and prefixing the site's own
+ * address to those produced links like "https://simtec.../https://xyz...".
+ */
+export function absoluteUrl(path: string): string {
+  return path.startsWith("http") ? path : `${SITE_URL}${path}`;
+}
+
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://simtecconsult.com"
 ).replace(/\/$/, "");

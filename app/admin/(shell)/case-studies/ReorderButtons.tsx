@@ -15,9 +15,12 @@ export function ReorderButtons({
 }) {
   const [pending, startTransition] = useTransition();
 
+  // Awaited inside the transition, so `pending` stays true until the move has
+  // actually happened and the list has caught up. Firing and forgetting left
+  // both arrows live, and a second click raced the first.
   const move = (direction: "up" | "down") =>
-    startTransition(() => {
-      void moveCaseStudy(id, direction);
+    startTransition(async () => {
+      await moveCaseStudy(id, direction);
     });
 
   return (

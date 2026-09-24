@@ -29,8 +29,7 @@ function fields(input: PostInput): FieldCheck[] {
   ];
 }
 
-function bodyTooLong(input: PostInput): string | null {
-  const length = blocksLength(input.body);
+function bodyTooLong(input: PostInput, length = blocksLength(input.body)): string | null {
   if (length > LIMITS.body) {
     return `The body is ${length} characters; the limit is ${LIMITS.body}.`;
   }
@@ -41,8 +40,12 @@ function bodyTooLong(input: PostInput): string | null {
  * Only the too-long problems. The editor greys Save out on this and shows the
  * sentence, so it says the same thing the server would have said.
  */
-export function postTooLong(input: PostInput): string | null {
-  return checkLimits(fields(input)) ?? bodyTooLong(input);
+export function postTooLong(
+  input: PostInput,
+  /** The editor already counts the body for its own counter; reuse that. */
+  bodyLength?: number
+): string | null {
+  return checkLimits(fields(input)) ?? bodyTooLong(input, bodyLength);
 }
 
 /**

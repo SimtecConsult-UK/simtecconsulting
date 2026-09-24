@@ -84,7 +84,7 @@ export function PostEditor({ post }: PostEditorProps) {
   const slug = slugify(draft.slug || draft.title);
 
   /** The same sentence the server would send back, so Save explains itself. */
-  const tooLong = postTooLong(draft);
+  const tooLong = postTooLong(draft, bodyCount);
 
   const submit = (next: "draft" | "published") => {
     save(
