@@ -156,6 +156,7 @@ export function ReviewSheet({
               className="dw-btn-teal"
               restingLabel="Submit & book workshop →"
               sentLabel="✓ SENT"
+              consentHint="Tick the consent box to the left of this button"
             />
           </span>
         </div>

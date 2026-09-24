@@ -54,6 +54,7 @@ export function SubmitButton({
   className,
   restingLabel,
   sentLabel,
+  consentHint,
 }: {
   submit: SubmitStatus;
   consent: boolean;
@@ -61,6 +62,12 @@ export function SubmitButton({
   className: string;
   restingLabel: string;
   sentLabel: string;
+  /**
+   * Where the consent box actually is, said from this overlay's point of view.
+   * The sheet owns the box; the brief sits on top of it. One shared sentence
+   * would be wrong on one of the two.
+   */
+  consentHint: string;
 }) {
   const failure = submit.state.kind === "failed" ? submit.state.message : null;
 
@@ -79,7 +86,7 @@ export function SubmitButton({
         className={`${className}${consent && !submit.sending ? "" : " dw-dis"}`}
         disabled={!consent || submit.sending}
         onClick={onSubmit}
-        title={consent ? undefined : "Tick the consent box on the review screen"}
+        title={consent ? undefined : consentHint}
       >
         {submit.sending
           ? "Sending…"

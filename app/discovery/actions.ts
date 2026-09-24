@@ -2,10 +2,10 @@
 
 import { createClient } from "../lib/supabase/server";
 import { isSupabaseConfigured } from "../lib/supabase/config";
-import { sanitizeAnswers } from "./data";
 import {
   MAX_PAYLOAD_CHARS,
   SEND_FAILED,
+  coerceSubmission,
   validateSubmission,
   type ContactField,
   type SubmissionInput,
@@ -33,14 +33,16 @@ export async function submitDiscovery(
     return { error: SEND_FAILED };
   }
 
-  const problem = validateSubmission(input);
-  if (problem) return { error: problem };
+  // First, because the annotation above is a description of what the wizard
+  // sends rather than a guarantee about what arrives. This drops anything that
+  // is not the shape the CMS will later read back, and settles each answer into
+  // the string-or-list its question expects.
+  const { answers, repRows, consent } = coerceSubmission(input);
 
-  // Forces each answer into the shape its question expects. Without it a
-  // multi-choice answer arriving as plain text is stored as plain text, and
-  // the CMS cannot replay the submission it belongs to.
-  const answers = sanitizeAnswers(input.answers ?? {});
-  const repRows = input.repRows ?? {};
+  // Checked after coercing, so the values the rules are applied to are exactly
+  // the values about to be written.
+  const problem = validateSubmission({ answers, repRows, consent });
+  if (problem) return { error: problem };
 
   if (JSON.stringify({ answers, repRows }).length > MAX_PAYLOAD_CHARS) {
     return { error: "Those answers are too long to send. Please shorten them." };
