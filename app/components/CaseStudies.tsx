@@ -8,8 +8,8 @@ import {
   CHAPTERS,
   DEFAULT_CHAPTER,
   MAX_HOMEPAGE_CASE_STUDIES,
-  caseStudies,
   quoteParagraphs,
+  type CaseStudy,
   type CaseStudyChapter,
   type ChapterKey,
 } from "../lib/caseStudies";
@@ -94,8 +94,14 @@ const ChapterPane = memo(function ChapterPane({
   );
 });
 
-export function CaseStudies() {
-  const studies = caseStudies.slice(0, MAX_HOMEPAGE_CASE_STUDIES);
+type CaseStudiesProps = {
+  /** Fetched on the server by app/page.tsx — this component is interactive and
+      cannot read the database itself. */
+  studies: CaseStudy[];
+};
+
+export function CaseStudies({ studies: published }: CaseStudiesProps) {
+  const studies = published.slice(0, MAX_HOMEPAGE_CASE_STUDIES);
 
   const [activeClient, setActiveClient] = useState(0);
   const [activeChapter, setActiveChapter] = useState<ChapterKey>(DEFAULT_CHAPTER);

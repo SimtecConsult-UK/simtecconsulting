@@ -9,6 +9,8 @@ export const ROUTES = {
   home: "/",
   discovery: "/discovery",
   blog: "/blog",
+  /** The content manager. Signed-in editors only, and kept out of search. */
+  admin: "/admin",
   policies: "/policies",
   terms: "/terms",
   /** Unlisted variant issued to specific support customers. */
