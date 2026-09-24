@@ -1,6 +1,6 @@
 import { requireEditor } from "../../lib/auth";
 import { isSupabaseConfigured } from "../../lib/supabase/config";
-import { countCaseStudies, countPosts } from "./counts";
+import { countCaseStudies, countPosts, countUnreadSubmissions } from "./counts";
 import { NotConnected } from "./NotConnected";
 import { Sidebar } from "./Sidebar";
 
@@ -31,9 +31,10 @@ export default async function ShellLayout({
   }
 
   const editor = await requireEditor();
-  const [posts, caseStudies] = await Promise.all([
+  const [posts, caseStudies, submissions] = await Promise.all([
     countPosts(),
     countCaseStudies(),
+    countUnreadSubmissions(),
   ]);
 
   return (
@@ -43,6 +44,7 @@ export default async function ShellLayout({
         counts={{
           "/admin/newsletter": posts,
           "/admin/case-studies": caseStudies,
+          "/admin/submissions": submissions,
         }}
       />
       <main className="cms-main">{children}</main>

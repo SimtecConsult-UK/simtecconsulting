@@ -8,11 +8,16 @@ import { signOut } from "../auth-actions";
 const SECTIONS = [
   { href: "/admin/newsletter", label: "Newsletter" },
   { href: "/admin/case-studies", label: "Case studies" },
+  { href: "/admin/submissions", label: "Submissions" },
 ];
 
 type SidebarProps = {
   email: string;
-  /** How many items each section holds, shown beside its name. */
+  /**
+   * The number beside each section. Newsletter and Case studies show how many
+   * items they hold; Submissions shows how many are unread, so it drops to
+   * zero once they have all been opened.
+   */
   counts: Record<string, number>;
 };
 

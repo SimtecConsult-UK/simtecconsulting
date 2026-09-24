@@ -3,7 +3,8 @@
 import { Fragment } from "react";
 import { Logo } from "../components/Logo";
 import { type Answers, type ReviewItem, type ReviewSectionData, padSectionNumber } from "./data";
-import { ReviewValueView, useBodyScrollLock, useEscapeKey } from "./ReviewShared";
+import { ReviewValueView, SubmitButton, useBodyScrollLock, useEscapeKey } from "./ReviewShared";
+import type { SubmitStatus } from "./submission";
 
 // The brief lists an answer's plain fields as one definition list, then every
 // repeater as its own table below it (matching the design reference) — one
@@ -20,14 +21,14 @@ export function DiscoveryBrief({
   answers,
   sections,
   consent,
-  submitted,
+  submit,
   onClose,
   onSubmit,
 }: {
   answers: Answers;
   sections: ReviewSectionData[];
   consent: boolean;
-  submitted: boolean;
+  submit: SubmitStatus;
   onClose: () => void;
   onSubmit: () => void;
 }) {
@@ -52,21 +53,14 @@ export function DiscoveryBrief({
             <button className="dw-tbtn" onClick={() => window.print()}>
               Print
             </button>
-            {!submitted ? (
-              // Consent lives on the review sheet behind this preview, so the
-              // button says what's missing instead of looking broken when it's
-              // clicked without it.
-              <button
-                className="dw-tbtn dw-tbtn-teal"
-                onClick={onSubmit}
-                disabled={!consent}
-                title={consent ? undefined : "Tick the consent box on the review screen"}
-              >
-                {consent ? "Looks right — submit →" : "Tick consent to submit"}
-              </button>
-            ) : (
-              <span className="dw-tbtn dw-tbtn-teal dw-tbtn-static">✓ Sent</span>
-            )}
+            <SubmitButton
+              submit={submit}
+              consent={consent}
+              onSubmit={onSubmit}
+              className="dw-tbtn dw-tbtn-teal"
+              restingLabel="Looks right — submit →"
+              sentLabel="✓ Sent"
+            />
             <button className="dw-tbtn dw-tbtn-x" onClick={onClose} aria-label="Close preview">
               ✕
             </button>

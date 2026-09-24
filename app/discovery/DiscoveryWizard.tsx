@@ -1,10 +1,12 @@
 "use client";
 
-import { Fragment, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { Logo } from "../components/Logo";
 import { DiscoveryBrief } from "./DiscoveryBrief";
 import { ReviewSheet } from "./ReviewSheet";
+import { submitDiscovery } from "./actions";
+import { SEND_FAILED, type SubmitState } from "./submission";
 import {
   type Answers,
   type NeedHelp,
@@ -111,7 +113,14 @@ export function DiscoveryWizard() {
   const [answers, setAnswers] = useState<Answers>({});
   const [repRows, setRepRows] = useState<Record<string, RepRow[]>>({});
   const [consent, setConsent] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  /**
+   * One value rather than a `submitted` / `sending` / `error` trio: those had
+   * eight combinations for four real states, and every write site had to
+   * remember to set two of them together.
+   */
+  const [submitState, setSubmitState] = useState<SubmitState>({ kind: "idle" });
+  const [sending, startSending] = useTransition();
+  const submitted = submitState.kind === "sent";
   const [hydrated, setHydrated] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [robotTop, setRobotTop] = useState<number | null>(null);
@@ -149,7 +158,7 @@ export function DiscoveryWizard() {
         setAnswers(sanitizeAnswers(saved.answers || {}));
         setRepRows(saved.repRows || {});
         setConsent(!!saved.consent);
-        setSubmitted(!!saved.submitted);
+        if (saved.submitted) setSubmitState({ kind: "sent" });
       }
     } catch {
       // ignore malformed drafts
@@ -339,9 +348,33 @@ export function DiscoveryWizard() {
     [visibleSteps]
   );
 
+  /**
+   * Sends the wizard. Until this existed the answers only ever reached the
+   * visitor's own browser, so a completed enquiry reached nobody.
+   *
+   * A failure is shown rather than swallowed: the draft stays in local storage
+   * either way, so retrying costs nothing, and quietly showing "sent" for an
+   * enquiry that was lost is the thing worth avoiding.
+   */
   const handleSubmit = useCallback(() => {
-    if (consent) setSubmitted(true);
-  }, [consent]);
+    if (!consent || sending) return;
+    startSending(async () => {
+      try {
+        // The reconciled rows, not the raw ones: that is what the review sheet
+        // showed, so it is what the CMS should show back.
+        const result = await submitDiscovery({
+          answers,
+          repRows: reconciledRepRows,
+          consent,
+        });
+        setSubmitState(
+          result.error ? { kind: "failed", message: result.error } : { kind: "sent" }
+        );
+      } catch {
+        setSubmitState({ kind: "failed", message: SEND_FAILED });
+      }
+    });
+  }, [answers, consent, reconciledRepRows, sending]);
 
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
@@ -643,7 +676,7 @@ export function DiscoveryWizard() {
           answers={answers}
           sections={reviewSections}
           consent={consent}
-          submitted={submitted}
+          submit={{ state: submitState, sending }}
           onClose={() => setOverlay("none")}
           onEditQuestion={jumpToQuestion}
           onDownload={() => setOverlay("brief")}
@@ -656,7 +689,7 @@ export function DiscoveryWizard() {
           answers={answers}
           sections={reviewSections}
           consent={consent}
-          submitted={submitted}
+          submit={{ state: submitState, sending }}
           onClose={() => setOverlay("review")}
           onSubmit={handleSubmit}
         />
