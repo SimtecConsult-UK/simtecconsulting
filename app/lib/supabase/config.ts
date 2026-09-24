@@ -6,7 +6,17 @@
  * supabase/migrations, not the secrecy of this key. The service-role key is
  * never used by the site and must never appear in this repository.
  */
-export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+/**
+ * The trailing slash is stripped because storage URLs are built by joining onto
+ * this value. A pasted "https://xyz.supabase.co/" would otherwise produce
+ * "…co//storage/v1/…", whose path no longer matches the one next.config.ts
+ * allows next/image to load — every picture on the site would fail, and the
+ * error would point at next/image rather than at the typo.
+ */
+export const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(
+  /\/$/,
+  ""
+);
 export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 /**
