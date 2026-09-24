@@ -1,0 +1,803 @@
+/* ── Blog (list + post) ───────────────────────────────────────────────────
+   Values lifted from design_handoff_blog/SPEC.md and the two source
+   prototypes. The handover draws four fixed artboards; they map to tiers here:
+
+     base      → 390 artboard
+     ≥768px    → 834 artboard
+     ≥1100px   → 1280 artboard
+     ≥1600px   → 1920 artboard (content capped at 1600 and centred)
+
+   The desktop tier starts at 1100 rather than 1024 because that is the width
+   at which the post body's 760px measure plus its padding still leaves room
+   for the share rail in the left gutter. Below it the rail sits horizontally
+   above the body, exactly as the 834 artboard shows.
+
+   Every size that changes per breakpoint is a custom property declared on
+   .bl-root, so the four tiers read as four tables instead of being scattered
+   through the rules. */
+
+.bl-root {
+  /* Palette — SPEC.md "Colour". Locally scoped: these are the blog's own
+     tokens and are deliberately not added to the site-wide theme. */
+  --bl-ink: #11141d;
+  --bl-body: #444a57;
+  --bl-muted: #5a6070;
+  --bl-meta: #9aa0ad;
+  --bl-teal: #0fae9a;
+  --bl-teal-light: #2dd4bf;
+  --bl-surface: #f5f6f7;
+  --bl-rule: #e7e9ef;
+  --bl-control: #e2e5eb;
+
+  /* Image placeholder stripes. The post cover and the related cards use the
+     slightly darker pair. */
+  --bl-ph-a: #dfe3e8;
+  --bl-ph-b: #e9ecf0;
+  --bl-ph-dark-a: #dcdfe4;
+  --bl-ph-dark-b: #e6e9ed;
+  --bl-ph-step: 12px;
+
+  /* ── 390 ── */
+  --bl-pad: 20px;
+  --bl-max: 100%;
+
+  --bl-eyebrow: 11px;
+  --bl-page-title: 40px;
+  --bl-page-title-lh: 0.96;
+  --bl-page-title-ls: -0.02em;
+  --bl-head-top: 32px;
+  --bl-head-bottom: 24px;
+  --bl-head-gap: 12px;
+
+  --bl-feat-h: 300px;
+  --bl-feat-pad: 20px;
+  --bl-feat-gap: 10px;
+  --bl-feat-eyebrow: 10px;
+  --bl-feat-title: 28px;
+  --bl-feat-title-lh: 1.04;
+  --bl-feat-title-ls: -0.015em;
+  --bl-feat-scrim: 0.92;
+
+  --bl-grid-cols: 1;
+  --bl-grid-row-gap: 36px;
+  --bl-grid-col-gap: 36px;
+  --bl-grid-top: 32px;
+  --bl-grid-bottom: 56px;
+  --bl-card-img-h: 190px;
+  --bl-card-gap: 12px;
+  --bl-card-meta: 11px;
+  --bl-card-title: 24px;
+  --bl-card-desc: 15px;
+
+  --bl-cover-h: 260px;
+  --bl-title-top: 28px;
+  --bl-title-bottom: 20px;
+  --bl-title-gap: 14px;
+  --bl-post-title: 34px;
+  --bl-post-title-lh: 1.02;
+  --bl-post-title-ls: -0.02em;
+  --bl-back: 11px;
+  --bl-date: 12px;
+
+  --bl-measure: 100%;
+  --bl-article-top: 28px;
+  --bl-article-bottom: 48px;
+  --bl-article-gap: 22px;
+  --bl-lead: 19px;
+  --bl-para: 16px;
+  --bl-h2: 26px;
+  --bl-h2-top: 6px;
+  --bl-body-img-h: 220px;
+  --bl-share-size: 44px;
+
+  --bl-rel-band: 40px;
+  --bl-rel-title-gap: 24px;
+  --bl-rel-row-gap: 28px;
+  --bl-rel-col-gap: 28px;
+  --bl-rel-img-h: 180px;
+  --bl-rel-card-gap: 12px;
+  --bl-rel-card-title: 22px;
+
+  background: #ffffff;
+  color: var(--bl-ink);
+  font-family: var(--font-ibm-plex-sans), var(--font-sans);
+  /* The site nav is fixed. Clearing it once here — as legal.css does on
+     .lg-root — keeps every block below from having to know that. */
+  padding-top: var(--nav-height);
+}
+
+/* ── 834 ── */
+@media (min-width: 768px) {
+  .bl-root {
+    --bl-ph-step: 14px;
+    --bl-pad: 32px;
+
+    --bl-eyebrow: 12px;
+    --bl-page-title: 52px;
+    --bl-head-top: 48px;
+    --bl-head-bottom: 28px;
+    --bl-head-gap: 16px;
+
+    --bl-feat-h: 340px;
+    --bl-feat-pad: 28px;
+    --bl-feat-gap: 12px;
+    --bl-feat-eyebrow: 11px;
+    --bl-feat-title: 34px;
+    --bl-feat-title-lh: 1.02;
+    --bl-feat-scrim: 0.9;
+
+    --bl-grid-cols: 2;
+    --bl-grid-row-gap: 40px;
+    --bl-grid-col-gap: 28px;
+    --bl-grid-top: 44px;
+    --bl-grid-bottom: 64px;
+    --bl-card-img-h: 200px;
+    --bl-card-gap: 14px;
+
+    --bl-cover-h: 380px;
+    --bl-title-top: 44px;
+    --bl-title-gap: 18px;
+    --bl-post-title: 46px;
+    --bl-post-title-lh: 1;
+    --bl-back: 12px;
+
+    --bl-measure: 660px;
+    --bl-article-top: 40px;
+    --bl-article-bottom: 64px;
+    --bl-article-gap: 24px;
+    --bl-lead: 20px;
+    --bl-para: 17px;
+    --bl-h2: 28px;
+    --bl-h2-top: 8px;
+    --bl-body-img-h: 300px;
+
+    --bl-rel-band: 48px;
+    --bl-rel-title-gap: 28px;
+    --bl-rel-row-gap: 32px;
+  }
+}
+
+/* ── 1280 ── */
+@media (min-width: 1100px) {
+  .bl-root {
+    --bl-pad: 64px;
+
+    --bl-page-title: 64px;
+    --bl-page-title-lh: 0.95;
+    --bl-head-top: 64px;
+    --bl-head-bottom: 36px;
+
+    --bl-feat-h: 420px;
+    --bl-feat-pad: 40px;
+    --bl-feat-gap: 14px;
+    --bl-feat-title: 42px;
+    --bl-feat-scrim: 0.88;
+
+    --bl-grid-cols: 3;
+    --bl-grid-col-gap: 32px;
+    --bl-grid-top: 56px;
+    --bl-grid-bottom: 80px;
+    --bl-card-gap: 16px;
+    --bl-card-desc: 16px;
+
+    --bl-cover-h: 460px;
+    --bl-title-top: 56px;
+    --bl-title-bottom: 24px;
+    --bl-title-gap: 20px;
+    --bl-post-title: 58px;
+    --bl-date: 13px;
+
+    --bl-measure: 760px;
+    --bl-article-top: 20px;
+    --bl-article-bottom: 80px;
+    --bl-article-gap: 26px;
+    --bl-lead: 21px;
+    --bl-h2: 30px;
+    --bl-h2-top: 10px;
+    --bl-body-img-h: 340px;
+    --bl-share-size: 38px;
+
+    --bl-rel-band: 64px;
+    --bl-rel-title-gap: 32px;
+    --bl-rel-col-gap: 32px;
+  }
+}
+
+/* ── 1920 ── */
+@media (min-width: 1600px) {
+  .bl-root {
+    --bl-ph-step: 16px;
+    --bl-pad: 40px;
+    --bl-max: 1600px;
+
+    --bl-eyebrow: 13px;
+    --bl-page-title: 80px;
+    --bl-page-title-lh: 0.94;
+    --bl-page-title-ls: -0.025em;
+    --bl-head-top: 80px;
+    --bl-head-bottom: 44px;
+    --bl-head-gap: 18px;
+
+    --bl-feat-h: 560px;
+    --bl-feat-pad: 52px;
+    --bl-feat-gap: 16px;
+    --bl-feat-eyebrow: 12px;
+    --bl-feat-title: 54px;
+    --bl-feat-title-lh: 1;
+    --bl-feat-title-ls: -0.02em;
+
+    --bl-grid-row-gap: 52px;
+    --bl-grid-col-gap: 40px;
+    --bl-grid-top: 64px;
+    --bl-grid-bottom: 100px;
+    --bl-card-img-h: 280px;
+    --bl-card-title: 28px;
+
+    --bl-cover-h: 620px;
+    --bl-title-top: 72px;
+    --bl-title-bottom: 28px;
+    --bl-title-gap: 22px;
+    --bl-post-title: 72px;
+    --bl-post-title-lh: 0.98;
+    --bl-post-title-ls: -0.025em;
+    --bl-back: 13px;
+    --bl-date: 14px;
+
+    --bl-measure: 860px;
+    --bl-article-top: 24px;
+    --bl-article-bottom: 100px;
+    --bl-article-gap: 28px;
+    --bl-lead: 23px;
+    --bl-para: 18px;
+    --bl-h2: 34px;
+    --bl-h2-top: 12px;
+    --bl-body-img-h: 400px;
+    --bl-share-size: 44px;
+
+    --bl-rel-band: 80px;
+    --bl-rel-title-gap: 36px;
+    --bl-rel-col-gap: 40px;
+    --bl-rel-row-gap: 40px;
+    --bl-rel-img-h: 250px;
+    --bl-rel-card-gap: 14px;
+    --bl-rel-card-title: 26px;
+  }
+}
+
+/* ── Shared primitives ─────────────────────────────────────────────────── */
+
+/* The one content column. Only the 1920 tier caps and centres it; below that
+   the pages are full bleed and the padding alone sets the margins. */
+.bl-wrap {
+  max-width: var(--bl-max);
+  margin-inline: auto;
+  padding-inline: var(--bl-pad);
+}
+
+/* The one mono-meta recipe: dates, eyebrows, the back link, the share label.
+   Everything below composes on it and overrides only size, colour or tracking. */
+.bl-meta {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bl-meta);
+}
+
+.bl-eyebrow {
+  font-size: var(--bl-eyebrow);
+  letter-spacing: 0.16em;
+}
+
+.bl-h {
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+/* Image slot. Its height comes from the class the caller adds, so the box is
+   the same size with or without a picture and nothing reflows when real
+   imagery arrives. */
+.bl-img {
+  position: relative;
+  overflow: hidden;
+}
+
+/* The design's striped placeholder, painted only while the slot is empty — a
+   slot with a picture covers it completely. */
+.bl-img--empty {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--bl-ph-a) 0 var(--bl-ph-step),
+    var(--bl-ph-b) var(--bl-ph-step) calc(var(--bl-ph-step) * 2)
+  );
+}
+
+/* The darker stripe pair, used by the post cover and the related cards. */
+.bl-img--dark {
+  --bl-ph-a: var(--bl-ph-dark-a);
+  --bl-ph-b: var(--bl-ph-dark-b);
+}
+
+/* Absolute so a slot can also hold an overlay on top of the picture — the
+   featured block puts its gradient and text there. */
+.bl-img img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Card (index grid and related band) ────────────────────────────────── */
+
+.bl-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bl-card-gap);
+  text-decoration: none;
+  color: inherit;
+}
+
+.bl-card-img {
+  height: var(--bl-card-img-h);
+}
+
+.bl-card-date {
+  font-size: var(--bl-card-meta);
+}
+
+.bl-card-title {
+  font-size: var(--bl-card-title);
+  line-height: 1.1;
+  color: var(--bl-ink);
+  transition: color 200ms ease;
+}
+
+.bl-card-desc {
+  font-size: var(--bl-card-desc);
+  line-height: 1.65;
+  color: var(--bl-muted);
+  text-wrap: pretty;
+  /* SPEC.md: "2-line description". */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Card hover was left open in the handover; this is the restrained option —
+   the title picks up the link teal and the image lifts very slightly. */
+.bl-card .bl-img img {
+  transition: transform 400ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@media (hover: hover) {
+  .bl-card:hover .bl-card-title {
+    color: var(--bl-teal);
+  }
+
+  .bl-card:hover .bl-img img {
+    transform: scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-card .bl-img img {
+    transition: none;
+  }
+
+  .bl-card:hover .bl-img img {
+    transform: none;
+  }
+}
+
+/* ── List page ─────────────────────────────────────────────────────────── */
+
+/* The site nav is fixed, so the first block owes it the bar's height on top of
+   the design's own spacing. */
+.bl-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bl-head-gap);
+  padding-top: var(--bl-head-top);
+  padding-bottom: var(--bl-head-bottom);
+}
+
+.bl-page-title {
+  font-size: var(--bl-page-title);
+  line-height: var(--bl-page-title-lh);
+  letter-spacing: var(--bl-page-title-ls);
+  color: var(--bl-ink);
+}
+
+/* The featured block goes edge to edge at 390 and sits inside the page padding
+   from 834 up. */
+.bl-feat-wrap {
+  padding-inline: 0;
+}
+
+@media (min-width: 768px) {
+  .bl-feat-wrap {
+    padding-inline: var(--bl-pad);
+  }
+}
+
+.bl-featured {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.bl-feat-img {
+  position: relative;
+  height: var(--bl-feat-h);
+  display: flex;
+  align-items: flex-end;
+}
+
+.bl-feat-overlay {
+  position: relative;
+  width: 100%;
+  padding: var(--bl-feat-pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--bl-feat-gap);
+  background: linear-gradient(
+    to top,
+    rgba(11, 10, 12, var(--bl-feat-scrim)),
+    rgba(11, 10, 12, 0)
+  );
+}
+
+.bl-feat-eyebrow {
+  font-size: var(--bl-feat-eyebrow);
+  letter-spacing: 0.16em;
+  color: var(--bl-teal-light);
+}
+
+.bl-feat-title {
+  font-size: var(--bl-feat-title);
+  line-height: var(--bl-feat-title-lh);
+  letter-spacing: var(--bl-feat-title-ls);
+  color: #ffffff;
+}
+
+/* Dropped at 390 — the artboard shows eyebrow and title only. */
+.bl-feat-desc {
+  display: none;
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+  text-wrap: pretty;
+}
+
+@media (min-width: 768px) {
+  .bl-feat-desc {
+    display: block;
+  }
+}
+
+@media (min-width: 1100px) {
+  .bl-feat-title {
+    max-width: 760px;
+  }
+
+  .bl-feat-desc {
+    font-size: 17px;
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .bl-feat-title {
+    max-width: 960px;
+  }
+
+  .bl-feat-desc {
+    font-size: 19px;
+    max-width: 760px;
+  }
+}
+
+.bl-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--bl-grid-cols), minmax(0, 1fr));
+  gap: var(--bl-grid-row-gap) var(--bl-grid-col-gap);
+  padding-top: var(--bl-grid-top);
+  padding-bottom: var(--bl-grid-bottom);
+}
+
+.bl-empty {
+  padding: 80px 0 120px;
+  font-size: var(--bl-para);
+  line-height: 1.8;
+  color: var(--bl-muted);
+}
+
+/* ── Post page ─────────────────────────────────────────────────────────── */
+
+/* Full bleed, straight under the fixed nav. */
+.bl-cover {
+  height: var(--bl-cover-h);
+}
+
+/* The body measure, centred inside the page padding. Three blocks sit on this
+   column: the title block, the article and the share row. */
+.bl-col {
+  max-width: calc(var(--bl-measure) + var(--bl-pad) * 2);
+  margin-inline: auto;
+  padding-inline: var(--bl-pad);
+}
+
+.bl-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bl-title-gap);
+  align-items: flex-start;
+  text-align: left;
+  padding-top: var(--bl-title-top);
+  padding-bottom: var(--bl-title-bottom);
+}
+
+/* Centred from 834 up; left-aligned at 390. */
+@media (min-width: 768px) {
+  .bl-title-block {
+    align-items: center;
+    text-align: center;
+  }
+}
+
+.bl-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--bl-back);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.bl-back:hover {
+  color: var(--bl-teal);
+}
+
+.bl-post-title {
+  font-size: var(--bl-post-title);
+  line-height: var(--bl-post-title-lh);
+  letter-spacing: var(--bl-post-title-ls);
+  color: var(--bl-ink);
+  text-wrap: pretty;
+}
+
+@media (min-width: 768px) {
+  .bl-post-title {
+    text-wrap: balance;
+  }
+}
+
+.bl-post-date {
+  font-size: var(--bl-date);
+  color: var(--bl-teal);
+}
+
+/* Below 1100 the body is a single centred column with the share row above it;
+   from 1100 up it becomes the three-column grid with the rail in the gutter. */
+.bl-body {
+  display: block;
+  padding-bottom: var(--bl-article-bottom);
+}
+
+.bl-article {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bl-article-gap);
+  padding-top: var(--bl-article-top);
+}
+
+@media (min-width: 1100px) {
+  /* The share rail and the article fill the first two tracks; the trailing
+     gutter sizes from free space, so it needs no element of its own. */
+  .bl-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--bl-measure) minmax(0, 1fr);
+    align-items: start;
+    max-width: var(--bl-max);
+    margin-inline: auto;
+    padding-top: var(--bl-article-top);
+    padding-inline: var(--bl-pad);
+  }
+
+  .bl-body .bl-col {
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+
+  .bl-article {
+    padding-top: 0;
+  }
+}
+
+.bl-lead {
+  font-size: var(--bl-lead);
+  line-height: 1.6;
+  color: var(--bl-ink);
+  text-wrap: pretty;
+}
+
+.bl-para {
+  font-size: var(--bl-para);
+  line-height: 1.8;
+  color: var(--bl-body);
+  text-wrap: pretty;
+}
+
+.bl-para a {
+  color: var(--bl-teal);
+  text-underline-offset: 3px;
+}
+
+/* The in-body H2 and the "Related articles" heading are the same size at every
+   tier; only their margins differ. */
+.bl-post-h2,
+.bl-rel-heading {
+  font-size: var(--bl-h2);
+  letter-spacing: -0.01em;
+  color: var(--bl-ink);
+}
+
+.bl-post-h2 {
+  margin-top: var(--bl-h2-top);
+}
+
+.bl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 22px;
+  list-style: disc;
+}
+
+.bl-list li {
+  font-size: var(--bl-para);
+  line-height: 1.8;
+  color: var(--bl-body);
+  text-wrap: pretty;
+}
+
+.bl-list li::marker {
+  color: var(--bl-teal);
+}
+
+.bl-body-img {
+  height: var(--bl-body-img-h);
+}
+
+@media (min-width: 768px) {
+  .bl-body-img {
+    margin-block: 4px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .bl-body-img {
+    margin-block: 8px;
+  }
+}
+
+/* ── Share ─────────────────────────────────────────────────────────────── */
+
+/* Below 1100: a horizontal row under the title block, above a hairline rule. */
+.bl-share {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--bl-rule);
+}
+
+@media (min-width: 768px) {
+  .bl-share {
+    justify-content: center;
+    gap: 14px;
+    padding-bottom: 24px;
+  }
+}
+
+.bl-share-label {
+  font-size: 10px;
+}
+
+.bl-share-links {
+  display: flex;
+  gap: 8px;
+}
+
+.bl-share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--bl-share-size);
+  height: var(--bl-share-size);
+  border: 1px solid var(--bl-control);
+  border-radius: 50%;
+  color: var(--bl-muted);
+  background: none;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+.bl-share-glyph {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.bl-share-btn:hover {
+  border-color: var(--bl-teal);
+  color: var(--bl-teal);
+}
+
+/* From 1100 the rail moves into the sticky left gutter. The offset clears the
+   fixed nav. */
+@media (min-width: 1100px) {
+  .bl-share {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding-right: 32px;
+    padding-bottom: 0;
+    border-bottom: 0;
+    position: sticky;
+    top: calc(var(--nav-height) + 24px);
+  }
+
+  .bl-share-links {
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 1600px) {
+  .bl-share {
+    padding-right: 40px;
+    gap: 12px;
+  }
+
+  .bl-share-links {
+    gap: 10px;
+  }
+}
+
+/* ── Related articles ──────────────────────────────────────────────────── */
+
+.bl-related {
+  background: var(--bl-surface);
+  padding-block: var(--bl-rel-band);
+}
+
+.bl-rel-heading {
+  margin-bottom: var(--bl-rel-title-gap);
+}
+
+.bl-rel-grid {
+  display: grid;
+  /* Same column count as the index grid at every tier. */
+  grid-template-columns: repeat(var(--bl-grid-cols), minmax(0, 1fr));
+  gap: var(--bl-rel-row-gap) var(--bl-rel-col-gap);
+}
+
+/* A related card is an index card with smaller type and images, the darker
+   stripes, and no description — all of it driven from the one root class the
+   component adds, so PostCard has no per-element branching. */
+.bl-rel-card {
+  --bl-card-gap: var(--bl-rel-card-gap);
+  --bl-card-img-h: var(--bl-rel-img-h);
+  --bl-card-title: var(--bl-rel-card-title);
+  --bl-ph-a: var(--bl-ph-dark-a);
+  --bl-ph-b: var(--bl-ph-dark-b);
+}
+
+.bl-rel-card .bl-card-desc {
+  display: none;
+}
