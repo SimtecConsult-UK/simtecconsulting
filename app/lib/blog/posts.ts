@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { POSTS } from "./content";
-import { createClient } from "../supabase/server";
+import { supabasePublic } from "../supabase/public";
 import { isSupabaseConfigured } from "../supabase/config";
 import { BUCKETS, publicUrl } from "../supabase/storage";
 import type { BlogBlock, FaqPair, Post, PostSummary } from "./types";
@@ -120,8 +120,7 @@ export const getIndex = cache(
 
     if (!isSupabaseConfigured) return split(samples().map(postToSummary));
 
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const { data, error } = await supabasePublic
       .from("posts")
       .select(SUMMARY_COLUMNS)
       .eq("status", "published")
@@ -138,8 +137,7 @@ export const getIndex = cache(
 export const getPost = cache(async (slug: string): Promise<Post | undefined> => {
   if (!isSupabaseConfigured) return samples().find((post) => post.slug === slug);
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await supabasePublic
     .from("posts")
     .select(POST_COLUMNS)
     .eq("slug", slug)
@@ -157,8 +155,7 @@ export const getPost = cache(async (slug: string): Promise<Post | undefined> => 
 export const getPostSlugs = cache(async (): Promise<string[]> => {
   if (!isSupabaseConfigured) return samples().map((post) => post.slug);
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await supabasePublic
     .from("posts")
     .select("slug")
     .eq("status", "published");
@@ -180,8 +177,7 @@ export const getRelatedPosts = cache(
         .map(postToSummary);
     }
 
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const { data, error } = await supabasePublic
       .from("posts")
       .select(SUMMARY_COLUMNS)
       .eq("status", "published")

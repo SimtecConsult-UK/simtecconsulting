@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { createClient } from "./supabase/server";
+import { supabasePublic } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/config";
 import { BUCKETS, publicUrl } from "./supabase/storage";
 import {
@@ -93,8 +93,7 @@ export const getCaseStudies = cache(async (): Promise<CaseStudy[]> => {
   const committed = committedCaseStudies.slice(0, MAX_HOMEPAGE_CASE_STUDIES);
   if (!isSupabaseConfigured) return committed;
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await supabasePublic
     .from("case_studies")
     .select(
       "id,tab_label,headline,client_name,system_name,project_type,logo_path,logo_width,logo_height,video_path,video_poster_path,quote,quote_attribution,chapters"
