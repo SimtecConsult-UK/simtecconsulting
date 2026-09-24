@@ -60,6 +60,7 @@ export function DiscoveryBrief({
               className="dw-tbtn dw-tbtn-teal"
               restingLabel="Looks right — submit →"
               sentLabel="✓ Sent"
+              consentHint="Close this preview and tick the consent box on the review screen"
             />
             <button className="dw-tbtn dw-tbtn-x" onClick={onClose} aria-label="Close preview">
               ✕

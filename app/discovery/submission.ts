@@ -1,4 +1,4 @@
-import { SECTIONS, hasText, type Answers, type RepRow } from "./data";
+import { SECTIONS, hasText, sanitizeAnswers, type Answers, type RepRow } from "./data";
 import { checkLimits, type FieldCheck } from "../admin/validation";
 
 /**
@@ -35,9 +35,10 @@ export const SEND_FAILED =
  * The contact fields lifted into their own columns, and the caps that match
  * those columns in supabase/migrations/0005.
  *
- * Keyed by question id, so a question renamed in `SECTIONS` without renaming
- * it here becomes a type error rather than a wizard that silently stops
- * accepting anything.
+ * Keyed by question id. TypeScript cannot check those keys against `SECTIONS`
+ * — the questions are a plain array, so their ids are strings rather than
+ * literal types — so `CONTACT_QUESTIONS` below checks them when this module
+ * loads instead.
  */
 export const SUBMISSION_LIMITS = {
   company: 200,
@@ -62,12 +63,126 @@ export const MAX_PAYLOAD_CHARS = 200_000;
 /** The Project Basics questions, which is where every contact field lives. */
 const BASICS = SECTIONS[0];
 
-function question(id: ContactField) {
-  return BASICS.questions.find((q) => q.id === id);
+/**
+ * The question behind each contact field, resolved once when this module is
+ * first imported — which is during `next build`, since the wizard imports it.
+ *
+ * Resolved eagerly and loudly on purpose. Renaming (say) `email` in data.ts
+ * without renaming it here would otherwise leave `question(id)` returning
+ * undefined, and the checks below read required-ness and the field's label off
+ * that question: the server would quietly stop insisting on an email address
+ * and start calling it "email" in its error messages. A failed build is a far
+ * cheaper way to find out.
+ */
+const CONTACT_QUESTIONS = new Map(
+  CONTACT_FIELDS.map((id) => {
+    const question = BASICS.questions.find((q) => q.id === id);
+    if (!question) {
+      throw new Error(
+        `[discovery] SUBMISSION_LIMITS names "${id}", which is not a question in ` +
+          `"${BASICS.name}". Rename it in app/discovery/data.ts and here together.`
+      );
+    }
+    return [id, question] as const;
+  })
+);
+
+/**
+ * Every key the wizard can legitimately put in `answers`: one per question,
+ * plus the `<questionId>.<fieldKey>` pairs a `group` question stores its parts
+ * under (see the group branch of `getReviewValue`).
+ */
+const ANSWER_KEYS = new Set(
+  SECTIONS.flatMap((section) =>
+    section.questions.flatMap((question) => [
+      question.id,
+      ...(question.fields ?? []).map((field) => `${question.id}.${field.key}`),
+    ])
+  )
+);
+
+/**
+ * The cell keys each repeating question's rows may carry. `__`-prefixed keys
+ * (`__key`, `__group`, `__<column>Kind`) are structural bookkeeping and are
+ * allowed everywhere; everything else has to be a column the question declares.
+ */
+const REP_COLUMNS = new Map(
+  SECTIONS.flatMap((section) => section.questions)
+    .filter((question) => question.type === "rep")
+    .map((question) => [question.id, new Set((question.columns ?? []).map((c) => c.key))])
+);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** A string, or a list with the non-strings dropped. Anything else is not an answer. */
+function coerceCell(value: unknown): string | string[] | null {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+  return null;
 }
 
 /**
- * Everything that must be true before a submission can be written.
+ * Forces a payload into the shapes the rest of the site assumes.
+ *
+ * `SubmissionInput` describes what the wizard sends, not what can arrive:
+ * `submitDiscovery` is public, so the payload is whatever somebody chose to
+ * post, and a type annotation checks nothing at runtime. That matters because
+ * these values are read back through `buildReviewData`, which calls `.some`,
+ * `.includes` and `.filter` on them — a number where a list belongs throws
+ * there rather than here, and the page it throws on is the only one from which
+ * a submission can be read or deleted.
+ *
+ * So anything that is not a string or a list of strings is dropped, as is any
+ * key the wizard could not have written. `sanitizeAnswers` then settles the
+ * remaining string-vs-list question per the question's own type, and because
+ * this runs before validation, the values checked are the values stored.
+ */
+export function coerceSubmission(input: SubmissionInput): SubmissionInput {
+  return {
+    answers: sanitizeAnswers(coerceAnswers(input?.answers)),
+    repRows: coerceRepRows(input?.repRows),
+    consent: input?.consent === true,
+  };
+}
+
+function coerceAnswers(raw: unknown): Answers {
+  if (!isRecord(raw)) return {};
+
+  const answers: Answers = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!ANSWER_KEYS.has(key)) continue;
+    const cell = coerceCell(value);
+    if (cell !== null) answers[key] = cell;
+  }
+  return answers;
+}
+
+function coerceRepRows(raw: unknown): Record<string, RepRow[]> {
+  if (!isRecord(raw)) return {};
+
+  const repRows: Record<string, RepRow[]> = {};
+  for (const [id, rows] of Object.entries(raw)) {
+    const columns = REP_COLUMNS.get(id);
+    if (!columns || !Array.isArray(rows)) continue;
+
+    repRows[id] = rows.filter(isRecord).map((raw) => {
+      const row: RepRow = {};
+      for (const [key, value] of Object.entries(raw)) {
+        if (!key.startsWith("__") && !columns.has(key)) continue;
+        const cell = coerceCell(value);
+        if (cell !== null) row[key] = cell;
+      }
+      return row;
+    });
+  }
+  return repRows;
+}
+
+/**
+ * Everything that must be true before a submission can be written. Call it on
+ * a `coerceSubmission` result, so what is checked is what will be stored.
  *
  * Length problems are reported rather than trimmed away: silently shortening
  * somebody's email to fit and then telling them it sent is how you end up with
@@ -83,26 +198,28 @@ export function validateSubmission(input: SubmissionInput): string | null {
   const answers = input.answers ?? {};
 
   const fields: FieldCheck[] = CONTACT_FIELDS.map((id) => {
-    const q = question(id);
-    const label = (q?.label ?? id).toLowerCase();
+    const question = CONTACT_QUESTIONS.get(id)!;
+    const label = question.label.toLowerCase();
     const value = answers[id];
     return {
       name: label,
       value: typeof value === "string" ? value : "",
       limit: SUBMISSION_LIMITS[id],
-      required: q?.required ? `Fill in your ${label} before sending.` : undefined,
+      required: question.required ? `Fill in your ${label} before sending.` : undefined,
     };
   });
 
   const problem = checkLimits(fields, { includeRequired: true });
   if (problem) return problem;
 
-  // Every other question the wizard marks required, so the server agrees with
-  // what the form asked for rather than checking a shorter list of its own.
-  for (const q of BASICS.questions) {
-    if (!q.required || CONTACT_FIELDS.includes(q.id as ContactField)) continue;
-    if (!hasText(answers[q.id])) {
-      return `Fill in ${q.label.toLowerCase()} before sending.`;
+  // Every other Project Basics question the wizard marks required, so the
+  // server agrees with what the form asked for rather than checking a shorter
+  // list of its own. Later sections are deliberately not enforced here: an
+  // enquiry missing question 41 is still an enquiry worth receiving.
+  for (const question of BASICS.questions) {
+    if (!question.required || CONTACT_FIELDS.includes(question.id as ContactField)) continue;
+    if (!hasText(answers[question.id])) {
+      return `Fill in ${question.label.toLowerCase()} before sending.`;
     }
   }
 

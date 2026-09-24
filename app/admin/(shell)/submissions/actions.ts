@@ -7,31 +7,9 @@ import { createClient } from "../../../lib/supabase/server";
 
 /**
  * Writes for the submissions section. There is no edit: a submission is a
- * record of what somebody sent, so the only changes are marking it read and
- * deleting it.
+ * record of what somebody sent, so the only changes are deleting it and
+ * marking it read — and the latter lives in `read.ts`, which explains why.
  */
-
-/**
- * Called when an editor opens one, so the list can show what is new.
- *
- * Deliberately does not revalidate: Next refuses a cache revalidation during a
- * render, and every route under /admin is already dynamic, so the list re-reads
- * the database on the next visit regardless.
- */
-export async function markSubmissionRead(id: string) {
-  await requireEditor();
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("submissions")
-    .update({ read_at: new Date().toISOString() })
-    .eq("id", id)
-    .is("read_at", null);
-
-  if (error) {
-    console.error(`[cms] mark submission ${id} read: ${error.message}`);
-  }
-}
 
 export async function deleteSubmission(id: string) {
   await requireEditor();

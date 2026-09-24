@@ -9,8 +9,8 @@ import type { Answers, RepRow } from "../../../discovery/data";
  * beyond marking it read — the editor reads and replies, they do not edit.
  */
 
-/** How many the list shows at once. */
-export const LIST_LIMIT = 200;
+/** How many the list shows on one page. */
+export const PAGE_SIZE = 50;
 
 export type SubmissionListItem = {
   id: string;
@@ -63,23 +63,61 @@ function toListItem(row: ListRow): SubmissionListItem {
   };
 }
 
-export async function listSubmissions(): Promise<SubmissionListItem[]> {
-  if (!isSupabaseConfigured) return [];
+/** One page of the list, and enough about the rest to draw the pager. */
+export type SubmissionPage = {
+  items: SubmissionListItem[];
+  /** 1-based, and clamped to a page that exists — so ?page=999 shows the last one. */
+  page: number;
+  pageCount: number;
+  total: number;
+};
+
+const EMPTY_PAGE: SubmissionPage = { items: [], page: 1, pageCount: 1, total: 0 };
+
+/**
+ * One page of submissions, newest first.
+ *
+ * Paged rather than capped. This is the one table strangers can write to and
+ * nothing rate-limits them, so the row count is not ours to bound — and a flat
+ * limit would mean an enquiry past it could not be read *or* deleted, since
+ * deleting one is only possible from its own page, which is only reachable
+ * from this list.
+ */
+export async function listSubmissions(requestedPage = 1): Promise<SubmissionPage> {
+  if (!isSupabaseConfigured) return EMPTY_PAGE;
 
   const supabase = await createClient();
+
+  // Counted first so the page number can be clamped to something that exists,
+  // rather than silently serving an empty list for an out-of-range ?page=.
+  const { count, error: countError } = await supabase
+    .from("submissions")
+    .select("id", { count: "exact", head: true });
+
+  if (countError) {
+    console.error(`[cms] count submissions: ${countError.message}`);
+    return EMPTY_PAGE;
+  }
+
+  const total = count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(Math.max(1, Math.trunc(requestedPage) || 1), pageCount);
+  const from = (page - 1) * PAGE_SIZE;
+
   const { data, error } = await supabase
     .from("submissions")
     .select("id,created_at,company,contact_name,email,project_name,read_at")
     .order("created_at", { ascending: false })
-    // Capped because this is the one table strangers can write to: a flood of
-    // junk should degrade the page, not bring it down.
-    .limit(LIST_LIMIT);
+    // A tiebreaker, so two submissions sent in the same instant cannot swap
+    // places between two page reads and leave one of them unreachable.
+    .order("id", { ascending: false })
+    .range(from, from + PAGE_SIZE - 1);
 
   if (error) {
     console.error(`[cms] list submissions: ${error.message}`);
-    return [];
+    return EMPTY_PAGE;
   }
-  return (data as ListRow[]).map(toListItem);
+  return { items: (data as ListRow[]).map(toListItem), page, pageCount, total };
 }
 
 export async function getSubmission(id: string): Promise<Submission | null> {

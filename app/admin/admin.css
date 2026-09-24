@@ -851,3 +851,16 @@
   flex-direction: column;
   gap: 9px;
 }
+
+/* Newer / Page n of m / Older, under a paged list. The empty spans on the
+   first and last page keep "Page n of m" centred rather than letting it slide
+   across as the arrows appear and disappear. */
+.cms-pager {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.cms-pager > :last-child {
+  justify-self: end;
+}
