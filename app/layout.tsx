@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { CookieConsent } from "./components/CookieConsent";
+import { SITE_URL } from "./lib/sections";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -26,6 +27,9 @@ const leagueSpartan = localFont({
 });
 
 export const metadata: Metadata = {
+  // Lets every page give canonical and Open Graph URLs as plain paths; Next
+  // resolves them against this origin.
+  metadataBase: new URL(SITE_URL),
   title: "Simtec — Construction management software",
   description:
     "Construction management software that helps teams deliver projects faster, safer, and on budget.",
