@@ -4,7 +4,6 @@ import { isSupabaseConfigured } from "./supabase/config";
 import { BUCKETS, publicUrl } from "./supabase/storage";
 import {
   MAX_HOMEPAGE_CASE_STUDIES,
-  caseStudies as committedCaseStudies,
   toChapters,
   type CaseStudy,
   type CaseStudyRow,
@@ -44,14 +43,15 @@ function toCaseStudy(row: CaseStudyRow): CaseStudy {
 /**
  * The case studies the homepage section renders, in their published order.
  *
- * Unlike the blog, a failed read falls back to the copy committed in
- * `caseStudies.ts`. That content is the real thing rather than placeholder
- * text, and the section is a permanent part of the homepage — showing the last
- * known-good version beats leaving a hole in the page.
+ * The database is the only source. There used to be a copy committed beside
+ * this file that stood in whenever the table came back empty, which meant the
+ * homepage and the CMS could disagree about what the site was showing — and
+ * deleting the last case study silently brought the old pair back. With one
+ * source, an empty table means the section renders nothing, which is honest
+ * and is what the component already does with an empty list.
  */
 export const getCaseStudies = cache(async (): Promise<CaseStudy[]> => {
-  const committed = committedCaseStudies.slice(0, MAX_HOMEPAGE_CASE_STUDIES);
-  if (!isSupabaseConfigured) return committed;
+  if (!isSupabaseConfigured) return [];
 
   const { data, error } = await supabasePublic()
     .from("case_studies")
@@ -63,9 +63,8 @@ export const getCaseStudies = cache(async (): Promise<CaseStudy[]> => {
 
   if (error) {
     console.error(`[case studies] read: ${error.message}`);
-    return committed;
+    return [];
   }
-  if (data.length === 0) return committed;
 
   return (data as CaseStudyRow[]).map(toCaseStudy);
 });
