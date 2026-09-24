@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Logo } from "../components/Logo";
 import { DiscoveryBrief } from "./DiscoveryBrief";
 import { ReviewSheet } from "./ReviewSheet";
+import { submitDiscovery } from "./actions";
 import {
   type Answers,
   type NeedHelp,
@@ -112,6 +113,8 @@ export function DiscoveryWizard() {
   const [repRows, setRepRows] = useState<Record<string, RepRow[]>>({});
   const [consent, setConsent] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [robotTop, setRobotTop] = useState<number | null>(null);
@@ -339,9 +342,32 @@ export function DiscoveryWizard() {
     [visibleSteps]
   );
 
+  /**
+   * Sends the wizard. Until this existed the answers only ever reached the
+   * visitor's own browser, so a completed enquiry reached nobody.
+   *
+   * A failure is shown rather than swallowed: the draft stays in local storage
+   * either way, so retrying costs nothing, and quietly showing "sent" for an
+   * enquiry that was lost is the thing worth avoiding.
+   */
   const handleSubmit = useCallback(() => {
-    if (consent) setSubmitted(true);
-  }, [consent]);
+    if (!consent || sending) return;
+    setSending(true);
+    setSubmitError(null);
+    // The reconciled rows, not the raw ones: that is what the review sheet
+    // showed, so it is what the CMS should show back.
+    void submitDiscovery({ answers, repRows: reconciledRepRows, consent }).then(
+      (result) => {
+        setSending(false);
+        if (result.error) setSubmitError(result.error);
+        else setSubmitted(true);
+      },
+      () => {
+        setSending(false);
+        setSubmitError("We could not send your answers just now. Please try again.");
+      }
+    );
+  }, [answers, consent, reconciledRepRows, sending]);
 
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
@@ -644,6 +670,8 @@ export function DiscoveryWizard() {
           sections={reviewSections}
           consent={consent}
           submitted={submitted}
+          sending={sending}
+          submitError={submitError}
           onClose={() => setOverlay("none")}
           onEditQuestion={jumpToQuestion}
           onDownload={() => setOverlay("brief")}
@@ -657,6 +685,8 @@ export function DiscoveryWizard() {
           sections={reviewSections}
           consent={consent}
           submitted={submitted}
+          sending={sending}
+          submitError={submitError}
           onClose={() => setOverlay("review")}
           onSubmit={handleSubmit}
         />

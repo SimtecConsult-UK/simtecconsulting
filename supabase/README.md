@@ -11,6 +11,7 @@ newsletter posts (the blog) and homepage case studies.
 | `migrations/0002_case_studies.sql` | The `case_studies` table, its access rules and the `case-study-media` bucket |
 | `migrations/0003_seed_case_studies.sql` | The two real case studies, so the table starts with the site's current content |
 | `migrations/0004_case_study_vertase.sql` | The third case study, Vertase / VertaVerse |
+| `migrations/0005_submissions.sql` | The `submissions` table behind the discovery wizard |
 
 The columns are the fields of the editors in the CMS handover, one for one.
 
@@ -21,9 +22,10 @@ The columns are the fields of the editors in the CMS handover, one for one.
 
 2. **Run the migrations**, in order, in the project's SQL editor
    (Database → SQL Editor → New query). Paste `0001` and run it, then `0002`,
-   `0003` and `0004`. Skipping the last two leaves the case studies table
-   empty, and an empty table means the homepage renders no case studies
-   section at all.
+   `0003`, `0004` and `0005`. Skipping `0003`/`0004` leaves the case studies
+   table empty, and an empty table means the homepage renders no case studies
+   section at all. Skipping `0005` means the discovery wizard has nowhere to
+   send completed enquiries.
 
 3. **Create the one editor account.** Authentication → Users → Add user. Give
    it the email you want to sign in with, set a password, and tick
@@ -87,11 +89,14 @@ site would be worse than an empty page.
 
 ## What is deliberately not here yet
 
-**Submissions** and **Policies**, the other two sections in the CMS handover.
+**Policies**, the remaining section in the CMS handover.
 
-- Submissions has no data to show: the discovery wizard does not currently save
-  anything anywhere, so that has to be built first.
-- The 30 policies are generated verbatim from the signed PDFs by
-  `scripts/extract-legal-content`. Putting them in an editor would let the
-  website drift from the documents people have actually signed, which needs a
-  decision before it is built.
+The 30 policies are generated verbatim from the signed PDFs by
+`scripts/extract-legal-content`. Putting them in an editor would let the
+website drift from the documents people have actually signed, which needs a
+decision before it is built.
+
+Nothing notifies anybody when a discovery wizard is submitted. It arrives in
+`/admin` and waits to be found, so somebody has to look. Sending an email on
+each submission needs a mail provider, an API key and a verified sending
+domain — a deliberate next step rather than an oversight.

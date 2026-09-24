@@ -9,6 +9,8 @@ export function ReviewSheet({
   sections,
   consent,
   submitted,
+  sending,
+  submitError,
   onClose,
   onEditQuestion,
   onDownload,
@@ -19,6 +21,8 @@ export function ReviewSheet({
   sections: ReviewSectionData[];
   consent: boolean;
   submitted: boolean;
+  sending: boolean;
+  submitError: string | null;
   onClose: () => void;
   onEditQuestion: (question: Question) => void;
   onDownload: () => void;
@@ -143,14 +147,23 @@ export function ReviewSheet({
           </span>
           {!submitted ? (
             <span className="dw-sfootactions">
+              {submitError && (
+                <span className="dw-senderr" role="alert">
+                  {submitError}
+                </span>
+              )}
               <button className="dw-ghost" onClick={onClose}>
                 Back to form
               </button>
               <button className="dw-ghost" onClick={onDownload}>
                 Download a copy
               </button>
-              <button className={`dw-btn-teal${consent ? "" : " dw-dis"}`} disabled={!consent} onClick={onSubmit}>
-                Submit &amp; book workshop →
+              <button
+                className={`dw-btn-teal${consent && !sending ? "" : " dw-dis"}`}
+                disabled={!consent || sending}
+                onClick={onSubmit}
+              >
+                {sending ? "Sending…" : submitError ? "Try again →" : "Submit & book workshop →"}
               </button>
             </span>
           ) : (

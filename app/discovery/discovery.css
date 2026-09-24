@@ -1372,3 +1372,13 @@ select.dw-rinp {
     margin: 16mm;
   }
 }
+
+/* Shown beside the submit button when sending the wizard failed. The draft is
+   still in local storage, so the visitor loses nothing by trying again. */
+.dw-senderr {
+  color: #b3261e;
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 34ch;
+  text-align: right;
+}

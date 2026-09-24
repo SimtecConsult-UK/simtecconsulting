@@ -21,6 +21,8 @@ export function DiscoveryBrief({
   sections,
   consent,
   submitted,
+  sending,
+  submitError,
   onClose,
   onSubmit,
 }: {
@@ -28,6 +30,8 @@ export function DiscoveryBrief({
   sections: ReviewSectionData[];
   consent: boolean;
   submitted: boolean;
+  sending: boolean;
+  submitError: string | null;
   onClose: () => void;
   onSubmit: () => void;
 }) {
@@ -59,10 +63,18 @@ export function DiscoveryBrief({
               <button
                 className="dw-tbtn dw-tbtn-teal"
                 onClick={onSubmit}
-                disabled={!consent}
-                title={consent ? undefined : "Tick the consent box on the review screen"}
+                disabled={!consent || sending}
+                title={
+                  submitError ?? (consent ? undefined : "Tick the consent box on the review screen")
+                }
               >
-                {consent ? "Looks right — submit →" : "Tick consent to submit"}
+                {sending
+                  ? "Sending…"
+                  : submitError
+                    ? "Try again →"
+                    : consent
+                      ? "Looks right — submit →"
+                      : "Tick consent to submit"}
               </button>
             ) : (
               <span className="dw-tbtn dw-tbtn-teal dw-tbtn-static">✓ Sent</span>

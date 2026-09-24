@@ -8,6 +8,7 @@ import { signOut } from "../auth-actions";
 const SECTIONS = [
   { href: "/admin/newsletter", label: "Newsletter" },
   { href: "/admin/case-studies", label: "Case studies" },
+  { href: "/admin/submissions", label: "Submissions" },
 ];
 
 type SidebarProps = {
