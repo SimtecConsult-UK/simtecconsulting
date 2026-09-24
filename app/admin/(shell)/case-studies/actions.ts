@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireEditor } from "../../../lib/auth";
 import { createClient } from "../../../lib/supabase/server";
-import { CHAPTER_LABELS, LIMITS, chapterLength, type Chapters } from "./limits";
+import { validateCaseStudy } from "./limits";
+import type { Chapters } from "../../../lib/caseStudies";
+import type { SaveState } from "../../validation";
 
 /**
  * Writes for the case studies section.
@@ -12,8 +14,6 @@ import { CHAPTER_LABELS, LIMITS, chapterLength, type Chapters } from "./limits";
  * As with the newsletter, every action re-checks that the caller is signed in:
  * a Server Action is a public endpoint, not a private function.
  */
-
-export type SaveState = { error: string | null; savedAt: number | null };
 
 export type CaseStudyInput = {
   id: string | null;
@@ -33,36 +33,6 @@ export type CaseStudyInput = {
   chapters: Chapters;
 };
 
-function validate(input: CaseStudyInput): string | null {
-  const fields: [string, string, number][] = [
-    ["client name in the switcher", input.tabLabel, LIMITS.tabLabel],
-    ["headline", input.headline, LIMITS.headline],
-    ["client", input.clientName, LIMITS.clientName],
-    ["system", input.systemName, LIMITS.systemName],
-    ["project type", input.projectType, LIMITS.projectType],
-    ["quote", input.quote, LIMITS.quote],
-    ["attribution", input.quoteAttribution, LIMITS.quoteAttribution],
-  ];
-
-  for (const [name, value, limit] of fields) {
-    if (!value.trim()) return `Fill in the ${name} before saving.`;
-    if (value.length > limit)
-      return `The ${name} is ${value.length} characters; the limit is ${limit}.`;
-  }
-
-  for (const key of Object.keys(CHAPTER_LABELS) as (keyof Chapters)[]) {
-    const length = chapterLength(input.chapters[key]);
-    if (length > LIMITS.chapter) {
-      return `The ${CHAPTER_LABELS[key]} chapter is ${length} characters; the limit is ${LIMITS.chapter}.`;
-    }
-  }
-
-  if (!input.logoPath) return "Upload the client's logo — the details bar and the phone tiles both show it.";
-  if (!input.videoPath) return "Upload the screen recording; the section is built around it.";
-
-  return null;
-}
-
 /** Case studies live on the homepage, so that is what needs refreshing. */
 function refreshHomepage() {
   revalidatePath("/");
@@ -74,8 +44,8 @@ export async function saveCaseStudy(
 ): Promise<SaveState> {
   await requireEditor();
 
-  const problem = validate(input);
-  if (problem) return { error: problem, savedAt: null };
+  const problem = validateCaseStudy(input);
+  if (problem) return { error: problem };
 
   const supabase = await createClient();
 
@@ -106,16 +76,15 @@ export async function saveCaseStudy(
     if (error.code === "23505") {
       return {
         error: "Another case study already holds that position on the homepage. Reorder them from the list instead.",
-        savedAt: null,
       };
     }
-    return { error: `Could not save: ${error.message}`, savedAt: null };
+    return { error: `Could not save: ${error.message}` };
   }
 
   refreshHomepage();
 
   if (!input.id && data?.id) redirect(`/admin/case-studies/${data.id}`);
-  return { error: null, savedAt: Date.now() };
+  return { error: null };
 }
 
 export async function deleteCaseStudy(id: string) {
@@ -124,7 +93,7 @@ export async function deleteCaseStudy(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("case_studies").delete().eq("id", id);
 
-  if (error) return { error: `Could not delete: ${error.message}`, savedAt: null };
+  if (error) return { error: `Could not delete: ${error.message}` };
 
   refreshHomepage();
   redirect("/admin/case-studies");

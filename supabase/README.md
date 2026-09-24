@@ -63,15 +63,23 @@ regardless.
 
 The site ships with content committed in the repository — sample blog posts in
 `app/lib/blog/content.ts` and the two real case studies in
-`app/lib/caseStudies.ts`. Until a row exists in the database:
+`app/lib/caseStudies.ts`. The two fall back differently, on purpose:
 
-- the **blog** serves the committed samples;
-- the **homepage** serves the committed case studies.
+- the **blog** serves the committed samples only while no Supabase project is
+  configured at all — on a fresh clone, so `npm run dev` works. Once a project
+  is configured it never falls back: a failed read shows the blog's own empty
+  state, because lorem ipsum appearing on the live site would be worse than an
+  empty page.
+- the **homepage** serves the committed case studies whenever the database has
+  none to give — no project configured, a failed read, or an empty table. That
+  content is the real thing rather than placeholder text, and the section is a
+  permanent part of the homepage, so the last known-good version beats a hole
+  in the page.
 
-So nothing breaks before the tables are filled, and the case studies keep
-working if a read ever fails. Once you add real content through `/admin`, the
-database wins. The committed copies stay as the fallback and can be deleted
-later, once every case study has been re-entered.
+Once you add real content through `/admin`, the database wins. Note the
+consequence of the homepage rule: deleting the last case study brings the
+committed ones back. They can be deleted from the repository later, once every
+case study has been re-entered.
 
 The two real case studies have to be re-entered by hand through the editor,
 because their logos and recordings need uploading to storage — there is no

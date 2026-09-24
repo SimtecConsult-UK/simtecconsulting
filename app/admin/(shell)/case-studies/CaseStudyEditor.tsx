@@ -1,21 +1,23 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { CharCount } from "../../CharCount";
+import { Banners, DeleteFooter, FilePicker, TextField } from "../../EditorUI";
+import { statusLabel, useEditorDraft } from "../../useEditorDraft";
 import { deleteCaseStudy, saveCaseStudy, type CaseStudyInput } from "./actions";
-import {
-  CHAPTER_LABELS,
-  EMPTY_CHAPTERS,
-  LIMITS,
-  chapterLength,
-  type ChapterKey,
-} from "./limits";
+import { LIMITS, caseStudyTooLong, chapterLength } from "./limits";
 import type { EditableCaseStudy } from "./data";
 import { BUCKETS, publicUrl } from "../../../lib/supabase/storage";
-import { imageSize, uploadFile, videoInfo } from "../../upload";
+import { uploadFile, uploadImage, videoInfo } from "../../upload";
 import { checkVideo, describeFailures, type Check } from "./video-checks";
-import type { CaseStudyChapter } from "../../../lib/caseStudies";
+import {
+  CHAPTERS,
+  DEFAULT_CHAPTER,
+  EMPTY_CHAPTERS,
+  type CaseStudyChapter,
+  type ChapterKey,
+} from "../../../lib/caseStudies";
 
 type Props = {
   caseStudy: EditableCaseStudy | null;
@@ -33,7 +35,18 @@ const linesToList = (text: string) =>
 const listToLines = (list: string[]) => list.join("\n");
 
 export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
-  const [draft, setDraft] = useState<CaseStudyInput>(() =>
+  const {
+    draft,
+    set,
+    patch,
+    status,
+    error,
+    setError,
+    pending,
+    confirmDelete,
+    save,
+    remove,
+  } = useEditorDraft<CaseStudyInput>(() =>
     caseStudy
       ? {
           id: caseStudy.id,
@@ -75,71 +88,34 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
   const [videoUrl, setVideoUrl] = useState(caseStudy?.video.url ?? null);
   const [posterUrl, setPosterUrl] = useState(caseStudy?.poster.url ?? null);
   const [videoChecks, setVideoChecks] = useState<Check[]>([]);
-  const [tab, setTab] = useState<ChapterKey>("solution");
+  const [tab, setTab] = useState<ChapterKey>(DEFAULT_CHAPTER);
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [pending, startTransition] = useTransition();
 
-  const set = <K extends keyof CaseStudyInput>(key: K, value: CaseStudyInput[K]) => {
-    setDraft((current) => ({ ...current, [key]: value }));
-    setDirty(true);
-    setSaved(false);
-  };
-
-  const setChapter = (key: ChapterKey, patch: Partial<CaseStudyChapter>) => {
+  const setChapter = (key: ChapterKey, fields: Partial<CaseStudyChapter>) => {
     set("chapters", {
       ...draft.chapters,
-      [key]: { ...draft.chapters[key], ...patch },
+      [key]: { ...draft.chapters[key], ...fields },
     });
   };
 
-  const overLimit =
-    draft.tabLabel.length > LIMITS.tabLabel ||
-    draft.headline.length > LIMITS.headline ||
-    draft.clientName.length > LIMITS.clientName ||
-    draft.systemName.length > LIMITS.systemName ||
-    draft.projectType.length > LIMITS.projectType ||
-    draft.quote.length > LIMITS.quote ||
-    draft.quoteAttribution.length > LIMITS.quoteAttribution ||
-    (Object.keys(CHAPTER_LABELS) as ChapterKey[]).some(
-      (key) => chapterLength(draft.chapters[key]) > LIMITS.chapter
-    );
-
-  const submit = () => {
-    setError(null);
-    startTransition(async () => {
-      const result = await saveCaseStudy(draft);
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      setDirty(false);
-      setSaved(true);
-    });
-  };
+  /** The same sentence the server would send back, so Save explains itself. */
+  const tooLong = caseStudyTooLong(draft);
 
   const onLogo = async (file: File) => {
     setBusy("logo");
     setError(null);
     try {
-      const { width, height } = await imageSize(file);
-      const result = await uploadFile(BUCKETS.caseStudyMedia, "logos", file);
+      const result = await uploadImage(BUCKETS.caseStudyMedia, "logos", file);
       if (!result.ok) {
         setError(`That logo did not upload: ${result.error}`);
         return;
       }
-      setDraft((current) => ({
-        ...current,
+      patch({
         logoPath: result.path,
-        logoWidth: width,
-        logoHeight: height,
-      }));
-      setLogoUrl(publicUrl(BUCKETS.caseStudyMedia, result.path));
-      setDirty(true);
-      setSaved(false);
+        logoWidth: result.width,
+        logoHeight: result.height,
+      });
+      setLogoUrl(result.url);
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : "That logo could not be read.");
     } finally {
@@ -190,26 +166,6 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
     setPosterUrl(publicUrl(BUCKETS.caseStudyMedia, result.path));
   };
 
-  const field = (
-    label: string,
-    key: "tabLabel" | "headline" | "clientName" | "systemName" | "projectType" | "quoteAttribution",
-    limit: number,
-    help?: string
-  ) => (
-    <label className="cms-field">
-      <span className="cms-field-head">
-        <span className="cms-label">{label}</span>
-        <CharCount value={draft[key].length} limit={limit} />
-      </span>
-      <input
-        className={`cms-input${draft[key].length > limit ? " cms-input--over" : ""}`}
-        value={draft[key]}
-        onChange={(event) => set(key, event.target.value)}
-      />
-      {help && <span className="cms-help">{help}</span>}
-    </label>
-  );
-
   const chapter = draft.chapters[tab];
   const chapterCount = chapterLength(chapter);
 
@@ -219,7 +175,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
         ← All case studies
       </Link>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="cms-editor-head">
         <input
           className="cms-title-input"
           value={draft.tabLabel}
@@ -227,27 +183,44 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
           placeholder="Client name"
           aria-label="Client name"
         />
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div className="cms-editor-head-row">
           <span className="cms-mono">
-            {dirty ? "Unsaved changes" : saved ? "All changes saved" : `Position ${draft.position} on the homepage`}
+            {statusLabel(status, `Position ${draft.position} on the homepage`)}
           </span>
-          <button type="button" className="cms-btn cms-btn--primary" onClick={submit} disabled={pending || overLimit}>
+          <button
+            type="button"
+            className="cms-btn cms-btn--primary"
+            onClick={() => save(() => saveCaseStudy(draft))}
+            disabled={pending || tooLong !== null}
+          >
             {pending ? "Saving…" : "Save changes"}
           </button>
         </div>
       </div>
 
-      {error && <div className="cms-banner cms-banner--error" role="alert">{error}</div>}
-      {saved && !error && (
-        <div className="cms-banner cms-banner--ok" role="status">
-          Saved. The homepage shows this straight away.
-        </div>
-      )}
+      <Banners
+        error={error}
+        saved={status === "saved"}
+        savedMessage="Saved. The homepage shows this straight away."
+        warning={tooLong}
+      />
 
       <div className="cms-card">
         <span className="cms-label">Switcher and heading</span>
-        {field("Client name in the switcher", "tabLabel", LIMITS.tabLabel, "Must fit one line on a tablet.")}
-        {field("Headline", "headline", LIMITS.headline, "Wraps to at most two lines on a laptop.")}
+        <TextField
+          label="Client name in the switcher"
+          value={draft.tabLabel}
+          limit={LIMITS.tabLabel}
+          help="Must fit one line on a tablet."
+          onChange={(value) => set("tabLabel", value)}
+        />
+        <TextField
+          label="Headline"
+          value={draft.headline}
+          limit={LIMITS.headline}
+          help="Wraps to at most two lines on a laptop."
+          onChange={(value) => set("headline", value)}
+        />
       </div>
 
       <div className="cms-card">
@@ -258,29 +231,32 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
               <video src={videoUrl} controls muted playsInline />
             </div>
             <div className="cms-file-row">
-              <label className="cms-btn cms-btn--secondary" style={{ cursor: "pointer" }}>
+              <FilePicker
+                accept="video/mp4,video/webm"
+                disabled={busy !== null}
+                onPick={onVideo}
+                className="cms-btn cms-btn--secondary"
+              >
                 Replace video
-                <input type="file" accept="video/mp4,video/webm" hidden disabled={busy !== null} onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (file) void onVideo(file);
-                }} />
-              </label>
-              <button type="button" className="cms-btn cms-btn--danger" onClick={() => { set("videoPath", null); setVideoUrl(null); setVideoChecks([]); }}>
+              </FilePicker>
+              <button
+                type="button"
+                className="cms-btn cms-btn--danger"
+                onClick={() => {
+                  set("videoPath", null);
+                  setVideoUrl(null);
+                  setVideoChecks([]);
+                }}
+              >
                 Remove
               </button>
             </div>
           </>
         ) : (
-          <label className="cms-drop">
+          <FilePicker accept="video/mp4,video/webm" disabled={busy !== null} onPick={onVideo}>
             <span>{busy === "video" ? "Checking…" : "Choose the screen recording"}</span>
             <span className="cms-mono">MP4 or WebM · 16:9 · 10–45s · under 15 MB</span>
-            <input type="file" accept="video/mp4,video/webm" hidden disabled={busy !== null} onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (file) void onVideo(file);
-            }} />
-          </label>
+          </FilePicker>
         )}
 
         {videoChecks.length > 0 && (
@@ -310,25 +286,20 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={logoUrl} alt="" />
               </div>
-              <label className="cms-btn cms-btn--secondary" style={{ cursor: "pointer" }}>
+              <FilePicker
+                accept="image/*"
+                disabled={busy !== null}
+                onPick={onLogo}
+                className="cms-btn cms-btn--secondary"
+              >
                 Replace
-                <input type="file" accept="image/*" hidden disabled={busy !== null} onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (file) void onLogo(file);
-                }} />
-              </label>
+              </FilePicker>
             </>
           ) : (
-            <label className="cms-drop">
+            <FilePicker accept="image/*" disabled={busy !== null} onPick={onLogo}>
               <span>{busy === "logo" ? "Uploading…" : "Choose the client's logo"}</span>
               <span className="cms-mono">SVG or transparent PNG</span>
-              <input type="file" accept="image/*" hidden disabled={busy !== null} onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (file) void onLogo(file);
-              }} />
-            </label>
+            </FilePicker>
           )}
           <p className="cms-help">Use the colour version — it sits on white and on pale blue.</p>
         </div>
@@ -341,15 +312,10 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
               <img src={posterUrl} alt="" />
             </div>
           ) : (
-            <label className="cms-drop">
+            <FilePicker accept="image/*" disabled={busy !== null} onPick={onPoster}>
               <span>{busy === "poster" ? "Uploading…" : "Choose a poster image"}</span>
               <span className="cms-mono">1920×1080 JPG or WebP</span>
-              <input type="file" accept="image/*" hidden disabled={busy !== null} onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (file) void onPoster(file);
-              }} />
-            </label>
+            </FilePicker>
           )}
           <p className="cms-help">
             Shown before the video plays and to anyone who has asked for less motion.
@@ -361,10 +327,26 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
       <div className="cms-card">
         <span className="cms-label">Client details</span>
         <div className="cms-grid-2">
-          {field("Client", "clientName", LIMITS.clientName)}
-          {field("System", "systemName", LIMITS.systemName)}
+          <TextField
+            label="Client"
+            value={draft.clientName}
+            limit={LIMITS.clientName}
+            onChange={(value) => set("clientName", value)}
+          />
+          <TextField
+            label="System"
+            value={draft.systemName}
+            limit={LIMITS.systemName}
+            onChange={(value) => set("systemName", value)}
+          />
         </div>
-        {field("Project type", "projectType", LIMITS.projectType, "Up to three lines on a laptop.")}
+        <TextField
+          label="Project type"
+          value={draft.projectType}
+          limit={LIMITS.projectType}
+          help="Up to three lines on a laptop."
+          onChange={(value) => set("projectType", value)}
+        />
       </div>
 
       <div className="cms-card">
@@ -379,14 +361,20 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
           value={draft.quote}
           onChange={(event) => set("quote", event.target.value)}
         />
-        {field("Attribution", "quoteAttribution", LIMITS.quoteAttribution, 'Shown in capitals, e.g. "Tina · Compli Digital".')}
+        <TextField
+          label="Attribution"
+          value={draft.quoteAttribution}
+          limit={LIMITS.quoteAttribution}
+          help={'Shown in capitals, e.g. "Tina · Compli Digital".'}
+          onChange={(value) => set("quoteAttribution", value)}
+        />
       </div>
 
       <div className="cms-card">
         <span className="cms-label">Chapters</span>
 
         <div className="cms-segments" role="tablist">
-          {(Object.keys(CHAPTER_LABELS) as ChapterKey[]).map((key) => (
+          {CHAPTERS.map(({ key, label }) => (
             <button
               key={key}
               type="button"
@@ -395,7 +383,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
               aria-selected={tab === key}
               onClick={() => setTab(key)}
             >
-              {CHAPTER_LABELS[key]}
+              {label}
               {chapterLength(draft.chapters[key]) > LIMITS.chapter && (
                 <span className="cms-segment-dot" aria-label="over the limit" />
               )}
@@ -451,26 +439,13 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
       </div>
 
       {caseStudy && (
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, borderTop: "1px solid var(--cms-line)", paddingTop: 22 }}>
-          <span className="cms-help">Deleting removes this case study from the homepage.</span>
-          <button
-            type="button"
-            className="cms-btn cms-btn--danger"
-            disabled={pending}
-            onClick={() => {
-              if (!confirmDelete) {
-                setConfirmDelete(true);
-                return;
-              }
-              startTransition(async () => {
-                const result = await deleteCaseStudy(caseStudy.id);
-                if (result?.error) setError(result.error);
-              });
-            }}
-          >
-            {confirmDelete ? "Confirm delete" : "Delete case study"}
-          </button>
-        </div>
+        <DeleteFooter
+          help="Deleting removes this case study from the homepage."
+          label="Delete case study"
+          confirming={confirmDelete}
+          disabled={pending}
+          onDelete={() => remove(() => deleteCaseStudy(caseStudy.id))}
+        />
       )}
     </div>
   );

@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { CharCount } from "../../CharCount";
+import { Banners, DeleteFooter, FilePicker, TextAreaField, TextField } from "../../EditorUI";
+import { statusLabel, useEditorDraft } from "../../useEditorDraft";
 import { BodyEditor } from "./BodyEditor";
-import { LIMITS, deletePost, savePost, type PostInput } from "./actions";
+import { deletePost, savePost, type PostInput } from "./actions";
+import { LIMITS, postTooLong } from "./limits";
 import { blocksLength } from "../../../lib/blog/html";
 import { slugify } from "../../../lib/blog/slug";
 import { SITE_URL } from "../../../lib/sections";
-import { BUCKETS, publicUrl } from "../../../lib/supabase/storage";
-import { imageSize, uploadFile } from "../../upload";
+import { BUCKETS } from "../../../lib/supabase/storage";
+import { uploadImage } from "../../upload";
 import type { BlogBlock, FaqPair } from "../../../lib/blog/types";
 import type { EditablePost } from "./data";
 
@@ -46,8 +49,8 @@ function fromPost(post: EditablePost): PostInput {
     body: post.body,
     coverPath: post.cover.path,
     coverAlt: post.cover.alt,
-    coverWidth: null,
-    coverHeight: null,
+    coverWidth: post.cover.width,
+    coverHeight: post.cover.height,
     status: post.status,
     publishedAt: post.publishedAt || null,
     metaTitle: post.seo.metaTitle ?? "",
@@ -59,66 +62,52 @@ function fromPost(post: EditablePost): PostInput {
 }
 
 export function PostEditor({ post }: PostEditorProps) {
-  const [draft, setDraft] = useState<PostInput>(post ? fromPost(post) : BLANK);
+  const {
+    draft,
+    setDraft,
+    set,
+    patch,
+    status,
+    error,
+    setError,
+    pending,
+    confirmDelete,
+    save,
+    remove,
+  } = useEditorDraft<PostInput>(post ? fromPost(post) : BLANK);
+
   const [coverUrl, setCoverUrl] = useState<string | null>(post?.cover.url ?? null);
   const [seoOpen, setSeoOpen] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [pending, startTransition] = useTransition();
-
-  const set = <K extends keyof PostInput>(key: K, value: PostInput[K]) => {
-    setDraft((current) => ({ ...current, [key]: value }));
-    setDirty(true);
-    setSaved(false);
-  };
 
   const bodyCount = blocksLength(draft.body);
   const slug = slugify(draft.slug || draft.title);
 
-  const overLimit =
-    draft.title.length > LIMITS.title ||
-    draft.standfirst.length > LIMITS.standfirst ||
-    draft.metaTitle.length > LIMITS.metaTitle ||
-    draft.metaDescription.length > LIMITS.metaDescription ||
-    draft.keyTakeaway.length > LIMITS.keyTakeaway ||
-    bodyCount > LIMITS.body;
+  /** The same sentence the server would send back, so Save explains itself. */
+  const tooLong = postTooLong(draft);
 
-  const submit = (status: "draft" | "published") => {
-    setError(null);
-    startTransition(async () => {
-      const result = await savePost({ ...draft, status, slug });
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      setDraft((current) => ({ ...current, status }));
-      setDirty(false);
-      setSaved(true);
-    });
+  const submit = (next: "draft" | "published") => {
+    save(
+      () => savePost({ ...draft, status: next, slug }),
+      () => setDraft((current) => ({ ...current, status: next }))
+    );
   };
 
   const onCover = async (file: File) => {
     setUploading(true);
     setError(null);
     try {
-      const { width, height } = await imageSize(file);
-      const result = await uploadFile(BUCKETS.blogImages, "covers", file);
+      const result = await uploadImage(BUCKETS.blogImages, "covers", file);
       if (!result.ok) {
         setError(`That cover did not upload: ${result.error}`);
         return;
       }
-      setDraft((current) => ({
-        ...current,
+      patch({
         coverPath: result.path,
-        coverWidth: width,
-        coverHeight: height,
-      }));
-      setCoverUrl(publicUrl(BUCKETS.blogImages, result.path));
-      setDirty(true);
-      setSaved(false);
+        coverWidth: result.width,
+        coverHeight: result.height,
+      });
+      setCoverUrl(result.url);
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : "That cover could not be read.");
     } finally {
@@ -126,10 +115,10 @@ export function PostEditor({ post }: PostEditorProps) {
     }
   };
 
-  const setFaq = (index: number, patch: Partial<FaqPair>) => {
+  const setFaq = (index: number, fields: Partial<FaqPair>) => {
     set(
       "faqs",
-      draft.faqs.map((pair, i) => (i === index ? { ...pair, ...patch } : pair))
+      draft.faqs.map((pair, i) => (i === index ? { ...pair, ...fields } : pair))
     );
   };
 
@@ -139,7 +128,7 @@ export function PostEditor({ post }: PostEditorProps) {
         ← All posts
       </Link>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="cms-editor-head">
         <input
           className="cms-title-input"
           value={draft.title}
@@ -148,9 +137,9 @@ export function PostEditor({ post }: PostEditorProps) {
           aria-label="Post title"
         />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "space-between", flexWrap: "wrap" }}>
+        <div className="cms-editor-head-row">
           <span className="cms-mono">
-            {dirty ? "Unsaved changes" : saved ? "All changes saved" : post ? `Live at /blog/${post.slug}` : "Not saved yet"}
+            {statusLabel(status, post ? `Live at /blog/${post.slug}` : "Not saved yet")}
           </span>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -159,7 +148,7 @@ export function PostEditor({ post }: PostEditorProps) {
               type="button"
               className="cms-btn cms-btn--secondary"
               onClick={() => submit("draft")}
-              disabled={pending || overLimit}
+              disabled={pending || tooLong !== null}
             >
               {pending ? "Saving…" : "Save draft"}
             </button>
@@ -167,7 +156,7 @@ export function PostEditor({ post }: PostEditorProps) {
               type="button"
               className="cms-btn cms-btn--primary"
               onClick={() => submit("published")}
-              disabled={pending || overLimit}
+              disabled={pending || tooLong !== null}
             >
               {draft.status === "published" ? "Update live post" : "Publish"}
             </button>
@@ -175,21 +164,16 @@ export function PostEditor({ post }: PostEditorProps) {
         </div>
       </div>
 
-      {error && (
-        <div className="cms-banner cms-banner--error" role="alert">
-          {error}
-        </div>
-      )}
-      {saved && !error && (
-        <div className="cms-banner cms-banner--ok" role="status">
-          Saved. {draft.status === "published" ? "The post is live on the site." : "It stays a draft until you publish."}
-        </div>
-      )}
-      {overLimit && !error && (
-        <div className="cms-banner cms-banner--error">
-          Something is over its limit. The counters in red show which.
-        </div>
-      )}
+      <Banners
+        error={error}
+        saved={status === "saved"}
+        savedMessage={`Saved. ${
+          draft.status === "published"
+            ? "The post is live on the site."
+            : "It stays a draft until you publish."
+        }`}
+        warning={tooLong}
+      />
 
       <BodyEditor
         blocks={draft.body}
@@ -226,19 +210,19 @@ export function PostEditor({ post }: PostEditorProps) {
               <img src={coverUrl} alt="" />
             </div>
             <div className="cms-file-row">
-              <label className="cms-btn cms-btn--secondary" style={{ cursor: "pointer" }}>
+              <FilePicker
+                accept="image/*"
+                disabled={uploading}
+                onPick={onCover}
+                className="cms-btn cms-btn--secondary"
+              >
                 Replace
-                <input type="file" accept="image/*" hidden disabled={uploading} onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (file) void onCover(file);
-                }} />
-              </label>
+              </FilePicker>
               <button
                 type="button"
                 className="cms-btn cms-btn--danger"
                 onClick={() => {
-                  set("coverPath", null);
+                  patch({ coverPath: null, coverWidth: null, coverHeight: null });
                   setCoverUrl(null);
                 }}
               >
@@ -247,15 +231,10 @@ export function PostEditor({ post }: PostEditorProps) {
             </div>
           </>
         ) : (
-          <label className="cms-drop">
+          <FilePicker accept="image/*" disabled={uploading} onPick={onCover}>
             <span>{uploading ? "Uploading…" : "Choose a cover image · 1600×900"}</span>
             <span className="cms-mono">JPG, PNG or WebP</span>
-            <input type="file" accept="image/*" hidden disabled={uploading} onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (file) void onCover(file);
-            }} />
-          </label>
+          </FilePicker>
         )}
 
         <label className="cms-field" style={{ marginTop: 4 }}>
@@ -319,34 +298,23 @@ export function PostEditor({ post }: PostEditorProps) {
                 </div>
               </label>
 
-              <label className="cms-field">
-                <span className="cms-field-head">
-                  <span className="cms-label">Meta title</span>
-                  <CharCount value={draft.metaTitle.length} limit={LIMITS.metaTitle} />
-                </span>
-                <input
-                  className={`cms-input${draft.metaTitle.length > LIMITS.metaTitle ? " cms-input--over" : ""}`}
-                  value={draft.metaTitle}
-                  onChange={(event) => set("metaTitle", event.target.value)}
-                  placeholder="Defaults to the post title"
-                />
-              </label>
+              <TextField
+                label="Meta title"
+                value={draft.metaTitle}
+                limit={LIMITS.metaTitle}
+                placeholder="Defaults to the post title"
+                onChange={(value) => set("metaTitle", value)}
+              />
 
-              <label className="cms-field">
-                <span className="cms-field-head">
-                  <span className="cms-label">Meta description</span>
-                  <CharCount value={draft.metaDescription.length} limit={LIMITS.metaDescription} />
-                </span>
-                <textarea
-                  className={`cms-textarea${draft.metaDescription.length > LIMITS.metaDescription ? " cms-textarea--over" : ""}`}
-                  rows={2}
-                  value={draft.metaDescription}
-                  onChange={(event) => set("metaDescription", event.target.value)}
-                  placeholder="Defaults to the standfirst"
-                />
-              </label>
+              <TextAreaField
+                label="Meta description"
+                value={draft.metaDescription}
+                limit={LIMITS.metaDescription}
+                placeholder="Defaults to the standfirst"
+                onChange={(value) => set("metaDescription", value)}
+              />
 
-              <div style={{ background: "var(--cms-field)", border: "1px solid var(--cms-field-line)", borderRadius: 10, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 5 }}>
+              <div className="cms-subcard" style={{ gap: 5 }}>
                 <span className="cms-mono">{SITE_URL.replace(/^https?:\/\//, "")}/blog/{slug || "…"}</span>
                 <span style={{ fontSize: 16, color: "#1a4fd6" }}>{draft.metaTitle || draft.title || "Post title"}</span>
                 <span style={{ fontSize: 13, lineHeight: 1.6, color: "#5b6766" }}>
@@ -364,24 +332,18 @@ export function PostEditor({ post }: PostEditorProps) {
                 </span>
               </span>
 
-              <label className="cms-field">
-                <span className="cms-field-head">
-                  <span className="cms-label">Key takeaway</span>
-                  <CharCount value={draft.keyTakeaway.length} limit={LIMITS.keyTakeaway} />
-                </span>
-                <textarea
-                  className={`cms-textarea${draft.keyTakeaway.length > LIMITS.keyTakeaway ? " cms-textarea--over" : ""}`}
-                  rows={2}
-                  value={draft.keyTakeaway}
-                  onChange={(event) => set("keyTakeaway", event.target.value)}
-                  placeholder="State the answer plainly in one or two sentences."
-                />
-              </label>
+              <TextAreaField
+                label="Key takeaway"
+                value={draft.keyTakeaway}
+                limit={LIMITS.keyTakeaway}
+                placeholder="State the answer plainly in one or two sentences."
+                onChange={(value) => set("keyTakeaway", value)}
+              />
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <span className="cms-label">FAQ pairs</span>
                 {draft.faqs.map((pair, index) => (
-                  <div key={index} style={{ background: "var(--cms-field)", border: "1px solid var(--cms-field-line)", borderRadius: 10, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 9 }}>
+                  <div key={index} className="cms-subcard">
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                       <label className="cms-field" style={{ flex: 1, minWidth: 0 }}>
                         <span className="cms-label">Question</span>
@@ -443,28 +405,13 @@ export function PostEditor({ post }: PostEditorProps) {
       </div>
 
       {post && (
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, borderTop: "1px solid var(--cms-line)", paddingTop: 22 }}>
-          <span className="cms-help">
-            Deleting removes the post from the site. This cannot be undone.
-          </span>
-          <button
-            type="button"
-            className="cms-btn cms-btn--danger"
-            disabled={pending}
-            onClick={() => {
-              if (!confirmDelete) {
-                setConfirmDelete(true);
-                return;
-              }
-              startTransition(async () => {
-                const result = await deletePost(post.id, post.slug);
-                if (result?.error) setError(result.error);
-              });
-            }}
-          >
-            {confirmDelete ? "Confirm delete" : "Delete post"}
-          </button>
-        </div>
+        <DeleteFooter
+          help="Deleting removes the post from the site. This cannot be undone."
+          label="Delete post"
+          confirming={confirmDelete}
+          disabled={pending}
+          onDelete={() => remove(() => deletePost(post.id, post.slug))}
+        />
       )}
     </div>
   );

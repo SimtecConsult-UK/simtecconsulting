@@ -82,6 +82,68 @@ export type ChapterKey = (typeof CHAPTERS)[number]["key"];
 /** Open on load, on every breakpoint. */
 export const DEFAULT_CHAPTER: ChapterKey = "solution";
 
+/** The four chapters, as stored on a row and edited in the CMS. */
+export type Chapters = CaseStudy["chapters"];
+
+export const EMPTY_CHAPTER: CaseStudyChapter = {
+  paragraphs: [],
+  bullets: [],
+  closing: [],
+};
+
+export const EMPTY_CHAPTERS: Chapters = {
+  summary: EMPTY_CHAPTER,
+  problem: EMPTY_CHAPTER,
+  solution: EMPTY_CHAPTER,
+  value: EMPTY_CHAPTER,
+};
+
+/** The `chapters` JSON column, which may be missing keys or absent entirely. */
+export type StoredChapters =
+  | Partial<Record<ChapterKey, Partial<CaseStudyChapter> | null>>
+  | null;
+
+/**
+ * The stored JSON as four complete chapters. One copy, shared by the homepage
+ * and the editor, so the same row can never be read two different ways.
+ */
+export function toChapters(stored: StoredChapters): Chapters {
+  const read = (key: ChapterKey): CaseStudyChapter => {
+    const value = stored?.[key];
+    if (!value) return EMPTY_CHAPTER;
+    return {
+      paragraphs: value.paragraphs ?? [],
+      bullets: value.bullets ?? [],
+      closing: value.closing ?? [],
+    };
+  };
+
+  return {
+    summary: read("summary"),
+    problem: read("problem"),
+    solution: read("solution"),
+    value: read("value"),
+  };
+}
+
+/** The `case_studies` row. The editor selects two more columns on top of these. */
+export type CaseStudyRow = {
+  id: string;
+  tab_label: string;
+  headline: string;
+  client_name: string;
+  system_name: string;
+  project_type: string;
+  logo_path: string | null;
+  logo_width: number | null;
+  logo_height: number | null;
+  video_path: string | null;
+  video_poster_path: string | null;
+  quote: string;
+  quote_attribution: string;
+  chapters: StoredChapters;
+};
+
 /**
  * Stand-in recording used across the site until each client's own screen
  * capture is ready. Swapping it is a one-line change per case study.

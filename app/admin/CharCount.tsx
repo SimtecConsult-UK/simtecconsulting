@@ -16,7 +16,7 @@ export function CharCount({ value, limit }: { value: number; limit: number }) {
   );
 }
 
-/** Whether a field should be drawn as over its limit. */
-export function isOver(value: string, limit: number): boolean {
-  return value.length > limit;
+/** Whether a field should be drawn as over its limit. A field with no limit never is. */
+export function isOver(value: string, limit?: number): boolean {
+  return limit !== undefined && value.length > limit;
 }

@@ -1,5 +1,7 @@
 import { requireEditor } from "../../lib/auth";
+import { isSupabaseConfigured } from "../../lib/supabase/config";
 import { countCaseStudies, countPosts } from "./counts";
+import { NotConnected } from "./NotConnected";
 import { Sidebar } from "./Sidebar";
 
 /**
@@ -14,6 +16,20 @@ export default async function ShellLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Asked before requireEditor(), because with no project configured there is
+  // nobody to be signed in as: that check would send the editor to a sign-in
+  // form that cannot succeed and never says why. One check here covers every
+  // page under the shell.
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="cms-shell">
+        <main className="cms-main">
+          <NotConnected />
+        </main>
+      </div>
+    );
+  }
+
   const editor = await requireEditor();
   const [posts, caseStudies] = await Promise.all([
     countPosts(),

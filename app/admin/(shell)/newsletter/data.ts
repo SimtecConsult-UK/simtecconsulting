@@ -15,13 +15,22 @@ export type PostListItem = {
   slug: string;
   status: "draft" | "published";
   publishedAt: string | null;
-  updatedAt: string;
   coverUrl: string | null;
 };
 
 export type EditablePost = Omit<Post, "cover"> & {
   id: string;
-  cover: { path: string | null; url: string | null; alt: string };
+  /**
+   * `width`/`height` are carried so that saving an edit writes back the size
+   * the cover was uploaded at, rather than blanking it.
+   */
+  cover: {
+    path: string | null;
+    url: string | null;
+    alt: string;
+    width: number | null;
+    height: number | null;
+  };
 };
 
 type Row = {
@@ -66,7 +75,6 @@ export async function listPosts(): Promise<PostListItem[]> {
     slug: row.slug,
     status: row.status === "draft" ? "draft" : "published",
     publishedAt: row.published_at,
-    updatedAt: row.updated_at,
     coverUrl: publicUrl(BUCKETS.blogImages, row.cover_path),
   }));
 }
@@ -101,6 +109,8 @@ export async function getPostForEdit(id: string): Promise<EditablePost | null> {
       path: row.cover_path,
       url: publicUrl(BUCKETS.blogImages, row.cover_path),
       alt: row.cover_alt ?? "",
+      width: row.cover_width,
+      height: row.cover_height,
     },
     seo: {
       metaTitle: row.meta_title,

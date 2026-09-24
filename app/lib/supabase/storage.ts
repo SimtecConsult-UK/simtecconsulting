@@ -9,6 +9,12 @@ export const BUCKETS = {
 export type Bucket = (typeof BUCKETS)[keyof typeof BUCKETS];
 
 /**
+ * The path every public file sits under. next.config.ts reads this too, so the
+ * shape next/image is told to allow cannot drift from the one built below.
+ */
+export const STORAGE_PUBLIC_PREFIX = "/storage/v1/object/public";
+
+/**
  * The public URL of a stored file.
  *
  * Built by hand rather than through `supabase.storage.getPublicUrl()` so that
@@ -22,5 +28,5 @@ export function publicUrl(bucket: Bucket, path: string | null): string | null {
   if (!path) return null;
   // Already absolute — a file still served from /public during the migration.
   if (path.startsWith("/") || path.startsWith("http")) return path;
-  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+  return `${SUPABASE_URL}${STORAGE_PUBLIC_PREFIX}/${bucket}/${path}`;
 }

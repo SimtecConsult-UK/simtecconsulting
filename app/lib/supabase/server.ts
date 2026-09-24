@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./config";
@@ -9,11 +10,12 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./config";
  * query it makes is subject to that person's row-level security — an anonymous
  * visitor sees only published content, an editor sees everything.
  *
- * Always create one per request. Never hoist it to a module-level constant:
- * that would share one person's session with every other request the server
- * handles.
+ * `cache` makes that one client per request rather than one per call — a
+ * single admin page asks for four. It must never become a module-level
+ * constant: that would share one person's session with every other request the
+ * server handles, which is exactly what React's per-request cache avoids.
  */
-export async function createClient() {
+export const createClient = cache(async () => {
   const cookieStore = await cookies();
 
   return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -33,4 +35,4 @@ export async function createClient() {
       },
     },
   });
-}
+});

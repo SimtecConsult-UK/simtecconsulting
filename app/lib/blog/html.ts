@@ -79,6 +79,12 @@ export function htmlToBlocks(root: HTMLElement): BlogBlock[] {
     if (hasText(runs)) blocks.push({ t: "p", runs });
   };
 
+  /** An image is stored only if it has a source; a broken one is dropped. */
+  const pushImage = (image: Element | null) => {
+    const src = image?.getAttribute("src");
+    if (src) blocks.push({ t: "image", src, alt: image?.getAttribute("alt") ?? "" });
+  };
+
   for (const child of Array.from(root.childNodes)) {
     if (child.nodeType === Node.TEXT_NODE) {
       const text = child.textContent ?? "";
@@ -109,35 +115,24 @@ export function htmlToBlocks(root: HTMLElement): BlogBlock[] {
         break;
       }
 
-      case "IMG": {
-        const src = element.getAttribute("src");
-        if (src) {
-          blocks.push({ t: "image", src, alt: element.getAttribute("alt") ?? "" });
-        }
+      case "IMG":
+        pushImage(element);
         break;
-      }
 
-      case "FIGURE": {
-        const image = element.querySelector("img");
-        const src = image?.getAttribute("src");
-        if (src) {
-          blocks.push({ t: "image", src, alt: image?.getAttribute("alt") ?? "" });
-        }
+      case "FIGURE":
+        pushImage(element.querySelector("img"));
         break;
-      }
 
-      default:
+      default: {
         // P, DIV and anything else a browser produced for a line of text.
         // An image the browser wrapped in a div is lifted out rather than lost.
-        if (element.querySelector("img")) {
-          const image = element.querySelector("img")!;
-          const src = image.getAttribute("src");
-          if (src) {
-            blocks.push({ t: "image", src, alt: image.getAttribute("alt") ?? "" });
-          }
+        const image = element.querySelector("img");
+        if (image) {
+          pushImage(image);
           break;
         }
         pushParagraph(element);
+      }
     }
   }
 

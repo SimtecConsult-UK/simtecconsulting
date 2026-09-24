@@ -7,7 +7,6 @@ import { SECTION_IDS } from "../lib/sections";
 import {
   CHAPTERS,
   DEFAULT_CHAPTER,
-  MAX_HOMEPAGE_CASE_STUDIES,
   quoteParagraphs,
   type CaseStudy,
   type CaseStudyChapter,
@@ -100,9 +99,7 @@ type CaseStudiesProps = {
   studies: CaseStudy[];
 };
 
-export function CaseStudies({ studies: published }: CaseStudiesProps) {
-  const studies = published.slice(0, MAX_HOMEPAGE_CASE_STUDIES);
-
+export function CaseStudies({ studies }: CaseStudiesProps) {
   const [activeClient, setActiveClient] = useState(0);
   const [activeChapter, setActiveChapter] = useState<ChapterKey>(DEFAULT_CHAPTER);
   /** Phone only: the open chapter was tapped again to close it. */

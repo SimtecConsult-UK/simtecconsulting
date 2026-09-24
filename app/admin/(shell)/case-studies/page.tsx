@@ -1,13 +1,9 @@
 import Link from "next/link";
-import { isSupabaseConfigured } from "../../../lib/supabase/config";
 import { MAX_HOMEPAGE_CASE_STUDIES } from "../../../lib/caseStudies";
 import { listCaseStudies } from "./data";
 import { ReorderButtons } from "./ReorderButtons";
-import { NotConnected } from "../NotConnected";
 
 export default async function CaseStudiesListPage() {
-  if (!isSupabaseConfigured) return <NotConnected />;
-
   const studies = await listCaseStudies();
   const shown = Math.min(studies.length, MAX_HOMEPAGE_CASE_STUDIES);
 

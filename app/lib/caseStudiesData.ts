@@ -5,8 +5,9 @@ import { BUCKETS, publicUrl } from "./supabase/storage";
 import {
   MAX_HOMEPAGE_CASE_STUDIES,
   caseStudies as committedCaseStudies,
+  toChapters,
   type CaseStudy,
-  type CaseStudyChapter,
+  type CaseStudyRow,
 } from "./caseStudies";
 
 /**
@@ -17,42 +18,6 @@ import {
  * client in there would break the build. The component takes its studies as a
  * prop and `app/page.tsx` calls this.
  */
-
-type CaseStudyRow = {
-  id: string;
-  tab_label: string;
-  headline: string;
-  client_name: string;
-  system_name: string;
-  project_type: string;
-  logo_path: string | null;
-  logo_width: number | null;
-  logo_height: number | null;
-  video_path: string | null;
-  video_poster_path: string | null;
-  quote: string;
-  quote_attribution: string;
-  chapters: Partial<Record<keyof CaseStudy["chapters"], CaseStudyChapter>> | null;
-};
-
-const EMPTY_CHAPTER: CaseStudyChapter = {
-  paragraphs: [],
-  bullets: [],
-  closing: [],
-};
-
-function chapter(
-  chapters: CaseStudyRow["chapters"],
-  key: keyof CaseStudy["chapters"]
-): CaseStudyChapter {
-  const value = chapters?.[key];
-  if (!value) return EMPTY_CHAPTER;
-  return {
-    paragraphs: value.paragraphs ?? [],
-    bullets: value.bullets ?? [],
-    closing: value.closing ?? [],
-  };
-}
 
 function toCaseStudy(row: CaseStudyRow): CaseStudy {
   return {
@@ -72,12 +37,7 @@ function toCaseStudy(row: CaseStudyRow): CaseStudy {
       publicUrl(BUCKETS.caseStudyMedia, row.video_poster_path) ?? undefined,
     quote: row.quote,
     quoteAttribution: row.quote_attribution,
-    chapters: {
-      summary: chapter(row.chapters, "summary"),
-      problem: chapter(row.chapters, "problem"),
-      solution: chapter(row.chapters, "solution"),
-      value: chapter(row.chapters, "value"),
-    },
+    chapters: toChapters(row.chapters),
   };
 }
 

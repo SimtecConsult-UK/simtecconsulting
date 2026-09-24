@@ -41,17 +41,20 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  // getUser() revalidates the token with Supabase and writes any refreshed
-  // cookie through the handlers above. Do not swap it for getSession(), which
-  // trusts the cookie as-is.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the token's signature locally against a cached key
+  // set, and still refreshes the session — and the cookie, through the handlers
+  // above — when it is close to expiring. getUser() would do the same job but
+  // calls the auth server every time, and this runs on every admin request
+  // including the ones Next fires to prefetch links, which Next's own guidance
+  // warns against. Do not swap it for getSession(), which trusts the cookie
+  // as-is without checking the signature.
+  const { data } = await supabase.auth.getClaims();
+  const signedIn = Boolean(data?.claims);
 
   const { pathname } = request.nextUrl;
   const onLoginPage = pathname === "/admin/login";
 
-  if (!user && !onLoginPage) {
+  if (!signedIn && !onLoginPage) {
     const signIn = request.nextUrl.clone();
     signIn.pathname = "/admin/login";
     // So the editor lands back where they were headed.
@@ -59,7 +62,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(signIn);
   }
 
-  if (user && onLoginPage) {
+  if (signedIn && onLoginPage) {
     const home = request.nextUrl.clone();
     home.pathname = "/admin";
     home.search = "";

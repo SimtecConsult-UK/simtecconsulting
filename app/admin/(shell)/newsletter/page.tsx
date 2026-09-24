@@ -1,12 +1,8 @@
 import Link from "next/link";
-import { isSupabaseConfigured } from "../../../lib/supabase/config";
 import { formatPostDate } from "../../../lib/blog/posts";
 import { listPosts } from "./data";
-import { NotConnected } from "../NotConnected";
 
 export default async function NewsletterListPage() {
-  if (!isSupabaseConfigured) return <NotConnected />;
-
   const posts = await listPosts();
 
   return (

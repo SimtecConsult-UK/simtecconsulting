@@ -814,3 +814,40 @@
   opacity: 0.3;
   cursor: not-allowed;
 }
+
+/* The delete row at the foot of an editor. */
+.cms-danger-zone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--cms-line);
+  padding-top: 22px;
+}
+
+/* The header strip: title input, then the saved state beside the buttons. */
+.cms-editor-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cms-editor-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* A panel inside a card — the SEO preview and each FAQ pair sit on one. */
+.cms-subcard {
+  background: var(--cms-field);
+  border: 1px solid var(--cms-field-line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}

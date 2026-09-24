@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "../lib/supabase/browser";
-import type { Bucket } from "../lib/supabase/storage";
+import { publicUrl, type Bucket } from "../lib/supabase/storage";
 
 /**
  * Uploads go straight from the browser to Supabase Storage rather than through
@@ -38,6 +38,28 @@ export async function uploadFile(
 
   if (error) return { ok: false, error: error.message };
   return { ok: true, path };
+}
+
+export type ImageUpload =
+  | { ok: true; path: string; width: number; height: number; url: string | null }
+  | { ok: false; error: string };
+
+/**
+ * Measures an image and uploads it in one go — the two always happen together,
+ * because next/image needs the real pixel size to reserve space for it.
+ *
+ * Throws if the file cannot be read as an image; the caller reports that.
+ */
+export async function uploadImage(
+  bucket: Bucket,
+  folder: string,
+  file: File
+): Promise<ImageUpload> {
+  const { width, height } = await imageSize(file);
+  const result = await uploadFile(bucket, folder, file);
+  if (!result.ok) return result;
+
+  return { ok: true, path: result.path, width, height, url: publicUrl(bucket, result.path) };
 }
 
 /** Reads an image's real dimensions, which next/image needs to reserve space. */

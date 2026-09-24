@@ -1,8 +1,8 @@
 import { createClient } from "../../../lib/supabase/server";
 import { isSupabaseConfigured } from "../../../lib/supabase/config";
 import { BUCKETS, publicUrl } from "../../../lib/supabase/storage";
-import { EMPTY_CHAPTER, type Chapters } from "./limits";
-import type { CaseStudyChapter } from "../../../lib/caseStudies";
+import { toChapters } from "../../../lib/caseStudies";
+import type { CaseStudyRow, Chapters } from "../../../lib/caseStudies";
 
 export type EditableCaseStudy = {
   id: string;
@@ -26,37 +26,13 @@ export type CaseStudyListItem = Pick<
 > & {
   logoUrl: string | null;
   hasVideo: boolean;
-  updatedAt: string;
 };
 
-type Row = {
-  id: string;
+/** The shared row plus the two columns only the editor reads. */
+type Row = CaseStudyRow & {
   position: number;
-  tab_label: string;
-  headline: string;
-  client_name: string;
-  system_name: string;
-  project_type: string;
-  logo_path: string | null;
-  logo_width: number | null;
-  logo_height: number | null;
-  video_path: string | null;
-  video_poster_path: string | null;
-  quote: string;
-  quote_attribution: string;
-  chapters: Partial<Chapters> | null;
   updated_at: string;
 };
-
-function chapter(stored: Partial<Chapters> | null, key: keyof Chapters): CaseStudyChapter {
-  const value = stored?.[key];
-  if (!value) return EMPTY_CHAPTER;
-  return {
-    paragraphs: value.paragraphs ?? [],
-    bullets: value.bullets ?? [],
-    closing: value.closing ?? [],
-  };
-}
 
 export async function listCaseStudies(): Promise<CaseStudyListItem[]> {
   if (!isSupabaseConfigured) return [];
@@ -64,7 +40,7 @@ export async function listCaseStudies(): Promise<CaseStudyListItem[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("case_studies")
-    .select("id,position,tab_label,headline,logo_path,video_path,updated_at")
+    .select("id,position,tab_label,headline,logo_path,video_path")
     .order("position", { ascending: true });
 
   if (error) {
@@ -79,7 +55,6 @@ export async function listCaseStudies(): Promise<CaseStudyListItem[]> {
     headline: row.headline,
     logoUrl: publicUrl(BUCKETS.caseStudyMedia, row.logo_path),
     hasVideo: Boolean(row.video_path),
-    updatedAt: row.updated_at,
   }));
 }
 
@@ -126,12 +101,7 @@ export async function getCaseStudyForEdit(
     },
     quote: row.quote,
     quoteAttribution: row.quote_attribution,
-    chapters: {
-      summary: chapter(row.chapters, "summary"),
-      problem: chapter(row.chapters, "problem"),
-      solution: chapter(row.chapters, "solution"),
-      value: chapter(row.chapters, "value"),
-    },
+    chapters: toChapters(row.chapters),
   };
 }
 

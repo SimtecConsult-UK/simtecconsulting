@@ -1,14 +1,15 @@
 import type { NextConfig } from "next";
+import { SUPABASE_URL } from "./app/lib/supabase/config";
+import { STORAGE_PUBLIC_PREFIX } from "./app/lib/supabase/storage";
 
 /**
  * Cover images and case-study media are served from Supabase Storage, so
- * next/image has to be told that host is allowed. It is derived from the same
- * environment variable the rest of the app uses, rather than hardcoded, so
- * preview and production can point at different projects.
+ * next/image has to be told that host is allowed. Both the host and the path
+ * come from the same modules the rest of the app uses, rather than being
+ * written out again here, so preview and production can point at different
+ * projects and the allowed path cannot drift from the one publicUrl() builds.
  */
-const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
-  : undefined;
+const supabaseHost = SUPABASE_URL ? new URL(SUPABASE_URL).hostname : undefined;
 
 const nextConfig: NextConfig = {
   images: {
@@ -17,7 +18,7 @@ const nextConfig: NextConfig = {
           {
             protocol: "https",
             hostname: supabaseHost,
-            pathname: "/storage/v1/object/public/**",
+            pathname: `${STORAGE_PUBLIC_PREFIX}/**`,
           },
         ]
       : [],
