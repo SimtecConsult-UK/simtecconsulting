@@ -11,7 +11,13 @@ import { createClient } from "../../../lib/supabase/server";
  * deleting it.
  */
 
-/** Called when an editor opens one, so the list can show what is new. */
+/**
+ * Called when an editor opens one, so the list can show what is new.
+ *
+ * Deliberately does not revalidate: Next refuses a cache revalidation during a
+ * render, and every route under /admin is already dynamic, so the list re-reads
+ * the database on the next visit regardless.
+ */
 export async function markSubmissionRead(id: string) {
   await requireEditor();
 
@@ -24,9 +30,7 @@ export async function markSubmissionRead(id: string) {
 
   if (error) {
     console.error(`[cms] mark submission ${id} read: ${error.message}`);
-    return;
   }
-  revalidatePath("/admin/submissions");
 }
 
 export async function deleteSubmission(id: string) {

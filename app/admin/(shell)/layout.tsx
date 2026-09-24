@@ -1,7 +1,6 @@
 import { requireEditor } from "../../lib/auth";
 import { isSupabaseConfigured } from "../../lib/supabase/config";
-import { countCaseStudies, countPosts } from "./counts";
-import { countUnreadSubmissions } from "./submissions/data";
+import { countCaseStudies, countPosts, countUnreadSubmissions } from "./counts";
 import { NotConnected } from "./NotConnected";
 import { Sidebar } from "./Sidebar";
 
@@ -35,8 +34,6 @@ export default async function ShellLayout({
   const [posts, caseStudies, submissions] = await Promise.all([
     countPosts(),
     countCaseStudies(),
-    // Unread rather than total: the badge is there to say what needs looking
-    // at, and a submission that has been read needs nothing.
     countUnreadSubmissions(),
   ]);
 

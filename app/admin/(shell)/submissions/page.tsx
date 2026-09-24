@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatSubmittedAt, listSubmissions } from "./data";
+import { LIST_LIMIT, formatSubmittedAt, listSubmissions } from "./data";
 
 export default async function SubmissionsListPage() {
   const submissions = await listSubmissions();
@@ -14,12 +14,18 @@ export default async function SubmissionsListPage() {
             Completed discovery wizards, newest first. These are records of what
             somebody sent, so they are read-only.
           </p>
+          <p>
+            <strong>Nothing emails you when one arrives</strong> — check here
+            regularly, or an enquiry can sit unread.
+          </p>
         </div>
       </div>
 
       {submissions.length > 0 && (
         <span className="cms-label">
-          {submissions.length} in total
+          {submissions.length === LIST_LIMIT
+            ? `Showing the most recent ${LIST_LIMIT}`
+            : `${submissions.length} in total`}
           {unread > 0 ? ` · ${unread} not yet opened` : ""}
         </span>
       )}
@@ -30,7 +36,7 @@ export default async function SubmissionsListPage() {
             key={submission.id}
             href={`/admin/submissions/${submission.id}`}
             className="cms-row"
-            style={{ gridTemplateColumns: "1fr auto auto" }}
+            style={{ gridTemplateColumns: "1fr auto" }}
           >
             <span className="cms-row-body">
               <span style={{ display: "flex", alignItems: "center", gap: 11, flexWrap: "wrap" }}>

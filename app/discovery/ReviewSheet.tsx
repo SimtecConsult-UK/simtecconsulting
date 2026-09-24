@@ -2,15 +2,14 @@
 
 import { useCallback, useRef, useState } from "react";
 import { type Answers, type Question, type ReviewSectionData, padSectionNumber } from "./data";
-import { ReviewValueView, useBodyScrollLock, useEscapeKey } from "./ReviewShared";
+import { ReviewValueView, SubmitButton, useBodyScrollLock, useEscapeKey } from "./ReviewShared";
+import type { SubmitStatus } from "./submission";
 
 export function ReviewSheet({
   answers,
   sections,
   consent,
-  submitted,
-  sending,
-  submitError,
+  submit,
   onClose,
   onEditQuestion,
   onDownload,
@@ -20,9 +19,7 @@ export function ReviewSheet({
   answers: Answers;
   sections: ReviewSectionData[];
   consent: boolean;
-  submitted: boolean;
-  sending: boolean;
-  submitError: string | null;
+  submit: SubmitStatus;
   onClose: () => void;
   onEditQuestion: (question: Question) => void;
   onDownload: () => void;
@@ -145,32 +142,22 @@ export function ReviewSheet({
             <span className={`dw-cbx${consent ? " dw-on" : ""}`}>✓</span>
             Consent to prepare Phase 1 scope
           </span>
-          {!submitted ? (
-            <span className="dw-sfootactions">
-              {submitError && (
-                <span className="dw-senderr" role="alert">
-                  {submitError}
-                </span>
-              )}
-              <button className="dw-ghost" onClick={onClose}>
-                Back to form
-              </button>
-              <button className="dw-ghost" onClick={onDownload}>
-                Download a copy
-              </button>
-              <button
-                className={`dw-btn-teal${consent && !sending ? "" : " dw-dis"}`}
-                disabled={!consent || sending}
-                onClick={onSubmit}
-              >
-                {sending ? "Sending…" : submitError ? "Try again →" : "Submit & book workshop →"}
-              </button>
-            </span>
-          ) : (
-            <span className="dw-sfootactions">
-              <span className="dw-sentmsg">✓ SENT</span>
-            </span>
-          )}
+          <span className="dw-sfootactions">
+            <button className="dw-ghost" onClick={onClose}>
+              Back to form
+            </button>
+            <button className="dw-ghost" onClick={onDownload}>
+              Download a copy
+            </button>
+            <SubmitButton
+              submit={submit}
+              consent={consent}
+              onSubmit={onSubmit}
+              className="dw-btn-teal"
+              restingLabel="Submit & book workshop →"
+              sentLabel="✓ SENT"
+            />
+          </span>
         </div>
       </div>
     </div>

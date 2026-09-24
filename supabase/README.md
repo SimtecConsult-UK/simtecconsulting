@@ -1,7 +1,9 @@
 # Supabase — the content manager's database
 
-The content manager at `/admin` reads and writes two collections here:
-newsletter posts (the blog) and homepage case studies.
+The content manager at `/admin` reads and writes three collections here:
+newsletter posts (the blog), homepage case studies, and the submissions the
+discovery wizard sends. The first two are edited in the CMS; submissions are
+only read and deleted, since they are a record of what somebody sent.
 
 ## What is here
 

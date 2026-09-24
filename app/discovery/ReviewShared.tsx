@@ -3,8 +3,10 @@
 // `ReviewValue` (see data.ts) the exact same way, just inside different
 // surrounding layout (a `.dw-qrow` grid vs. a `.dw-dl` definition list).
 
-import { Fragment, useEffect } from "react";
-import { type RepColumn, type RepRow, type ReviewValue, UNGROUPED_ROWS_HEADER, cellArray, cellText } from "./data";
+import { useEffect } from "react";
+import type { SubmitStatus } from "./submission";
+
+export { ReviewTable, ReviewValueView } from "./ReviewValue";
 
 // Both overlays are full-screen and modal over the wizard behind them, so
 // each locks body scroll for as long as it's mounted — mount/unmount already
@@ -37,77 +39,56 @@ export function useEscapeKey(onEscape: () => void) {
   }, [onEscape]);
 }
 
-function cellDisplay(column: RepColumn, row: RepRow): string {
-  const value = row[column.key];
-  const text = column.multiSelect ? cellArray(value).join(", ") : cellText(value);
-  return text || "—";
-}
+/**
+ * The submit button, shared by the review sheet and the brief.
+ *
+ * Both overlays send the same wizard, so both need the same three states and
+ * the same failure message. Written once because the two copies had already
+ * drifted: one showed the error as text, the other hid it in a `title`
+ * attribute on a disabled button, where a touch user can never see it.
+ */
+export function SubmitButton({
+  submit,
+  consent,
+  onSubmit,
+  className,
+  restingLabel,
+  sentLabel,
+}: {
+  submit: SubmitStatus;
+  consent: boolean;
+  onSubmit: () => void;
+  className: string;
+  restingLabel: string;
+  sentLabel: string;
+}) {
+  const failure = submit.state.kind === "failed" ? submit.state.message : null;
 
-// Rows in first-appearance order, split into the same buckets the wizard's own
-// table shows for a `groupRowsBy` repeater (see DiscoveryWizard's RepTable).
-// An ungrouped table is one headerless bucket, so the render below has a
-// single path either way.
-function groupRows(rows: RepRow[], groupBy?: string): { header: string | null; rows: RepRow[] }[] {
-  if (!groupBy) return [{ header: null, rows }];
-  const groups: { header: string; rows: RepRow[] }[] = [];
-  rows.forEach((row) => {
-    const header = cellText(row[groupBy]) || UNGROUPED_ROWS_HEADER;
-    const existing = groups.find((g) => g.header === header);
-    if (existing) existing.rows.push(row);
-    else groups.push({ header, rows: [row] });
-  });
-  return groups;
-}
-
-export function ReviewTable({ columns, rows, groupBy }: { columns: RepColumn[]; rows: RepRow[]; groupBy?: string }) {
-  return (
-    <table className="dw-tbl">
-      <thead>
-        <tr>
-          {columns.map((c) => (
-            <th key={c.key}>{c.header}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {groupRows(rows, groupBy).map((group) => (
-          <Fragment key={group.header ?? ""}>
-            {group.header && (
-              <tr className="dw-tgrp">
-                <td colSpan={columns.length}>{group.header}</td>
-              </tr>
-            )}
-            {group.rows.map((row, i) => (
-              <tr key={cellText(row.__key) || `${group.header ?? ""}:${i}`}>
-                {columns.map((c) => (
-                  <td key={c.key}>{cellDisplay(c, row)}</td>
-                ))}
-              </tr>
-            ))}
-          </Fragment>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-export function ReviewValueView({ value }: { value: ReviewValue }) {
-  switch (value.kind) {
-    case "text":
-      return <span className="dw-rv-text">{value.text}</span>;
-    case "chips":
-      return (
-        <Fragment>
-          {value.chips.map((chip) => (
-            <span className="dw-rv-chip" key={chip}>
-              {chip}
-            </span>
-          ))}
-        </Fragment>
-      );
-    case "table":
-      return <ReviewTable columns={value.columns} rows={value.rows} groupBy={value.groupBy} />;
-    case "skipped":
-      return <span className="dw-tbc">NOT ANSWERED — TBC</span>;
+  if (submit.state.kind === "sent") {
+    return <span className={`${className} dw-tbtn-static`}>{sentLabel}</span>;
   }
+
+  return (
+    <>
+      {failure && (
+        <span className="dw-senderr" role="alert">
+          {failure}
+        </span>
+      )}
+      <button
+        className={`${className}${consent && !submit.sending ? "" : " dw-dis"}`}
+        disabled={!consent || submit.sending}
+        onClick={onSubmit}
+        title={consent ? undefined : "Tick the consent box on the review screen"}
+      >
+        {submit.sending
+          ? "Sending…"
+          : failure
+            ? "Try again →"
+            : consent
+              ? restingLabel
+              : "Tick consent to submit"}
+      </button>
+    </>
+  );
 }

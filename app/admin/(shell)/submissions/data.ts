@@ -9,6 +9,9 @@ import type { Answers, RepRow } from "../../../discovery/data";
  * beyond marking it read — the editor reads and replies, they do not edit.
  */
 
+/** How many the list shows at once. */
+export const LIST_LIMIT = 200;
+
 export type SubmissionListItem = {
   id: string;
   createdAt: string;
@@ -42,10 +45,13 @@ type Row = {
   read_at: string | null;
 };
 
-const LIST_COLUMNS =
-  "id,created_at,company,contact_name,email,project_name,read_at";
+/** Exactly the columns the list query asks for, so the cast tells the truth. */
+type ListRow = Pick<
+  Row,
+  "id" | "created_at" | "company" | "contact_name" | "email" | "project_name" | "read_at"
+>;
 
-function toListItem(row: Row): SubmissionListItem {
+function toListItem(row: ListRow): SubmissionListItem {
   return {
     id: row.id,
     createdAt: row.created_at,
@@ -63,14 +69,17 @@ export async function listSubmissions(): Promise<SubmissionListItem[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("submissions")
-    .select(LIST_COLUMNS)
-    .order("created_at", { ascending: false });
+    .select("id,created_at,company,contact_name,email,project_name,read_at")
+    .order("created_at", { ascending: false })
+    // Capped because this is the one table strangers can write to: a flood of
+    // junk should degrade the page, not bring it down.
+    .limit(LIST_LIMIT);
 
   if (error) {
     console.error(`[cms] list submissions: ${error.message}`);
     return [];
   }
-  return (data as Row[]).map(toListItem);
+  return (data as ListRow[]).map(toListItem);
 }
 
 export async function getSubmission(id: string): Promise<Submission | null> {
@@ -98,23 +107,6 @@ export async function getSubmission(id: string): Promise<Submission | null> {
     answers: row.answers ?? {},
     repRows: row.rep_rows ?? {},
   };
-}
-
-/** How many have never been opened — the number the sidebar badge shows. */
-export async function countUnreadSubmissions(): Promise<number> {
-  if (!isSupabaseConfigured) return 0;
-
-  const supabase = await createClient();
-  const { count, error } = await supabase
-    .from("submissions")
-    .select("*", { count: "exact", head: true })
-    .is("read_at", null);
-
-  if (error) {
-    console.error(`[cms] count unread submissions: ${error.message}`);
-    return 0;
-  }
-  return count ?? 0;
 }
 
 /** "12 September 2026, 14:03" — the same en-GB/UTC rule the blog dates use. */

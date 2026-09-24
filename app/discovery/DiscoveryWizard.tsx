@@ -1,11 +1,12 @@
 "use client";
 
-import { Fragment, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { Logo } from "../components/Logo";
 import { DiscoveryBrief } from "./DiscoveryBrief";
 import { ReviewSheet } from "./ReviewSheet";
 import { submitDiscovery } from "./actions";
+import { SEND_FAILED, type SubmitState } from "./submission";
 import {
   type Answers,
   type NeedHelp,
@@ -112,9 +113,14 @@ export function DiscoveryWizard() {
   const [answers, setAnswers] = useState<Answers>({});
   const [repRows, setRepRows] = useState<Record<string, RepRow[]>>({});
   const [consent, setConsent] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  /**
+   * One value rather than a `submitted` / `sending` / `error` trio: those had
+   * eight combinations for four real states, and every write site had to
+   * remember to set two of them together.
+   */
+  const [submitState, setSubmitState] = useState<SubmitState>({ kind: "idle" });
+  const [sending, startSending] = useTransition();
+  const submitted = submitState.kind === "sent";
   const [hydrated, setHydrated] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [robotTop, setRobotTop] = useState<number | null>(null);
@@ -152,7 +158,7 @@ export function DiscoveryWizard() {
         setAnswers(sanitizeAnswers(saved.answers || {}));
         setRepRows(saved.repRows || {});
         setConsent(!!saved.consent);
-        setSubmitted(!!saved.submitted);
+        if (saved.submitted) setSubmitState({ kind: "sent" });
       }
     } catch {
       // ignore malformed drafts
@@ -352,21 +358,22 @@ export function DiscoveryWizard() {
    */
   const handleSubmit = useCallback(() => {
     if (!consent || sending) return;
-    setSending(true);
-    setSubmitError(null);
-    // The reconciled rows, not the raw ones: that is what the review sheet
-    // showed, so it is what the CMS should show back.
-    void submitDiscovery({ answers, repRows: reconciledRepRows, consent }).then(
-      (result) => {
-        setSending(false);
-        if (result.error) setSubmitError(result.error);
-        else setSubmitted(true);
-      },
-      () => {
-        setSending(false);
-        setSubmitError("We could not send your answers just now. Please try again.");
+    startSending(async () => {
+      try {
+        // The reconciled rows, not the raw ones: that is what the review sheet
+        // showed, so it is what the CMS should show back.
+        const result = await submitDiscovery({
+          answers,
+          repRows: reconciledRepRows,
+          consent,
+        });
+        setSubmitState(
+          result.error ? { kind: "failed", message: result.error } : { kind: "sent" }
+        );
+      } catch {
+        setSubmitState({ kind: "failed", message: SEND_FAILED });
       }
-    );
+    });
   }, [answers, consent, reconciledRepRows, sending]);
 
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
@@ -669,9 +676,7 @@ export function DiscoveryWizard() {
           answers={answers}
           sections={reviewSections}
           consent={consent}
-          submitted={submitted}
-          sending={sending}
-          submitError={submitError}
+          submit={{ state: submitState, sending }}
           onClose={() => setOverlay("none")}
           onEditQuestion={jumpToQuestion}
           onDownload={() => setOverlay("brief")}
@@ -684,9 +689,7 @@ export function DiscoveryWizard() {
           answers={answers}
           sections={reviewSections}
           consent={consent}
-          submitted={submitted}
-          sending={sending}
-          submitError={submitError}
+          submit={{ state: submitState, sending }}
           onClose={() => setOverlay("review")}
           onSubmit={handleSubmit}
         />
