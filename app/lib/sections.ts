@@ -1,7 +1,7 @@
 export const SECTION_IDS = {
   solutions: "solutions",
   team: "team",
-  productDemo: "product-demo",
+  caseStudies: "case-studies",
   testimonials: "testimonials",
 } as const;
 

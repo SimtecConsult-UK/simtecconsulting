@@ -11,7 +11,7 @@ import { ROUTES, SECTION_IDS } from "../lib/sections";
 const links = [
   { label: "Solutions", href: `#${SECTION_IDS.solutions}` },
   { label: "Our Team", href: `#${SECTION_IDS.team}` },
-  { label: "Case Studies", href: `#${SECTION_IDS.productDemo}` },
+  { label: "Case Studies", href: `#${SECTION_IDS.caseStudies}` },
   { label: "Testimonials", href: `#${SECTION_IDS.testimonials}` },
 ];
 

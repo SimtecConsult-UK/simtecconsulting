@@ -1,7 +1,6 @@
 import { CtaBand } from "./components/CtaBand";
 import { ModulePicker } from "./components/ModulePicker";
-import { MoreModules } from "./components/MoreModules";
-import { OnSiteOperations } from "./components/OnSiteOperations";
+import { CaseStudies } from "./components/CaseStudies";
 import { Footer } from "./components/Footer";
 import { BlueprintBackground } from "./components/BlueprintBackground";
 import { Hero } from "./components/Hero";
@@ -29,9 +28,7 @@ export default function Home() {
 
       <Team />
 
-      <OnSiteOperations />
-
-      <MoreModules />
+      <CaseStudies />
 
       <SocialProof />
       <Testimonials />
