@@ -9,10 +9,6 @@ import { formatPostDate, getIndex } from "../lib/blog/posts";
 import { ROUTES, postHref } from "../lib/sections";
 import "../components/blog/blog.css";
 
-/** Posts are published from the CMS, so the page is rebuilt periodically;
-    saving also refreshes it immediately. */
-export const revalidate = 300;
-
 const PAGE_TITLE = "Notes from the floor";
 const PAGE_DESCRIPTION =
   "The Simtec newsletter — notes on environmental consultancy, construction data and the software we build for site teams.";

@@ -26,6 +26,18 @@ const leagueSpartan = localFont({
   variable: "--font-league-spartan",
 });
 
+/**
+ * Every public page is rebuilt on this timer.
+ *
+ * It lives here rather than on each page because the whole site depends on
+ * content that changes without a deploy: case studies on the homepage, posts on
+ * the blog, and — through the footer, which every page carries — whether the
+ * blog has anything in it at all. The lowest `revalidate` in a route wins, so a
+ * page needing something faster can still say so; the admin area opts out
+ * entirely with `dynamic = "force-dynamic"`.
+ */
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   // Lets every page give canonical and Open Graph URLs as plain paths; Next
   // resolves them against this origin.
