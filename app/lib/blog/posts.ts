@@ -120,7 +120,7 @@ export const getIndex = cache(
 
     if (!isSupabaseConfigured) return split(samples().map(postToSummary));
 
-    const { data, error } = await supabasePublic
+    const { data, error } = await supabasePublic()
       .from("posts")
       .select(SUMMARY_COLUMNS)
       .eq("status", "published")
@@ -137,7 +137,7 @@ export const getIndex = cache(
 export const getPost = cache(async (slug: string): Promise<Post | undefined> => {
   if (!isSupabaseConfigured) return samples().find((post) => post.slug === slug);
 
-  const { data, error } = await supabasePublic
+  const { data, error } = await supabasePublic()
     .from("posts")
     .select(POST_COLUMNS)
     .eq("slug", slug)
@@ -155,7 +155,7 @@ export const getPost = cache(async (slug: string): Promise<Post | undefined> => 
 export const getPostSlugs = cache(async (): Promise<string[]> => {
   if (!isSupabaseConfigured) return samples().map((post) => post.slug);
 
-  const { data, error } = await supabasePublic
+  const { data, error } = await supabasePublic()
     .from("posts")
     .select("slug")
     .eq("status", "published");
@@ -177,7 +177,7 @@ export const getRelatedPosts = cache(
         .map(postToSummary);
     }
 
-    const { data, error } = await supabasePublic
+    const { data, error } = await supabasePublic()
       .from("posts")
       .select(SUMMARY_COLUMNS)
       .eq("status", "published")

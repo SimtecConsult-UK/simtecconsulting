@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./config";
 
 /**
@@ -16,11 +16,21 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./config";
  * published content, which row-level security exposes to the anonymous key
  * anyway. The cookie-bound client in `server.ts` stays for the admin area,
  * where the editor's session is the whole point.
+ *
+ * Built on first use rather than at module load. `createClient` throws when it
+ * is handed an empty URL, so constructing it eagerly would crash the build on
+ * any deployment that has no Supabase project configured — including the very
+ * fallback case the rest of this code takes care to support.
  */
-export const supabasePublic = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    // There is no user here and nothing to persist or refresh.
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
+let client: SupabaseClient | null = null;
+
+export function supabasePublic(): SupabaseClient {
+  client ??= createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      // There is no user here and nothing to persist or refresh.
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+  return client;
+}
