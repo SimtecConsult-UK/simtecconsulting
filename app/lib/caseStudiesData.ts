@@ -43,12 +43,9 @@ function toCaseStudy(row: CaseStudyRow): CaseStudy {
 /**
  * The case studies the homepage section renders, in their published order.
  *
- * The database is the only source. There used to be a copy committed beside
- * this file that stood in whenever the table came back empty, which meant the
- * homepage and the CMS could disagree about what the site was showing — and
- * deleting the last case study silently brought the old pair back. With one
- * source, an empty table means the section renders nothing, which is honest
- * and is what the component already does with an empty list.
+ * The database is the only source, so the homepage and the CMS always agree.
+ * No rows means no section: `CaseStudies.tsx` renders nothing for an empty
+ * list rather than leaving an empty frame.
  */
 export const getCaseStudies = cache(async (): Promise<CaseStudy[]> => {
   if (!isSupabaseConfigured) return [];

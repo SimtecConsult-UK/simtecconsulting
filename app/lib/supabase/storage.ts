@@ -26,7 +26,11 @@ export const STORAGE_PUBLIC_PREFIX = "/storage/v1/object/public";
  */
 export function publicUrl(bucket: Bucket, path: string | null): string | null {
   if (!path) return null;
-  // Already absolute — a file still served from /public during the migration.
+  // A path starting with "/" is served from /public rather than storage. Not
+  // a leftover: the seeded case studies deliberately point their logos and
+  // recording at files in /public, so deleting this branch blanks both of them
+  // on the homepage. Replacing either through the editor writes a storage key
+  // and takes the branch below instead.
   if (path.startsWith("/") || path.startsWith("http")) return path;
   return `${SUPABASE_URL}${STORAGE_PUBLIC_PREFIX}/${bucket}/${path}`;
 }
