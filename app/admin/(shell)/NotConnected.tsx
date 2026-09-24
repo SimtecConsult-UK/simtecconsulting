@@ -22,8 +22,9 @@ export function NotConnected() {
           <code>supabase/README.md</code>.
         </p>
         <p className="cms-help">
-          Until then the website falls back to the content committed in the
-          repository, so nothing is broken for visitors.
+          Until then the blog shows the sample posts committed in the repository,
+          and the homepage leaves out its case studies section — those come only
+          from the database.
         </p>
       </div>
     </div>

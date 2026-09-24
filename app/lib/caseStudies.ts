@@ -7,8 +7,7 @@
  * editor enforces — keeping to them holds the rendered heights in the range
  * the design was drawn for.
  *
- * The section renders up to MAX_HOMEPAGE_CASE_STUDIES of them, in position
- * order, and renders nothing at all when there are none.
+ * The section renders at most MAX_HOMEPAGE_CASE_STUDIES of them.
  */
 
 /**

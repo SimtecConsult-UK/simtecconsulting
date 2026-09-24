@@ -24,7 +24,11 @@ export const ROUTES = {
  */
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://simtecconsult.com"
-).replace(/\/$/, "");
+)
+  // Trimmed and de-slashed for the same reason as SUPABASE_URL: paths are
+  // joined onto this, and "…com//blog/x" is a different URL to Google.
+  .trim()
+  .replace(/\/+$/, "");
 
 /**
  * A site path as an absolute URL, for the places that cannot use a relative one

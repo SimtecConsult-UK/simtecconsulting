@@ -19,7 +19,9 @@ The columns are the fields of the editors in the CMS handover, one for one.
    your visitors.
 
 2. **Run the migrations**, in order, in the project's SQL editor
-   (Database → SQL Editor → New query). Paste `0001` and run it, then `0002`.
+   (Database → SQL Editor → New query). Paste `0001` and run it, then `0002`,
+   then `0003`. Skipping `0003` leaves the case studies table empty, and an
+   empty table means the homepage renders no case studies section at all.
 
 3. **Create the one editor account.** Authentication → Users → Add user. Give
    it the email you want to sign in with, set a password, and tick
