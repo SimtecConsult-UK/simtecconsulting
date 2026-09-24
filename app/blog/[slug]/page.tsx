@@ -18,10 +18,6 @@ import type { Post } from "../../lib/blog/types";
 import { ROUTES, absoluteUrl, postHref } from "../../lib/sections";
 import "../../components/blog/blog.css";
 
-/** Posts are published from the CMS, so the page is rebuilt periodically;
-    saving also refreshes it immediately. */
-export const revalidate = 300;
-
 export async function generateStaticParams() {
   const slugs = await getPostSlugs();
   return slugs.map((slug) => ({ slug }));

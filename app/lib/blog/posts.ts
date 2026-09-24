@@ -151,7 +151,7 @@ export const getPost = cache(async (slug: string): Promise<Post | undefined> => 
   return data ? toPost(data as PostRow) : undefined;
 });
 
-/** Every published slug — used to pre-render the post pages at build time. */
+/** Every published slug — pre-renders the post pages, and answers hasPublishedPosts(). */
 export const getPostSlugs = cache(async (): Promise<string[]> => {
   if (!isSupabaseConfigured) return samples().map((post) => post.slug);
 
@@ -166,6 +166,15 @@ export const getPostSlugs = cache(async (): Promise<string[]> => {
   }
   return (data as { slug: string }[]).map((row) => row.slug);
 });
+
+/**
+ * Whether there is anything to read yet — the footer links to the blog only
+ * once it has something in it. Built on getPostSlugs() so the blog's own pages,
+ * which already ask for the slugs, pay for one read rather than two.
+ */
+export async function hasPublishedPosts(): Promise<boolean> {
+  return (await getPostSlugs()).length > 0;
+}
 
 /** The related-articles band: the newest posts other than the one being read. */
 export const getRelatedPosts = cache(

@@ -3,8 +3,12 @@ import Link from "next/link";
 import { CookieSettingsLink } from "./CookieSettingsLink";
 import { FooterLogoLink } from "./FooterLogoLink";
 import { ROUTES } from "../lib/sections";
+import { hasPublishedPosts } from "../lib/blog/posts";
 
-export function Footer() {
+export async function Footer() {
+  // Plain text until the first post exists, so nobody lands on an empty blog.
+  const blogIsLive = await hasPublishedPosts();
+
   return (
     <footer className="px-4 py-16 text-black md:px-16 md:py-24" style={{ background: "#ffffff" }}>
       <div className="mx-auto max-w-[var(--container-content)]">
@@ -70,9 +74,13 @@ export function Footer() {
             </h4>
             <ul className="mt-4 space-y-3">
               <li>
-                <Link href={ROUTES.blog} className="text-black/60 hover:text-black">
-                  Blog
-                </Link>
+                {blogIsLive ? (
+                  <Link href={ROUTES.blog} className="text-black/60 hover:text-black">
+                    Blog
+                  </Link>
+                ) : (
+                  <span className="text-black/40">Blog (Coming Soon)</span>
+                )}
               </li>
             </ul>
           </div>
