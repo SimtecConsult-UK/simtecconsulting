@@ -7,9 +7,6 @@
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo,
     monospace;
 
-  /* Custom breakpoint used by MoreModules.tsx to stack its footer below tablet width */
-  --breakpoint-900: 900px;
-
   /* DESIGN.md — Vital Assurance palette */
   --color-surface: #f9f9ff;
   --color-surface-dim: #d5dae8;

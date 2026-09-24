@@ -1,0 +1,963 @@
+/* ── Case Studies (homepage) ────────────────────────────────────────────────
+   Four layouts from one DOM. Base is the phone (<640); the three media queries
+   are the handover's 768 / 1280 / 1920 frames, whose ranges line up exactly
+   with Tailwind's sm / lg / 2xl.
+
+     <640      phone    logo tiles, bare video, accordion
+     640–1023  tablet   pill row, sticky chapter rail, quote in a bottom row
+     1024–1535 laptop   header row with pills, chapter tabs, quote beside them
+     >=1536    desktop  the laptop layout, scaled up, capped at 1360px
+
+   Two ideas do most of the work:
+
+   1. Everything that changes with the client is STACKED — every version sits in
+      the same grid cell and the inactive ones are `visibility:hidden`. Each
+      block is therefore as tall as its tallest version, so switching client or
+      chapter never moves the page. That is a stated design requirement, and it
+      is why the section looks bottom-heavy on a short chapter (see the Jackson
+      Summary reference render).
+
+   2. The chapter buttons live in `.cs-rail`, which is `display:contents` on the
+      phone so the buttons drop into the accordion grid interleaved with their
+      bodies, a sticky column on tablet, and a tab row on laptop. That is what
+      lets one copy of the chapter text serve all three arrangements.
+
+   Fonts arrive as next/font CSS variables on the section (see CaseStudies.tsx),
+   the same way app/discovery does it. */
+
+.cs {
+  background: var(--color-tinted-bg);
+  padding: 12px;
+  font-family: var(--font-ibm-plex-sans), sans-serif;
+}
+
+/* Plain blocks, not flex — the head/video margins are meant to collapse the way
+   they do in the reference prototype. */
+.cs-panel {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 20px 24px;
+  box-shadow:
+    0 24px 64px -32px rgba(20, 26, 50, 0.28),
+    0 2px 8px rgba(20, 26, 50, 0.06);
+}
+
+/* ── Header ── */
+.cs-eyebrow {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8a8f9c;
+}
+
+.cs-h2 {
+  display: grid; /* stacked headlines */
+  margin: 12px 0 0;
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -0.022em;
+  color: #13151e;
+  text-wrap: pretty;
+}
+
+/* ── Client switcher ──
+   Phone: logo tiles. Tablet and up: a pill group. Both live in the same
+   buttons; only the child that suits the breakpoint is shown. */
+.cs-switch {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.cs-switch-btn {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1.5px solid #e3e6ee;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cs-switch-btn[aria-selected="true"] {
+  background: #f3f5ff;
+  border-color: var(--color-primary-container);
+}
+
+.cs-switch-logo {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* The pill text, shown from tablet up; the phone tier shows the logo instead. */
+.cs-switch-label {
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ── Video ──
+   One frame element throughout: a bare rounded screen on the phone, and the
+   MacBook bezel (plus its base) from tablet up. */
+.cs-video {
+  margin-top: 20px;
+}
+
+.cs-screen {
+  position: relative;
+  overflow: hidden;
+  background: #0b0b0f;
+  border: 6px solid #0b0b0f;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px -24px rgba(20, 26, 50, 0.5);
+}
+
+.cs-camera,
+.cs-base {
+  display: none;
+}
+
+/* Only the selected client's video is laid out (the others are display:none), so
+   unlike the text blocks this needs no stacking — the 16:9 box holds the height. */
+.cs-screen-inner {
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #0c0e14;
+}
+
+.cs-screen-inner video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* The recordings are framed so the top-left is never cropped. */
+  object-position: top left;
+}
+
+/* ── Body: quote, chapters, details ── */
+.cs-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+/* The rule above the bottom row. A pseudo-element so it spans the gap between
+   the two columns on tablet and laptop. */
+.cs-body::before {
+  content: "";
+  display: none;
+  align-self: start;
+  border-top: 1px solid #e8eaef;
+}
+
+/* ── Quote card ── */
+.cs-quote-cell {
+  display: grid; /* stacked quotes */
+  margin-top: 20px;
+}
+
+.cs-quote {
+  margin: 0;
+  padding: 18px;
+  border: 1px solid #c9d3fb;
+  border-radius: 14px;
+  background: #f3f5ff;
+}
+
+/* The oversized opening quote mark is a desktop flourish; too heavy on a phone. */
+.cs-quote-mark {
+  display: none;
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 0.6;
+  height: 22px;
+  color: var(--color-primary-container);
+}
+
+.cs-quote-text {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+}
+
+.cs-quote-text p {
+  margin: 0;
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #13151e;
+  text-wrap: pretty;
+}
+
+.cs-quote figcaption {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #c9d3fb;
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary-container);
+}
+
+/* ── Chapters ──
+   Phone: an accordion. Buttons and bodies alternate down one column, so each
+   button is placed on an odd row and its body on the even row below it. */
+.cs-chapters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 24px;
+}
+
+/* Scoped to the phone, like the chips below: these place the buttons and bodies
+   into one interleaved column, and leaving them unscoped would force every
+   wider tier to out-specify them. One pair per chapter, because CSS grid line
+   numbers can't be computed from a custom property in every browser we support
+   — CHAPTERS is fixed at four by the design, so the list is complete. */
+@media (max-width: 639px) {
+  .cs-rail {
+    display: contents;
+  }
+
+  .cs-chap-btn[data-i="0"] { grid-row: 1; }
+  .cs-chap-body[data-i="0"] { grid-row: 2; }
+  .cs-chap-btn[data-i="1"] { grid-row: 3; }
+  .cs-chap-body[data-i="1"] { grid-row: 4; }
+  .cs-chap-btn[data-i="2"] { grid-row: 5; }
+  .cs-chap-body[data-i="2"] { grid-row: 6; }
+  .cs-chap-btn[data-i="3"] { grid-row: 7; }
+  .cs-chap-body[data-i="3"] { grid-row: 8; }
+
+  /* Only the open chapter is laid out; height changing here is by design. */
+  .cs-chap-body {
+    display: none;
+  }
+
+  .cs-chap-body[data-open="true"] {
+    display: grid;
+    padding-bottom: 20px;
+  }
+
+  /* The switcher is a row of logo tiles at this width. */
+  .cs-switch-label {
+    display: none;
+  }
+}
+
+.cs-chap-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid #e8eaef;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cs-chap-num {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: #8a8f9c;
+  transition: color 0.2s;
+}
+
+.cs-chap-label {
+  flex: 1;
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.005em;
+  color: #13151e;
+  transition: color 0.2s;
+}
+
+.cs-chap-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  background: #f0f2f7;
+  color: #13151e;
+  font-size: 16px;
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.cs-chap-btn[aria-expanded="true"] .cs-chap-toggle {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ── Chapter text ── */
+.cs-pane-paras {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.cs-pane-paras p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #6b7280;
+  text-wrap: pretty;
+}
+
+.cs-pane-closing {
+  margin-top: 8px;
+}
+
+/* Authors enter one flat list; the columns are decided here, never in the CMS.
+   `break-inside: avoid` keeps a wrapped bullet from splitting across columns. */
+.cs-bullets {
+  column-count: 1;
+  column-gap: 28px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-bullet {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #13151e;
+  break-inside: avoid;
+}
+
+.cs-bullet::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-top: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--color-primary-container);
+}
+
+/* Solution runs long, so on the phone its bullets become chips rather than a
+   very tall list. Scoped to the phone: `gap` also feeds `column-gap`, so left
+   unscoped it would narrow the two-column list at every other width. */
+@media (max-width: 639px) {
+  .cs-bullets[data-chips="true"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    column-count: initial;
+  }
+
+  .cs-bullets[data-chips="true"] .cs-bullet {
+    margin-bottom: 0;
+    padding: 7px 11px;
+    border: 1px solid var(--color-surface-container-highest);
+    border-radius: 999px;
+    background: var(--color-surface-container-low);
+    font-size: 13px;
+  }
+
+  .cs-bullets[data-chips="true"] .cs-bullet::before {
+    display: none;
+  }
+}
+
+/* ── Details bar ── */
+.cs-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 14px;
+  margin-top: 24px;
+}
+
+/* The phone shows each client's logo in the picker already. */
+.cs-logo-cell {
+  display: none;
+}
+
+.cs-detail {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: start;
+}
+
+.cs-detail-label {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a8f9c;
+}
+
+.cs-detail-vals {
+  display: grid; /* stacked values */
+}
+
+.cs-detail-vals > * {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #13151e;
+}
+
+/* ── Stacking ──
+   Every version of a variable block occupies the same cell, so the block keeps
+   the height of its tallest version and nothing shifts on switch. */
+.cs-h2 > *,
+.cs-quote-cell > *,
+.cs-chap-body > *,
+.cs-detail-vals > *,
+.cs-logo-cell > * {
+  grid-area: 1 / 1;
+}
+
+.cs-h2 > [data-on="false"],
+.cs-quote-cell > [data-on="false"],
+.cs-chap-body > [data-on="false"],
+.cs-detail-vals > [data-on="false"],
+.cs-logo-cell > [data-on="false"] {
+  visibility: hidden;
+}
+
+/* ══ Tablet · 640–1023 ═════════════════════════════════════════════════════ */
+@media (min-width: 640px) {
+  .cs {
+    padding: 24px;
+  }
+
+  .cs-panel {
+    border-radius: 24px;
+    padding: 44px 40px;
+  }
+
+  .cs-h2 {
+    font-size: 32px;
+    line-height: 1.12;
+    max-width: 560px;
+  }
+
+  /* Pill group, full width, one equal share per client. */
+  .cs-switch {
+    gap: 6px;
+    margin-top: 24px;
+    padding: 5px;
+    border-radius: 999px;
+    background: #f0f2f7;
+  }
+
+  .cs-switch-btn {
+    height: auto;
+    padding: 11px 8px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .cs-switch-btn[aria-selected="true"] {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
+  }
+
+  .cs-switch-logo {
+    display: none;
+  }
+
+  .cs-switch-label {
+    font-size: 13px;
+  }
+
+  .cs-switch-btn[aria-selected="true"] .cs-switch-label {
+    color: #fff;
+  }
+
+  /* MacBook mockup. */
+  .cs-video {
+    width: 90%;
+    margin: 44px auto 48px;
+  }
+
+  .cs-screen {
+    overflow: visible;
+    border: 1px solid #2c2d35;
+    border-radius: 16px 16px 0 0;
+    padding: 18px 12px 14px;
+    box-shadow: 0 40px 80px -36px rgba(20, 26, 50, 0.45);
+  }
+
+  .cs-camera {
+    display: block;
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    margin-left: -3px;
+    border-radius: 50%;
+    background: #26272e;
+  }
+
+  .cs-screen-inner {
+    aspect-ratio: 16 / 9;
+    border-radius: 4px;
+  }
+
+  .cs-base {
+    display: block;
+    position: relative;
+    width: 112%;
+    margin-left: -6%;
+    height: 14px;
+    border-radius: 2px 2px 16px 16px;
+    background: linear-gradient(180deg, #e4e6eb 0%, #c3c6ce 55%, #9a9ea8 100%);
+    box-shadow: 0 18px 30px -18px rgba(0, 0, 0, 0.5);
+  }
+
+  .cs-notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 15%;
+    margin-left: -7.5%;
+    height: 7px;
+    border-radius: 0 0 8px 8px;
+    background: #a7abb4;
+  }
+
+  /* Chapters on top, then a bottom row of quote | details. */
+  .cs-body {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    column-gap: 32px;
+    row-gap: 40px;
+  }
+
+  .cs-body::before {
+    display: block;
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+
+  .cs-chapters {
+    grid-row: 1;
+    grid-column: 1 / -1;
+    grid-template-columns: 176px minmax(0, 1fr);
+    gap: 32px;
+    margin-top: 0;
+    align-items: start;
+  }
+
+  .cs-quote-cell {
+    grid-row: 2;
+    grid-column: 1;
+    margin-top: 0;
+    padding-top: 32px;
+  }
+
+  .cs-details {
+    grid-row: 2;
+    grid-column: 2;
+    margin-top: 0;
+    padding-top: 32px;
+    row-gap: 18px;
+  }
+
+  /* A sticky rail of four buttons; the text sits alongside it. */
+  .cs-rail {
+    display: flex;
+    flex-direction: column;
+    grid-row: 1;
+    grid-column: 1;
+    position: sticky;
+    /* The site nav is fixed, so the rail has to stop below it, not under it. */
+    top: calc(var(--nav-height) + 24px);
+  }
+
+  .cs-chap-btn {
+    min-height: 0;
+    padding: 12px 14px;
+    border-top: 0;
+    border-radius: 12px;
+  }
+
+  .cs-chap-btn[aria-selected="true"] {
+    background: var(--color-surface-container-low);
+  }
+
+  .cs-chap-num {
+    font-size: 12px;
+    color: #8a8f9c;
+  }
+
+  .cs-chap-label {
+    flex: none;
+    font-size: 15px;
+    color: #8a8f9c;
+  }
+
+  .cs-chap-btn[aria-selected="true"] .cs-chap-num {
+    color: var(--color-primary-container);
+  }
+
+  .cs-chap-btn[aria-selected="true"] .cs-chap-label {
+    color: #13151e;
+  }
+
+  .cs-chap-toggle {
+    display: none;
+  }
+
+  /* All four bodies share one cell, so the text area keeps the height of the
+     longest chapter of any client and never jumps. */
+  .cs-chap-body {
+    display: grid; /* stacked panes, one per client */
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .cs-chap-body[data-active="false"] {
+    visibility: hidden;
+  }
+
+  .cs-bullets {
+    column-count: 2;
+  }
+
+  /* Quote card gains its padding and the big quote mark. */
+  .cs-quote {
+    padding: 24px 24px 22px;
+    border-radius: 16px;
+  }
+
+  .cs-quote-mark {
+    display: block;
+  }
+
+  .cs-quote-text p {
+    font-size: 17px;
+  }
+
+  /* Details become a stacked column under the logo. */
+  .cs-logo-cell {
+    display: grid;
+    /* Definite tracks: the logos are stacked grid items sized with 100%, and
+       against an `auto` track that percentage would resolve to the image's own
+       height and overflow the box. */
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    width: 150px;
+    height: 48px;
+  }
+
+  .cs-logo-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .cs-detail {
+    display: block;
+  }
+
+  .cs-detail-label {
+    font-size: 11px;
+  }
+
+  .cs-detail-vals {
+    margin-top: 6px;
+  }
+
+  .cs-detail-vals > * {
+    font-size: 13.5px;
+  }
+}
+
+/* ══ Laptop · 1024–1535 ════════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+  .cs {
+    padding: 40px;
+  }
+
+  .cs-panel {
+    border-radius: 28px;
+    padding: 64px;
+  }
+
+  /* Headline left, switcher right, baselines aligned. */
+  .cs-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 32px;
+    margin-bottom: 36px;
+  }
+
+  .cs-h2 {
+    margin-top: 13px;
+    font-size: 34px;
+    line-height: 1.1;
+    max-width: 620px;
+  }
+
+  .cs-switch {
+    flex: none;
+    margin-top: 0;
+  }
+
+  /* Content-sized pills once the switcher sits beside the headline. */
+  .cs-switch-btn {
+    flex: none;
+    padding: 10px 20px;
+  }
+
+  .cs-video {
+    width: 80%;
+    margin: 56px auto 64px;
+  }
+
+  .cs-screen {
+    border-radius: 20px 20px 0 0;
+    padding: 22px 16px 18px;
+  }
+
+  .cs-base {
+    width: 114%;
+    margin-left: -7%;
+    height: 18px;
+  }
+
+  /* Quote beside the chapters, details bar underneath. */
+  .cs-body {
+    grid-template-columns: 280px minmax(0, 1fr);
+    column-gap: 56px;
+    row-gap: 48px;
+  }
+
+  .cs-quote-cell {
+    grid-row: 1;
+    grid-column: 1;
+    padding-top: 0;
+  }
+
+  .cs-chapters {
+    grid-row: 1;
+    grid-column: 2;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .cs-details {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    grid-template-columns: 160px minmax(0, 1fr) minmax(0, 1fr) 1.5fr;
+    column-gap: 40px;
+    row-gap: 0;
+    padding-top: 32px;
+  }
+
+  /* The rail becomes the tab row; its own bottom border is the rule under the
+     tabs, which the active tab's 2px underline overlaps. */
+  .cs-rail {
+    flex-direction: row;
+    gap: 22px;
+    align-items: flex-end;
+    grid-row: 1;
+    grid-column: 1;
+    position: static;
+    border-bottom: 1px solid #e8eaef;
+  }
+
+  .cs-chap-btn {
+    align-items: baseline;
+    gap: 8px;
+    width: auto;
+    flex: none;
+    white-space: nowrap;
+    padding: 0 0 16px;
+    margin-bottom: -1px;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+  }
+
+  .cs-chap-btn[aria-selected="true"] {
+    background: none;
+    border-bottom-color: var(--color-primary-container);
+  }
+
+  .cs-chap-label {
+    font-size: 17px;
+  }
+
+  .cs-chap-btn[aria-selected="true"] .cs-chap-num {
+    color: #8a8f9c;
+  }
+
+  .cs-chap-body {
+    grid-row: 2;
+    grid-column: 1;
+    margin-top: 28px;
+  }
+
+  .cs-logo-cell {
+    width: 160px;
+    height: 52px;
+  }
+
+  .cs-detail-label {
+    font-size: 12px;
+  }
+
+  .cs-detail-vals > * {
+    font-size: 14px;
+  }
+}
+
+/* ══ Desktop · 1536+ ═══════════════════════════════════════════════════════ */
+@media (min-width: 1536px) {
+  .cs {
+    padding: 80px;
+  }
+
+  .cs-panel {
+    padding: 96px;
+  }
+
+  .cs-inner {
+    max-width: 1360px;
+    margin: 0 auto;
+  }
+
+  .cs-head {
+    margin-bottom: 52px;
+  }
+
+  .cs-h2 {
+    margin-top: 18px;
+    font-size: 52px;
+    line-height: 1.07;
+    letter-spacing: -0.026em;
+    max-width: 900px;
+  }
+
+  .cs-switch-btn {
+    padding: 13px 26px;
+  }
+
+  .cs-switch-label {
+    font-size: 15px;
+  }
+
+  .cs-video {
+    margin: 80px auto 96px;
+  }
+
+  .cs-body {
+    grid-template-columns: 380px minmax(0, 1fr);
+    column-gap: 80px;
+    row-gap: 64px;
+  }
+
+  .cs-quote {
+    padding: 32px 32px 28px;
+  }
+
+  .cs-quote-mark {
+    font-size: 60px;
+  }
+
+  .cs-quote-text p {
+    font-size: 20px;
+  }
+
+  .cs-quote figcaption {
+    font-size: 13px;
+  }
+
+  .cs-rail {
+    gap: 36px;
+  }
+
+  .cs-chap-label {
+    font-size: 21px;
+  }
+
+  .cs-chap-body {
+    margin-top: 36px;
+  }
+
+  .cs-pane-paras {
+    max-width: 1000px;
+  }
+
+  .cs-pane-paras p {
+    font-size: 18px;
+  }
+
+  .cs-bullets {
+    column-gap: 40px;
+  }
+
+  .cs-bullet {
+    margin-bottom: 16px;
+    font-size: 17px;
+  }
+
+  .cs-details {
+    grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr) 1.5fr;
+    column-gap: 56px;
+    padding-top: 40px;
+  }
+
+  .cs-logo-cell {
+    width: 200px;
+    height: 64px;
+  }
+
+  .cs-detail-label {
+    font-size: 13px;
+  }
+
+  .cs-detail-vals > * {
+    font-size: 17px;
+  }
+}
+
+/* The transitions above are the section's only motion, but honour the
+   preference anyway — the videos are handled in the component. */
+@media (prefers-reduced-motion: reduce) {
+  .cs-switch-btn,
+  .cs-chap-btn,
+  .cs-chap-num,
+  .cs-chap-label,
+  .cs-chap-toggle {
+    transition: none;
+  }
+}
