@@ -9,6 +9,7 @@ newsletter posts (the blog) and homepage case studies.
 |---|---|
 | `migrations/0001_newsletter_posts.sql` | The `posts` table, its access rules and the `blog-images` bucket |
 | `migrations/0002_case_studies.sql` | The `case_studies` table, its access rules and the `case-study-media` bucket |
+| `migrations/0003_seed_case_studies.sql` | The two real case studies, so the table starts with the site's current content |
 
 The columns are the fields of the editors in the CMS handover, one for one.
 
@@ -66,29 +67,19 @@ the backstop, so the limits hold even if that check is bypassed.
 
 ## Moving the existing content in
 
-The site ships with content committed in the repository — sample blog posts in
-`app/lib/blog/content.ts` and the two real case studies in
-`app/lib/caseStudies.ts`. The two fall back differently, on purpose:
+The **case studies** were moved into the database by
+`migrations/0003_seed_case_studies.sql`, which carries the two real ones over
+with their existing `/public` logo and video paths — `publicUrl()` passes any
+path starting with `/` straight through, so nothing had to be uploaded first.
+Replacing a logo or recording through the editor uploads it to storage
+properly. The database is now the only source: an empty table means the
+homepage renders no case studies section at all.
 
-- the **blog** serves the committed samples only while no Supabase project is
-  configured at all — on a fresh clone, so `npm run dev` works. Once a project
-  is configured it never falls back: a failed read shows the blog's own empty
-  state, because lorem ipsum appearing on the live site would be worse than an
-  empty page.
-- the **homepage** serves the committed case studies whenever the database has
-  none to give — no project configured, a failed read, or an empty table. That
-  content is the real thing rather than placeholder text, and the section is a
-  permanent part of the homepage, so the last known-good version beats a hole
-  in the page.
-
-Once you add real content through `/admin`, the database wins. Note the
-consequence of the homepage rule: deleting the last case study brings the
-committed ones back. They can be deleted from the repository later, once every
-case study has been re-entered.
-
-The two real case studies have to be re-entered by hand through the editor,
-because their logos and recordings need uploading to storage — there is no
-import that can do that part.
+The **blog** still ships sample posts in `app/lib/blog/content.ts`, but they
+only appear while no Supabase project is configured — on a fresh clone, so
+`npm run dev` works. Once a project is configured the blog never falls back: a
+failed read shows the blog's own empty state, because lorem ipsum on the live
+site would be worse than an empty page.
 
 ## What is deliberately not here yet
 
