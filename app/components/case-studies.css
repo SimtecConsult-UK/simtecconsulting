@@ -27,13 +27,32 @@
 
 .cs {
   background: var(--color-tinted-bg);
-  padding: 12px;
+  padding: 12px 20px;
   font-family: var(--font-ibm-plex-sans), sans-serif;
+}
+
+/* The panel's edges line up with every other section: the same gutters as
+   ModulePicker and Team (px-5 / md:px-10 / lg:px-16) and the same 1200px cap.
+   The handover drew this section on its own and specified wider gutters, which
+   left the card sticking out past the rest of the page. Gutters step at the
+   site's breakpoints (768/1024), not this file's (640/1024/1536). */
+@media (min-width: 768px) {
+  .cs {
+    padding-inline: 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cs {
+    padding-inline: 64px;
+  }
 }
 
 /* Plain blocks, not flex — the head/video margins are meant to collapse the way
    they do in the reference prototype. */
 .cs-panel {
+  max-width: 1200px;
+  margin-inline: auto;
   background: #fff;
   border-radius: 20px;
   padding: 28px 20px 24px;
@@ -452,7 +471,7 @@
 /* ══ Tablet · 640–1023 ═════════════════════════════════════════════════════ */
 @media (min-width: 640px) {
   .cs {
-    padding: 24px;
+    padding-block: 24px;
   }
 
   .cs-panel {
@@ -703,7 +722,7 @@
 /* ══ Laptop · 1024–1535 ════════════════════════════════════════════════════ */
 @media (min-width: 1024px) {
   .cs {
-    padding: 40px;
+    padding-block: 40px;
   }
 
   .cs-panel {
@@ -843,17 +862,12 @@
 /* ══ Desktop · 1536+ ═══════════════════════════════════════════════════════ */
 @media (min-width: 1536px) {
   .cs {
-    padding: 80px;
+    padding-block: 80px;
   }
 
-  .cs-panel {
-    padding: 96px;
-  }
-
-  .cs-inner {
-    max-width: 1360px;
-    margin: 0 auto;
-  }
+  /* The panel keeps the laptop tier's 64px padding: now that its width is
+     capped at the site's 1200px column, the handover's 96px — drawn for a
+     1760px-wide panel — would make the content narrower here than on a laptop. */
 
   .cs-head {
     margin-bottom: 52px;
