@@ -63,7 +63,20 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-10 border-t border-black/10 pt-8 text-sm sm:grid-cols-3 sm:gap-8">
+        <div className="mt-6 grid grid-cols-1 gap-10 border-t border-black/10 pt-8 text-sm sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
+          <div>
+            <h4 className="text-xs font-medium uppercase tracking-wide text-black/40">
+              Explore
+            </h4>
+            <ul className="mt-4 space-y-3">
+              <li>
+                <Link href={ROUTES.blog} className="text-black/60 hover:text-black">
+                  Blog
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           <div>
             <h4 className="text-xs font-medium uppercase tracking-wide text-black/40">
               Legal
