@@ -15,8 +15,12 @@ import {
   getRelatedPosts,
 } from "../../lib/blog/posts";
 import type { Post } from "../../lib/blog/types";
-import { ROUTES, SITE_URL, postHref } from "../../lib/sections";
+import { ROUTES, absoluteUrl, postHref } from "../../lib/sections";
 import "../../components/blog/blog.css";
+
+/** Posts are published from the CMS, so the page is rebuilt periodically;
+    saving also refreshes it immediately. */
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   const slugs = await getPostSlugs();
@@ -58,7 +62,7 @@ export async function generateMetadata(
 function StructuredData({ post }: { post: Post }) {
   // Unlike the Metadata object, JSON-LD is emitted verbatim, so these have to
   // be absolute here.
-  const url = `${SITE_URL}${postHref(post.slug)}`;
+  const url = absoluteUrl(postHref(post.slug));
 
   const article = {
     "@context": "https://schema.org",
@@ -69,7 +73,7 @@ function StructuredData({ post }: { post: Post }) {
     dateModified: post.updatedAt ?? post.publishedAt,
     mainEntityOfPage: url,
     publisher: { "@type": "Organization", name: "Simtec Consult Ltd" },
-    ...(post.cover.src ? { image: `${SITE_URL}${post.cover.src}` } : {}),
+    ...(post.cover.src ? { image: absoluteUrl(post.cover.src) } : {}),
   };
 
   const faq =

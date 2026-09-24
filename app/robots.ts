@@ -33,7 +33,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: [ROUTES.discovery, ROUTES.termsProject],
+        disallow: [ROUTES.discovery, ROUTES.termsProject, ROUTES.admin],
       },
       {
         userAgent: AI_CRAWLER_USER_AGENTS,
