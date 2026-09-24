@@ -22,6 +22,10 @@ export const ROUTES = {
  * both have to be absolute. Set NEXT_PUBLIC_SITE_URL per environment so
  * previews do not advertise the production address.
  */
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://simtecconsult.com"
+).replace(/\/$/, "");
+
 /**
  * A site path as an absolute URL, for the places that cannot use a relative one
  * — JSON-LD and share links. Anything already absolute is left alone: images
@@ -31,10 +35,6 @@ export const ROUTES = {
 export function absoluteUrl(path: string): string {
   return path.startsWith("http") ? path : `${SITE_URL}${path}`;
 }
-
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://simtecconsult.com"
-).replace(/\/$/, "");
 
 /** The path of one blog post. Keeps `/blog` spelt in exactly one place. */
 export function postHref(slug: string): string {
