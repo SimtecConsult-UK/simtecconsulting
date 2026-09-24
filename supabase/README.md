@@ -10,6 +10,7 @@ newsletter posts (the blog) and homepage case studies.
 | `migrations/0001_newsletter_posts.sql` | The `posts` table, its access rules and the `blog-images` bucket |
 | `migrations/0002_case_studies.sql` | The `case_studies` table, its access rules and the `case-study-media` bucket |
 | `migrations/0003_seed_case_studies.sql` | The two real case studies, so the table starts with the site's current content |
+| `migrations/0004_case_study_vertase.sql` | The third case study, Vertase / VertaVerse |
 
 The columns are the fields of the editors in the CMS handover, one for one.
 
@@ -20,8 +21,9 @@ The columns are the fields of the editors in the CMS handover, one for one.
 
 2. **Run the migrations**, in order, in the project's SQL editor
    (Database → SQL Editor → New query). Paste `0001` and run it, then `0002`,
-   then `0003`. Skipping `0003` leaves the case studies table empty, and an
-   empty table means the homepage renders no case studies section at all.
+   `0003` and `0004`. Skipping the last two leaves the case studies table
+   empty, and an empty table means the homepage renders no case studies
+   section at all.
 
 3. **Create the one editor account.** Authentication → Users → Add user. Give
    it the email you want to sign in with, set a password, and tick

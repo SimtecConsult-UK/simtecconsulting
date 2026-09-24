@@ -74,7 +74,7 @@ export const CHAPTERS = [
   { key: "summary", label: "Summary" },
   { key: "problem", label: "Problem" },
   { key: "solution", label: "Solution" },
-  { key: "value", label: "Intended Value" },
+  { key: "value", label: "Impact" },
 ] as const;
 
 export type ChapterKey = (typeof CHAPTERS)[number]["key"];
