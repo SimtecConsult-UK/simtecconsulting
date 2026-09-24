@@ -160,181 +160,179 @@ export function CaseStudies() {
       aria-labelledby="cs-heading"
     >
       <div className="cs-panel">
-        <div className="cs-inner">
-          {/* ── Header: eyebrow, headline, client switcher ── */}
-          <div className="cs-head">
-            <div>
-              <div className="cs-eyebrow">Case Studies</div>
-              <h2 className="cs-h2" id="cs-heading">
-                {studies.map((study, i) => (
-                  <span key={study.id} {...stacked(i === activeClient)}>
-                    {study.headline}
-                  </span>
-                ))}
-              </h2>
-            </div>
-
-            <div className="cs-switch" role="tablist" aria-label="Choose a client">
+        {/* ── Header: eyebrow, headline, client switcher ── */}
+        <div className="cs-head">
+          <div>
+            <div className="cs-eyebrow">Case Studies</div>
+            <h2 className="cs-h2" id="cs-heading">
               {studies.map((study, i) => (
-                <button
+                <span key={study.id} {...stacked(i === activeClient)}>
+                  {study.headline}
+                </span>
+              ))}
+            </h2>
+          </div>
+
+          <div className="cs-switch" role="tablist" aria-label="Choose a client">
+            {studies.map((study, i) => (
+              <button
+                key={study.id}
+                type="button"
+                role="tab"
+                aria-selected={i === activeClient}
+                aria-label={study.tabLabel}
+                className="cs-switch-btn"
+                onClick={() => setActiveClient(i)}
+              >
+                {/* The phone picker shows the logo, every wider breakpoint the
+                    label; the stylesheet decides which. */}
+                {/* eslint-disable-next-line @next/next/no-img-element --
+                    laid out by CSS `contain` in a fixed box, not by intrinsic
+                    size, and below the fold so it lazy-loads. */}
+                <img
+                  className="cs-switch-logo"
+                  src={study.logo.src}
+                  width={study.logo.width}
+                  height={study.logo.height}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span className="cs-switch-label">{study.tabLabel}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Screen recording, in a MacBook mockup from tablet up ── */}
+        <div className="cs-video">
+          <div className="cs-screen">
+            <span className="cs-camera" aria-hidden="true" />
+            <div className="cs-screen-inner">
+              {studies.map((study, i) => (
+                <video
                   key={study.id}
+                  ref={(el) => {
+                    videoRefs.current[i] = el;
+                  }}
+                  src={study.video}
+                  poster={study.videoPoster}
+                  muted
+                  loop
+                  playsInline
+                  // Hidden videos are still fetched, so only the one on show
+                  // reaches for its file. Matters once each client has its own.
+                  preload={i === activeClient ? "metadata" : "none"}
+                  aria-label={`${study.tabLabel} system walkthrough`}
+                  style={{ display: i === activeClient ? "block" : "none" }}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="cs-base" aria-hidden="true">
+            <div className="cs-notch" />
+          </div>
+        </div>
+
+        <div className="cs-body">
+          {/* ── Client quote ── */}
+          <div className="cs-quote-cell">
+            {studies.map((study, i) => (
+              <figure key={study.id} className="cs-quote" {...stacked(i === activeClient)}>
+                <div className="cs-quote-mark" aria-hidden="true">
+                  &ldquo;
+                </div>
+                <blockquote className="cs-quote-text">
+                  {quoteParagraphs(study.quote).map((p, j) => (
+                    <p key={j}>{p}</p>
+                  ))}
+                </blockquote>
+                <figcaption>{study.quoteAttribution}</figcaption>
+              </figure>
+            ))}
+          </div>
+
+          {/* ── Chapters ──
+              One set of buttons and one copy of the text serve all three
+              arrangements: an accordion on the phone, a sticky rail on
+              tablet, and a tab row on laptop and desktop. The stylesheet
+              places them; `.cs-rail` is `display:contents` on the phone so
+              each button sits directly above its own body. */}
+          <div className="cs-chapters">
+            <div className="cs-rail" role="tablist" aria-label="Case study chapters">
+              {CHAPTERS.map((chapter, i) => (
+                <button
+                  key={chapter.key}
                   type="button"
                   role="tab"
-                  aria-selected={i === activeClient}
-                  aria-label={study.tabLabel}
-                  className="cs-switch-btn"
-                  onClick={() => setActiveClient(i)}
+                  data-i={i}
+                  className="cs-chap-btn"
+                  aria-selected={chapter.key === activeChapter}
+                  aria-expanded={isOpen(chapter.key)}
+                  aria-controls={`cs-chapter-${chapter.key}`}
+                  onClick={() => selectChapter(chapter.key)}
                 >
-                  {/* The phone picker shows the logo, every wider breakpoint the
-                      label; the stylesheet decides which. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element --
-                      laid out by CSS `contain` in a fixed box, not by intrinsic
-                      size, and below the fold so it lazy-loads. */}
-                  <img
-                    className="cs-switch-logo"
-                    src={study.logo.src}
-                    width={study.logo.width}
-                    height={study.logo.height}
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <span className="cs-switch-label">{study.tabLabel}</span>
+                  <span className="cs-chap-num">{`0${i + 1}`}</span>
+                  <span className="cs-chap-label">{chapter.label}</span>
+                  <span className="cs-chap-toggle" aria-hidden="true">
+                    {isOpen(chapter.key) ? "−" : "+"}
+                  </span>
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* ── Screen recording, in a MacBook mockup from tablet up ── */}
-          <div className="cs-video">
-            <div className="cs-screen">
-              <span className="cs-camera" aria-hidden="true" />
-              <div className="cs-screen-inner">
-                {studies.map((study, i) => (
-                  <video
+            {CHAPTERS.map((chapter, i) => (
+              <div
+                key={chapter.key}
+                id={`cs-chapter-${chapter.key}`}
+                className="cs-chap-body"
+                data-i={i}
+                data-active={chapter.key === activeChapter}
+                data-open={isOpen(chapter.key)}
+              >
+                {studies.map((study, j) => (
+                  <ChapterPane
                     key={study.id}
-                    ref={(el) => {
-                      videoRefs.current[i] = el;
-                    }}
-                    src={study.video}
-                    poster={study.videoPoster}
-                    muted
-                    loop
-                    playsInline
-                    // Hidden videos are still fetched, so only the one on show
-                    // reaches for its file. Matters once each client has its own.
-                    preload={i === activeClient ? "metadata" : "none"}
-                    aria-label={`${study.tabLabel} system walkthrough`}
-                    style={{ display: i === activeClient ? "block" : "none" }}
+                    chapter={study.chapters[chapter.key]}
+                    chapterKey={chapter.key}
+                    active={j === activeClient}
                   />
                 ))}
               </div>
-            </div>
-            <div className="cs-base" aria-hidden="true">
-              <div className="cs-notch" />
-            </div>
+            ))}
           </div>
 
-          <div className="cs-body">
-            {/* ── Client quote ── */}
-            <div className="cs-quote-cell">
+          {/* ── Details bar: logo, client, system, project type ── */}
+          <div className="cs-details">
+            <div className="cs-logo-cell">
               {studies.map((study, i) => (
-                <figure key={study.id} className="cs-quote" {...stacked(i === activeClient)}>
-                  <div className="cs-quote-mark" aria-hidden="true">
-                    &ldquo;
-                  </div>
-                  <blockquote className="cs-quote-text">
-                    {quoteParagraphs(study.quote).map((p, j) => (
-                      <p key={j}>{p}</p>
-                    ))}
-                  </blockquote>
-                  <figcaption>{study.quoteAttribution}</figcaption>
-                </figure>
+                /* eslint-disable-next-line @next/next/no-img-element -- as above. */
+                <img
+                  key={study.id}
+                  src={study.logo.src}
+                  width={study.logo.width}
+                  height={study.logo.height}
+                  alt={`${study.tabLabel} logo`}
+                  loading="lazy"
+                  decoding="async"
+                  {...stacked(i === activeClient)}
+                />
               ))}
             </div>
 
-            {/* ── Chapters ──
-                One set of buttons and one copy of the text serve all three
-                arrangements: an accordion on the phone, a sticky rail on
-                tablet, and a tab row on laptop and desktop. The stylesheet
-                places them; `.cs-rail` is `display:contents` on the phone so
-                each button sits directly above its own body. */}
-            <div className="cs-chapters">
-              <div className="cs-rail" role="tablist" aria-label="Case study chapters">
-                {CHAPTERS.map((chapter, i) => (
-                  <button
-                    key={chapter.key}
-                    type="button"
-                    role="tab"
-                    data-i={i}
-                    className="cs-chap-btn"
-                    aria-selected={chapter.key === activeChapter}
-                    aria-expanded={isOpen(chapter.key)}
-                    aria-controls={`cs-chapter-${chapter.key}`}
-                    onClick={() => selectChapter(chapter.key)}
-                  >
-                    <span className="cs-chap-num">{`0${i + 1}`}</span>
-                    <span className="cs-chap-label">{chapter.label}</span>
-                    <span className="cs-chap-toggle" aria-hidden="true">
-                      {isOpen(chapter.key) ? "−" : "+"}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {CHAPTERS.map((chapter, i) => (
-                <div
-                  key={chapter.key}
-                  id={`cs-chapter-${chapter.key}`}
-                  className="cs-chap-body"
-                  data-i={i}
-                  data-active={chapter.key === activeChapter}
-                  data-open={isOpen(chapter.key)}
-                >
-                  {studies.map((study, j) => (
-                    <ChapterPane
-                      key={study.id}
-                      chapter={study.chapters[chapter.key]}
-                      chapterKey={chapter.key}
-                      active={j === activeClient}
-                    />
+            {DETAILS.map(([label, field]) => (
+              <div className="cs-detail" key={label}>
+                <div className="cs-detail-label">{label}</div>
+                <div className="cs-detail-vals">
+                  {studies.map((study, i) => (
+                    <div key={study.id} {...stacked(i === activeClient)}>
+                      {study[field]}
+                    </div>
                   ))}
                 </div>
-              ))}
-            </div>
-
-            {/* ── Details bar: logo, client, system, project type ── */}
-            <div className="cs-details">
-              <div className="cs-logo-cell">
-                {studies.map((study, i) => (
-                  /* eslint-disable-next-line @next/next/no-img-element -- as above. */
-                  <img
-                    key={study.id}
-                    src={study.logo.src}
-                    width={study.logo.width}
-                    height={study.logo.height}
-                    alt={`${study.tabLabel} logo`}
-                    loading="lazy"
-                    decoding="async"
-                    {...stacked(i === activeClient)}
-                  />
-                ))}
               </div>
-
-              {DETAILS.map(([label, field]) => (
-                <div className="cs-detail" key={label}>
-                  <div className="cs-detail-label">{label}</div>
-                  <div className="cs-detail-vals">
-                    {studies.map((study, i) => (
-                      <div key={study.id} {...stacked(i === activeClient)}>
-                        {study[field]}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </div>
