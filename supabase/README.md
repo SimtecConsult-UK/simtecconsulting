@@ -59,6 +59,11 @@ rule is enforced three times over: the proxy redirects signed-out visitors, and
 because a Server Action is a public endpoint. Postgres itself refuses the write
 regardless.
 
+Both buckets also cap what they will accept — 10 MB of image for `blog-images`,
+15 MB of image or MP4/WebM for `case-study-media`. The editor checks a file
+before uploading it and explains what is wrong in plain words; these caps are
+the backstop, so the limits hold even if that check is bypassed.
+
 ## Moving the existing content in
 
 The site ships with content committed in the repository — sample blog posts in

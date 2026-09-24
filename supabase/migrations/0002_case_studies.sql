@@ -47,7 +47,57 @@ create table public.case_studies (
 );
 
 -- Two case studies may not claim the same slot.
-create unique index case_studies_position_idx on public.case_studies (position);
+--
+-- Deferrable, so the check happens when the transaction commits rather than
+-- after each statement. Swapping two rows means both briefly hold the other's
+-- slot; with an immediate constraint the first update would collide, which is
+-- why reordering used to park a row on a negative slot first.
+alter table public.case_studies
+  add constraint case_studies_position_key unique (position)
+  deferrable initially deferred;
+
+-- Swaps a case study with its neighbour, in one transaction.
+--
+-- Doing this in the database rather than as three writes from the server means
+-- a reorder either happens completely or not at all: it cannot fail halfway and
+-- leave the homepage in an order nobody chose. SECURITY INVOKER, so the caller's
+-- row-level security still applies and only a signed-in editor may reorder.
+create function public.move_case_study(target uuid, direction text)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  mover     public.case_studies%rowtype;
+  neighbour public.case_studies%rowtype;
+begin
+  select * into mover from public.case_studies where id = target;
+  if not found then
+    return;
+  end if;
+
+  if direction = 'up' then
+    select * into neighbour from public.case_studies
+     where position < mover.position
+     order by position desc
+     limit 1;
+  else
+    select * into neighbour from public.case_studies
+     where position > mover.position
+     order by position asc
+     limit 1;
+  end if;
+
+  -- Already at the top or the bottom; nothing to swap with.
+  if not found then
+    return;
+  end if;
+
+  update public.case_studies set position = neighbour.position where id = mover.id;
+  update public.case_studies set position = mover.position where id = neighbour.id;
+end;
+$$;
 
 create trigger case_studies_touch_updated_at
   before update on public.case_studies
@@ -75,9 +125,21 @@ create policy "signed-in editors manage case studies"
 -- Logos, screen recordings and posters. Public read so the homepage can play
 -- them; uploads and deletions require a signed-in editor.
 
-insert into storage.buckets (id, name, public)
-values ('case-study-media', 'case-study-media', true)
-on conflict (id) do nothing;
+-- The size and type limits are enforced here as well as in the editor. The
+-- editor's checks (app/admin/(shell)/case-studies/video-checks.ts) explain what
+-- is wrong in plain words; these are the backstop, so a browser that skipped
+-- them cannot put a 400 MB file in the bucket. 15 MB matches VIDEO_SPEC.maxBytes.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'case-study-media',
+  'case-study-media',
+  true,
+  15728640,
+  array['video/mp4', 'video/webm', 'image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
+)
+on conflict (id) do update
+  set file_size_limit    = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
 
 create policy "case study media is world readable"
   on storage.objects for select

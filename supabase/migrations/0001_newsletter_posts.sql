@@ -91,9 +91,20 @@ create policy "signed-in editors manage every post"
 -- Public read so next/image can fetch covers; uploads and deletions require a
 -- signed-in editor.
 
-insert into storage.buckets (id, name, public)
-values ('blog-images', 'blog-images', true)
-on conflict (id) do nothing;
+-- Covers are uploaded at 1600x900, body images smaller; 10 MB is well clear of
+-- both and stops anything unreasonable reaching the bucket. SVG is deliberately
+-- not allowed here: a post's cover is a photograph or a diagram, never markup.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'blog-images',
+  'blog-images',
+  true,
+  10485760,
+  array['image/png', 'image/jpeg', 'image/webp', 'image/avif', 'image/gif']
+)
+on conflict (id) do update
+  set file_size_limit    = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
 
 create policy "blog images are world readable"
   on storage.objects for select

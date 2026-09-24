@@ -100,35 +100,26 @@ export async function deleteCaseStudy(id: string) {
 }
 
 /**
- * Swaps a case study with its neighbour.
+ * Moves a case study up or down the homepage.
  *
- * `position` is unique, so the two rows cannot simply be written to each
- * other's slot — the first update would collide. The moving row is parked on a
- * free negative slot first, which no real row ever uses.
+ * The swap itself happens inside `move_case_study` in the database, in one
+ * transaction: reordering either happens completely or not at all. Doing it as
+ * separate writes from here meant a failure between them left the homepage in
+ * an order nobody chose, with no way back except the SQL editor.
  */
 export async function moveCaseStudy(id: string, direction: "up" | "down") {
   await requireEditor();
 
   const supabase = await createClient();
+  const { error } = await supabase.rpc("move_case_study", {
+    target: id,
+    direction,
+  });
 
-  const { data: rows, error: readError } = await supabase
-    .from("case_studies")
-    .select("id,position")
-    .order("position", { ascending: true });
-
-  if (readError || !rows) return;
-
-  const ordered = rows as { id: string; position: number }[];
-  const index = ordered.findIndex((row) => row.id === id);
-  const target = direction === "up" ? index - 1 : index + 1;
-  if (index === -1 || target < 0 || target >= ordered.length) return;
-
-  const moving = ordered[index];
-  const other = ordered[target];
-
-  await supabase.from("case_studies").update({ position: -1 }).eq("id", moving.id);
-  await supabase.from("case_studies").update({ position: moving.position }).eq("id", other.id);
-  await supabase.from("case_studies").update({ position: other.position }).eq("id", moving.id);
+  if (error) {
+    console.error(`[cms] reorder case study ${id}: ${error.message}`);
+    return;
+  }
 
   refreshHomepage();
 }
