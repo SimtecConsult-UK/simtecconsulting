@@ -56,6 +56,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
           posterPath: caseStudy.poster.path,
           quote: caseStudy.quote,
           quoteAttribution: caseStudy.quoteAttribution,
+          quotePhotoPath: caseStudy.quotePhoto.path,
           chapters: initialChapters,
         }
       : {
@@ -73,6 +74,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
           posterPath: null,
           quote: "",
           quoteAttribution: "",
+          quotePhotoPath: null,
           chapters: initialChapters,
         }
   );
@@ -80,6 +82,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
   const [logoUrl, setLogoUrl] = useState(caseStudy?.logo.url ?? null);
   const [videoUrl, setVideoUrl] = useState(caseStudy?.video.url ?? null);
   const [posterUrl, setPosterUrl] = useState(caseStudy?.poster.url ?? null);
+  const [quotePhotoUrl, setQuotePhotoUrl] = useState(caseStudy?.quotePhoto.url ?? null);
   const [videoChecks, setVideoChecks] = useState<Check[]>([]);
   const [tab, setTab] = useState<ChapterKey>(DEFAULT_CHAPTER);
   const [busy, setBusy] = useState<string | null>(null);
@@ -170,6 +173,19 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
     }
     set("posterPath", result.path);
     setPosterUrl(publicUrl(BUCKETS.caseStudyMedia, result.path));
+  };
+
+  const onQuotePhoto = async (file: File) => {
+    setBusy("quotePhoto");
+    setError(null);
+    const result = await uploadFile(BUCKETS.caseStudyMedia, "quote-photos", file);
+    setBusy(null);
+    if (!result.ok) {
+      setError(`That photo did not upload: ${result.error}`);
+      return;
+    }
+    set("quotePhotoPath", result.path);
+    setQuotePhotoUrl(publicUrl(BUCKETS.caseStudyMedia, result.path));
   };
 
   const chapter = draft.chapters[tab];
@@ -371,9 +387,49 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
           label="Attribution"
           value={draft.quoteAttribution}
           limit={LIMITS.quoteAttribution}
-          help={'Shown in capitals, e.g. "Tina · Compli Digital".'}
+          help={'Shown in capitals, e.g. "Tina Jackson · Compli Digital".'}
           onChange={(value) => set("quoteAttribution", value)}
         />
+
+        <span className="cms-label">Photo of the person quoted</span>
+        {quotePhotoUrl ? (
+          <>
+            <div className="cms-preview cms-preview--face">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={quotePhotoUrl} alt="" />
+            </div>
+            <div className="cms-file-row">
+              <FilePicker
+                accept="image/*"
+                disabled={busy !== null}
+                onPick={onQuotePhoto}
+                className="cms-btn cms-btn--secondary"
+              >
+                Replace
+              </FilePicker>
+              <button
+                type="button"
+                className="cms-btn cms-btn--danger"
+                onClick={() => {
+                  set("quotePhotoPath", null);
+                  setQuotePhotoUrl(null);
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          </>
+        ) : (
+          <FilePicker accept="image/*" disabled={busy !== null} onPick={onQuotePhoto}>
+            <span>{busy === "quotePhoto" ? "Uploading…" : "Choose a photo"}</span>
+            <span className="cms-mono">Square head-and-shoulders JPG or PNG</span>
+          </FilePicker>
+        )}
+        <p className="cms-help">
+          Shown as a small circle beside the attribution, the same as the
+          testimonials further down the homepage. Optional — without one the
+          attribution sits on its own.
+        </p>
       </div>
 
       <div className="cms-card">

@@ -30,6 +30,7 @@ export type CaseStudyInput = {
   posterPath: string | null;
   quote: string;
   quoteAttribution: string;
+  quotePhotoPath: string | null;
   chapters: Chapters;
 };
 
@@ -63,6 +64,7 @@ export async function saveCaseStudy(
     video_poster_path: input.posterPath,
     quote: input.quote.trim(),
     quote_attribution: input.quoteAttribution.trim(),
+    quote_photo_path: input.quotePhotoPath,
     chapters: input.chapters,
   };
 

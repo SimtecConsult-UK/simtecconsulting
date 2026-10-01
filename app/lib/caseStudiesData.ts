@@ -36,6 +36,7 @@ function toCaseStudy(row: CaseStudyRow): CaseStudy {
       publicUrl(BUCKETS.caseStudyMedia, row.video_poster_path) ?? undefined,
     quote: row.quote,
     quoteAttribution: row.quote_attribution,
+    quotePhoto: publicUrl(BUCKETS.caseStudyMedia, row.quote_photo_path) ?? undefined,
     chapters: toChapters(row.chapters),
   };
 }
@@ -53,7 +54,7 @@ export const getCaseStudies = cache(async (): Promise<CaseStudy[]> => {
   const { data, error } = await supabasePublic()
     .from("case_studies")
     .select(
-      "id,tab_label,headline,client_name,system_name,project_type,logo_path,logo_width,logo_height,video_path,video_poster_path,quote,quote_attribution,chapters"
+      "id,tab_label,headline,client_name,system_name,project_type,logo_path,logo_width,logo_height,video_path,video_poster_path,quote,quote_attribution,quote_photo_path,chapters"
     )
     .order("position", { ascending: true })
     .limit(MAX_HOMEPAGE_CASE_STUDIES);

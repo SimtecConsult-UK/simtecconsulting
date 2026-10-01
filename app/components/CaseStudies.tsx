@@ -251,7 +251,21 @@ export function CaseStudies({ studies }: CaseStudiesProps) {
                     <p key={j}>{p}</p>
                   ))}
                 </blockquote>
-                <figcaption>{study.quoteAttribution}</figcaption>
+                <figcaption>
+                  {/* Decorative, hence the empty alt: the attribution right
+                      beside it already names the speaker. */}
+                  {study.quotePhoto && (
+                    /* eslint-disable-next-line @next/next/no-img-element -- as above. */
+                    <img
+                      className="cs-quote-face"
+                      src={study.quotePhoto}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  )}
+                  <span>{study.quoteAttribution}</span>
+                </figcaption>
               </figure>
             ))}
           </div>

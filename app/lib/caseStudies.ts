@@ -54,10 +54,17 @@ export type CaseStudy = {
    */
   quote: string;
   /**
-   * Shown in capitals under the quote, e.g. "Tina · Compli Digital". Max 40.
-   * Leave the name out rather than inventing one; the company alone reads fine.
+   * Shown in capitals under the quote, e.g. "Tina Jackson · Compli Digital".
+   * Max 40. Leave the name out rather than inventing one; the company alone
+   * reads fine.
    */
   quoteAttribution: string;
+  /**
+   * Optional square headshot of whoever is quoted, shown beside the
+   * attribution exactly as the testimonials section shows one. Without it the
+   * attribution sits on its own, as it did before.
+   */
+  quotePhoto?: string;
   chapters: {
     summary: CaseStudyChapter;
     problem: CaseStudyChapter;
@@ -141,6 +148,7 @@ export type CaseStudyRow = {
   video_poster_path: string | null;
   quote: string;
   quote_attribution: string;
+  quote_photo_path: string | null;
   chapters: StoredChapters;
 };
 

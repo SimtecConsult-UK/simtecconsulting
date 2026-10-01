@@ -17,6 +17,7 @@ export type EditableCaseStudy = {
   poster: { path: string | null; url: string | null };
   quote: string;
   quoteAttribution: string;
+  quotePhoto: { path: string | null; url: string | null };
   chapters: Chapters;
 };
 
@@ -101,6 +102,10 @@ export async function getCaseStudyForEdit(
     },
     quote: row.quote,
     quoteAttribution: row.quote_attribution,
+    quotePhoto: {
+      path: row.quote_photo_path,
+      url: publicUrl(BUCKETS.caseStudyMedia, row.quote_photo_path),
+    },
     chapters: toChapters(row.chapters),
   };
 }
