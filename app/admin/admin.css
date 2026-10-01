@@ -715,6 +715,20 @@
   padding: 12px;
 }
 
+/* Shown the way the homepage shows it: a small circle, not a wide panel. */
+.cms-preview--face {
+  min-height: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+}
+
+.cms-preview--face img {
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+}
+
 .cms-file-row {
   display: flex;
   align-items: center;

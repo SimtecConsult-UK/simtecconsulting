@@ -14,6 +14,8 @@ only read and deleted, since they are a record of what somebody sent.
 | `migrations/0003_seed_case_studies.sql` | The two real case studies, so the table starts with the site's current content |
 | `migrations/0004_case_study_vertase.sql` | The third case study, Vertase / VertaVerse |
 | `migrations/0005_submissions.sql` | The `submissions` table behind the discovery wizard |
+| `migrations/0006_case_study_quote_photo.sql` | The optional photo beside a case-study quote |
+| `migrations/0007_case_study_corrections.sql` | Vertase's colour logo, and the names and photos for the three seeded quotes |
 
 The columns are the fields of the editors in the CMS handover, one for one.
 
@@ -23,11 +25,17 @@ The columns are the fields of the editors in the CMS handover, one for one.
    your visitors.
 
 2. **Run the migrations**, in order, in the project's SQL editor
-   (Database → SQL Editor → New query). Paste `0001` and run it, then `0002`,
-   `0003`, `0004` and `0005`. Skipping `0003`/`0004` leaves the case studies
+   (Database → SQL Editor → New query). Paste `0001` and run it, then each of
+   the rest in number order. Skipping `0003`/`0004` leaves the case studies
    table empty, and an empty table means the homepage renders no case studies
    section at all. Skipping `0005` means the discovery wizard has nowhere to
-   send completed enquiries.
+   send completed enquiries. Skipping `0007` leaves Vertase with the
+   placeholder black logo and the three quotes without their photos and
+   speakers' names.
+
+   `0006` and `0007` are safe to run on a database that is already live, and
+   safe to run twice. `0007` only changes a value that is still the one
+   `0003`/`0004` seeded, so anything edited in the CMS since is left alone.
 
 3. **Create the one editor account.** Authentication → Users → Add user. Give
    it the email you want to sign in with, set a password, and tick
@@ -82,6 +90,29 @@ path starting with `/` straight through, so nothing had to be uploaded first.
 Replacing a logo or recording through the editor uploads it to storage
 properly. The database is now the only source: an empty table means the
 homepage renders no case studies section at all.
+
+### `/public` files the seeded rows point at
+
+These are referenced by migrations rather than by any component, so a sweep for
+unused assets will not find a reference and must not delete them:
+
+| File | Referenced by |
+|---|---|
+| `/logos/compli-digital-color.png` | `0003` |
+| `/logos/jackson-geo-services-color.svg` | `0003` |
+| `/logos/vertase-fli-black.svg` | `0004` — superseded by `0007`, but still what a fresh database inserts before `0007` runs |
+| `/logos/vertase-fli-color.png` | `0007`, and what the live site shows |
+| `/people/tina-jackson.jpg`, `/people/daniel-mallet.jpg`, `/people/steve-edgar.jpg` | `0007` |
+| `/video1-section1.webm` | `0003`, `0004` — the stand-in recording all three studies share |
+
+Note `/logos/vertase-fli.svg` is a **white** knockout for the dark hero band
+and is invisible on the case studies section, which is why `0004` reached for a
+black variant and `0007` for the colour one. The Jackson logos have the same
+trap: `jackson-geo-services.svg` is white, `-color.svg` is the one to use.
+
+The `/people` photos used in the **testimonials** section are different — they
+are listed in `app/components/Testimonials.tsx`, not in the database, because
+that section's content is in code.
 
 The **blog** still ships sample posts in `app/lib/blog/content.ts`, but they
 only appear while no Supabase project is configured — on a fresh clone, so
