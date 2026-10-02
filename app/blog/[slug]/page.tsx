@@ -16,6 +16,9 @@ import {
 } from "../../lib/blog/posts";
 import type { Post } from "../../lib/blog/types";
 import { ROUTES, absoluteUrl, postHref } from "../../lib/sections";
+import { getSiteSettings } from "../../lib/seo/data";
+import { faqNode, organisationNode } from "../../lib/seo/jsonLd";
+import { JsonLd } from "../../components/JsonLd";
 import "../../components/blog/blog.css";
 
 export async function generateStaticParams() {
@@ -54,50 +57,35 @@ export async function generateMetadata(
  * Structured data. The CMS's "Search & AI visibility" panel feeds this: the
  * schema type, the key takeaway and the FAQ pairs all end up here rather than
  * anywhere a reader sees.
+ *
+ * The publisher and the FAQ shape come from `app/lib/seo/jsonLd.ts`, the same
+ * two the site's own pages use. The publisher used to be a name written out
+ * here, which meant renaming the company under SEO & AI changed every page on
+ * the site except the newsletter.
  */
-function StructuredData({ post }: { post: Post }) {
+async function StructuredData({ post }: { post: Post }) {
   // Unlike the Metadata object, JSON-LD is emitted verbatim, so these have to
   // be absolute here.
   const url = absoluteUrl(postHref(post.slug));
-
-  const article = {
-    "@context": "https://schema.org",
-    "@type": post.seo.schemaType,
-    headline: post.title,
-    description: post.seo.keyTakeaway ?? post.standfirst,
-    datePublished: post.publishedAt,
-    dateModified: post.updatedAt ?? post.publishedAt,
-    mainEntityOfPage: url,
-    publisher: { "@type": "Organization", name: "Simtec Consult Ltd" },
-    ...(post.cover.src ? { image: absoluteUrl(post.cover.src) } : {}),
-  };
-
-  const faq =
-    post.seo.faqs.length > 0
-      ? {
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: post.seo.faqs.map((pair) => ({
-            "@type": "Question",
-            name: pair.q,
-            acceptedAnswer: { "@type": "Answer", text: pair.a },
-          })),
-        }
-      : null;
+  const settings = await getSiteSettings();
 
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(article) }}
-      />
-      {faq && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }}
-        />
-      )}
-    </>
+    <JsonLd
+      blocks={[
+        {
+          "@context": "https://schema.org",
+          "@type": post.seo.schemaType,
+          headline: post.title,
+          description: post.seo.keyTakeaway ?? post.standfirst,
+          datePublished: post.publishedAt,
+          dateModified: post.updatedAt ?? post.publishedAt,
+          mainEntityOfPage: url,
+          publisher: organisationNode(settings),
+          ...(post.cover.src ? { image: absoluteUrl(post.cover.src) } : {}),
+        },
+        faqNode(post.seo.faqs),
+      ]}
+    />
   );
 }
 

@@ -1,9 +1,11 @@
 # Supabase — the content manager's database
 
-The content manager at `/admin` reads and writes three collections here:
-newsletter posts (the blog), homepage case studies, and the submissions the
-discovery wizard sends. The first two are edited in the CMS; submissions are
-only read and deleted, since they are a record of what somebody sent.
+The content manager at `/admin` reads and writes four collections here:
+newsletter posts (the blog), homepage case studies, the submissions the
+discovery wizard sends, and what the website tells search engines and AI
+assistants about itself. The editable ones are the posts, the case studies and
+the search settings; submissions are only read and deleted, since they are a
+record of what somebody sent.
 
 ## What is here
 
@@ -14,6 +16,7 @@ only read and deleted, since they are a record of what somebody sent.
 | `migrations/0003_seed_case_studies.sql` | The two real case studies, so the table starts with the site's current content |
 | `migrations/0004_case_study_vertase.sql` | The third case study, Vertase / VertaVerse |
 | `migrations/0005_submissions.sql` | The `submissions` table behind the discovery wizard |
+| `migrations/0006_site_seo.sql` | The `site_settings` and `page_seo` tables behind **SEO & AI**, and the `site-assets` bucket holding the favicon and share pictures |
 
 The columns are the fields of the editors in the CMS handover, one for one.
 
@@ -24,10 +27,12 @@ The columns are the fields of the editors in the CMS handover, one for one.
 
 2. **Run the migrations**, in order, in the project's SQL editor
    (Database → SQL Editor → New query). Paste `0001` and run it, then `0002`,
-   `0003`, `0004` and `0005`. Skipping `0003`/`0004` leaves the case studies
-   table empty, and an empty table means the homepage renders no case studies
-   section at all. Skipping `0005` means the discovery wizard has nowhere to
-   send completed enquiries.
+   `0003`, `0004`, `0005` and `0006`. Skipping `0003`/`0004` leaves the case
+   studies table empty, and an empty table means the homepage renders no case
+   studies section at all. Skipping `0005` means the discovery wizard has
+   nowhere to send completed enquiries. Skipping `0006` leaves the **SEO & AI**
+   section with nothing to save to — the live pages still work, because they
+   fall back to the wording written in `app/lib/seo/pages.ts`.
 
 3. **Create the one editor account.** Authentication → Users → Add user. Give
    it the email you want to sign in with, set a password, and tick
@@ -60,7 +65,9 @@ the anon key. That key can:
 - read **published** posts, and nothing else from `posts` — a draft is
   invisible even to somebody who guesses its address;
 - read case studies;
-- read files in both buckets.
+- read the site's search settings, which are by definition public — they are
+  what the pages put in their own `<head>`;
+- read files in all three buckets.
 
 Every write, and any sight of a draft, requires a signed-in session. The same
 rule is enforced three times over: the proxy redirects signed-out visitors, and
@@ -68,10 +75,25 @@ rule is enforced three times over: the proxy redirects signed-out visitors, and
 because a Server Action is a public endpoint. Postgres itself refuses the write
 regardless.
 
-Both buckets also cap what they will accept — 10 MB of image for `blog-images`,
-15 MB of image or MP4/WebM for `case-study-media`. The editor checks a file
-before uploading it and explains what is wrong in plain words; these caps are
-the backstop, so the limits hold even if that check is bypassed.
+Every bucket also caps what it will accept — 10 MB of image for `blog-images`,
+15 MB of image or MP4/WebM for `case-study-media`, 5 MB for `site-assets`. The
+editor checks a file before uploading it and explains what is wrong in plain
+words; these caps are the backstop, so the limits hold even if that check is
+bypassed. `site-assets` is the only bucket that accepts SVG, because a favicon
+is commonly drawn as one; it is served from the Supabase domain and only ever
+referenced by `<link rel="icon">`, never rendered as a document on ours.
+
+## Where the search settings came from
+
+The **SEO & AI** section did not move any content: every page's title and
+description are still written in `app/lib/seo/pages.ts`, exactly as they were
+in the page files before. The database only holds what somebody has since
+changed, so an empty `page_seo` table and an untouched `site_settings` row
+leave the live site word for word as it was built.
+
+The same is true of the favicon. `public/favicon.ico` is still the site's icon;
+uploading one in the CMS points the pages at the uploaded file instead, and
+removing it puts the committed one back.
 
 ## Moving the existing content in
 

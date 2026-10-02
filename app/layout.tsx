@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { CookieConsent } from "./components/CookieConsent";
 import { SITE_URL } from "./lib/sections";
+import { siteMetadata } from "./lib/seo/metadata";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,14 +39,22 @@ const leagueSpartan = localFont({
  */
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  // Lets every page give canonical and Open Graph URLs as plain paths; Next
-  // resolves them against this origin.
-  metadataBase: new URL(SITE_URL),
-  title: "Simtec — Construction management software",
-  description:
-    "Construction management software that helps teams deliver projects faster, safer, and on budget.",
-};
+/**
+ * The site-wide head: the browser-tab icon, and the title and description any
+ * page inherits when it sets none of its own.
+ *
+ * Read from the CMS rather than written here, which is why this is a function
+ * and not a constant — the favicon in particular is a field an editor can
+ * change at /admin/seo without a deploy. Nothing is customised on a fresh
+ * install, and the wording below is then exactly what this file used to hold.
+ */
+// Lets every page give canonical and Open Graph URLs as plain paths; Next
+// resolves them against this origin. Built once rather than on every render.
+const METADATA_BASE = new URL(SITE_URL);
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { metadataBase: METADATA_BASE, ...(await siteMetadata()) };
+}
 
 export default function RootLayout({
   children,

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Chevron } from "../../icons";
 import { formatPostDate } from "../../../lib/blog/posts";
 import { listPosts } from "./data";
 
@@ -39,9 +40,7 @@ export default async function NewsletterListPage() {
                 {post.publishedAt ? formatPostDate(post.publishedAt) : "Not published"} · /blog/{post.slug}
               </span>
             </span>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#9aa5a4" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M6 3.5L10.5 8 6 12.5" />
-            </svg>
+            <Chevron />
           </Link>
         ))}
 

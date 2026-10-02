@@ -7,17 +7,17 @@ import { PostCard } from "../components/blog/PostCard";
 import { ibmPlexSans } from "../lib/fonts";
 import { formatPostDate, getIndex } from "../lib/blog/posts";
 import { ROUTES, postHref } from "../lib/sections";
+import { pageMetadata } from "../lib/seo/metadata";
+import { SeoJsonLd } from "../components/SeoJsonLd";
 import "../components/blog/blog.css";
 
+/** The heading on the page itself. What search engines are told is edited at
+    /admin/seo, and starts out saying the same thing. */
 const PAGE_TITLE = "Notes from the floor";
-const PAGE_DESCRIPTION =
-  "The Simtec newsletter — notes on environmental consultancy, construction data and the software we build for site teams.";
 
-export const metadata: Metadata = {
-  title: `${PAGE_TITLE} — Simtec`,
-  description: PAGE_DESCRIPTION,
-  alternates: { canonical: ROUTES.blog },
-};
+export function generateMetadata(): Promise<Metadata> {
+  return pageMetadata(ROUTES.blog);
+}
 
 /** The featured slot is the full content column, less the page padding. */
 const FEATURED_SIZES = [
@@ -32,6 +32,7 @@ export default async function BlogIndexPage() {
 
   return (
     <>
+      <SeoJsonLd path={ROUTES.blog} />
       <Nav solid />
 
       <main className={`${ibmPlexSans.variable} bl-root`}>

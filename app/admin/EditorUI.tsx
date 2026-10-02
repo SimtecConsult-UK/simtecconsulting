@@ -47,6 +47,79 @@ export function FilePicker({
   );
 }
 
+/**
+ * A picture: its preview and Replace/Remove buttons once there is one, and the
+ * drop zone before that.
+ *
+ * The newsletter's cover, a page's share picture and the site-wide one all drew
+ * this themselves, identically but for the wording. `fallbackUrl` is the one
+ * real variation — a page with no picture of its own shows the site-wide one
+ * greyed out, so the editor can see what a share of it would actually look
+ * like. Pair it with `useImageUpload`, which owns the other half of the cycle.
+ */
+export function ImageField({
+  url,
+  fallbackUrl = null,
+  uploading,
+  accept = "image/*",
+  choose,
+  hint,
+  onPick,
+  onRemove,
+}: {
+  url: string | null;
+  fallbackUrl?: string | null;
+  uploading: boolean;
+  accept?: string;
+  /** The drop zone's first line — "Choose a cover image · 1600×900". */
+  choose: string;
+  /** Its second line, in mono. */
+  hint: string;
+  onPick: (file: File) => void;
+  onRemove: () => void;
+}) {
+  if (url) {
+    return (
+      <>
+        <div className="cms-preview">
+          {/* A plain img: this is a private tool and the file has just been
+              uploaded, so there is nothing for next/image to optimise. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt="" />
+        </div>
+        <div className="cms-file-row">
+          <FilePicker
+            accept={accept}
+            disabled={uploading}
+            onPick={onPick}
+            className="cms-btn cms-btn--secondary"
+          >
+            Replace
+          </FilePicker>
+          <button type="button" className="cms-btn cms-btn--danger" onClick={onRemove}>
+            Remove
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {fallbackUrl && (
+        <div className="cms-preview">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={fallbackUrl} alt="" style={{ opacity: 0.55 }} />
+        </div>
+      )}
+      <FilePicker accept={accept} disabled={uploading} onPick={onPick}>
+        <span>{uploading ? "Uploading…" : choose}</span>
+        <span className="cms-mono">{hint}</span>
+      </FilePicker>
+    </>
+  );
+}
+
 /** The error, saved and over-the-limit messages above the form. */
 export function Banners({
   error,

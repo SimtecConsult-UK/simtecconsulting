@@ -31,6 +31,12 @@ export const SITE_URL = (
   .replace(/\/+$/, "");
 
 /**
+ * The same address without its scheme, for the places that show a URL to a
+ * person rather than follow it — the search-result previews in the CMS.
+ */
+export const SITE_HOST = SITE_URL.replace(/^https?:\/\//, "");
+
+/**
  * A site path as an absolute URL, for the places that cannot use a relative one
  * — JSON-LD and share links. Anything already absolute is left alone: images
  * stored in Supabase come back as full URLs, and prefixing the site's own
