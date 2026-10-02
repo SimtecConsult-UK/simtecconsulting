@@ -55,15 +55,32 @@ export function useEditorDraft<T extends object>(initial: T | (() => T)) {
     });
   };
 
-  /** First click arms the button, second click deletes. */
-  const remove = (run: () => Promise<{ error: string } | void>) => {
+  /**
+   * First click arms the button, second click runs it.
+   *
+   * `after` is for the destructive buttons that leave you on the page — Reset,
+   * which clears a page's settings rather than deleting a row — so they can
+   * fold the emptied state back into the draft. Delete does not use it: the
+   * action redirects away.
+   */
+  const remove = (
+    run: () => Promise<{ error: string | null } | void>,
+    after?: () => void
+  ) => {
     if (!confirmDelete) {
       setConfirmDelete(true);
       return;
     }
+    setError(null);
     startTransition(async () => {
       const result = await run();
-      if (result?.error) setError(result.error);
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+      setConfirmDelete(false);
+      after?.();
+      setStatus("saved");
     });
   };
 

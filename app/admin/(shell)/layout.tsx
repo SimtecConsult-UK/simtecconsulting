@@ -1,4 +1,5 @@
 import { requireEditor } from "../../lib/auth";
+import { SEO_PAGES } from "../../lib/seo/pages";
 import { isSupabaseConfigured } from "../../lib/supabase/config";
 import { countCaseStudies, countPosts, countUnreadSubmissions } from "./counts";
 import { NotConnected } from "./NotConnected";
@@ -44,6 +45,8 @@ export default async function ShellLayout({
         counts={{
           "/admin/newsletter": posts,
           "/admin/case-studies": caseStudies,
+          // Fixed: the pages the site has, not something that is added to.
+          "/admin/seo": SEO_PAGES.length,
           "/admin/submissions": submissions,
         }}
       />

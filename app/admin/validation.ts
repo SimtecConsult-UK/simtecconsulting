@@ -8,6 +8,19 @@
 /** What a save reports back to the editor. */
 export type SaveState = { error: string | null };
 
+/**
+ * The three fields a post and a page describe themselves with, and the lengths
+ * at which they stop being useful: Google cuts a title around 60 characters and
+ * a description around 160, and a key takeaway longer than a short paragraph
+ * stops being a takeaway. Defined once so the newsletter and the site pages
+ * cannot drift apart.
+ */
+export const SEO_LIMITS = {
+  metaTitle: 60,
+  metaDescription: 160,
+  keyTakeaway: 300,
+} as const;
+
 export type FieldCheck = {
   /** How the field is named to the editor, read mid-sentence. */
   name: string;

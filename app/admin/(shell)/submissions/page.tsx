@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Chevron } from "../../icons";
 import { countUnreadSubmissions } from "../counts";
 import { PAGE_SIZE, formatSubmittedAt, listSubmissions } from "./data";
 
@@ -65,10 +66,7 @@ export default async function SubmissionsListPage(
                 {formatSubmittedAt(submission.createdAt)}
               </span>
             </span>
-
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#9aa5a4" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M6 3.5L10.5 8 6 12.5" />
-            </svg>
+            <Chevron />
           </Link>
         ))}
 

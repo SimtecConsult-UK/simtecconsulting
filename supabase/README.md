@@ -1,9 +1,11 @@
 # Supabase — the content manager's database
 
-The content manager at `/admin` reads and writes three collections here:
-newsletter posts (the blog), homepage case studies, and the submissions the
-discovery wizard sends. The first two are edited in the CMS; submissions are
-only read and deleted, since they are a record of what somebody sent.
+The content manager at `/admin` reads and writes four collections here:
+newsletter posts (the blog), homepage case studies, the submissions the
+discovery wizard sends, and what the website tells search engines and AI
+assistants about itself. The editable ones are the posts, the case studies and
+the search settings; submissions are only read and deleted, since they are a
+record of what somebody sent.
 
 ## What is here
 
@@ -16,6 +18,7 @@ only read and deleted, since they are a record of what somebody sent.
 | `migrations/0005_submissions.sql` | The `submissions` table behind the discovery wizard |
 | `migrations/0006_case_study_quote_photo.sql` | The optional photo beside a case-study quote |
 | `migrations/0007_case_study_corrections.sql` | Vertase's colour logo, and the names and photos for the three seeded quotes |
+| `migrations/0008_site_seo.sql` | The `site_settings` and `page_seo` tables behind **SEO & AI**, and the `site-assets` bucket holding the favicon and share pictures |
 
 The columns are the fields of the editors in the CMS handover, one for one.
 
@@ -31,7 +34,9 @@ The columns are the fields of the editors in the CMS handover, one for one.
    section at all. Skipping `0005` means the discovery wizard has nowhere to
    send completed enquiries. Skipping `0007` leaves Vertase with the
    placeholder black logo and the three quotes without their photos and
-   speakers' names.
+   speakers' names. Skipping `0008` leaves the **SEO & AI** section with
+   nothing to save to — the live pages still work, because they fall back to
+   the wording written in `app/lib/seo/pages.ts`.
 
    `0006` and `0007` are safe to run on a database that is already live, and
    safe to run twice. `0007` only changes a value that is still the one
@@ -62,13 +67,15 @@ The columns are the fields of the editors in the CMS handover, one for one.
 
 ## How the data is protected
 
-Row-level security is on for both tables, and the site only ever connects with
+Row-level security is on for every table, and the site only ever connects with
 the anon key. That key can:
 
 - read **published** posts, and nothing else from `posts` — a draft is
   invisible even to somebody who guesses its address;
 - read case studies;
-- read files in both buckets.
+- read the site's search settings, which are by definition public — they are
+  what the pages put in their own `<head>`;
+- read files in all three buckets.
 
 Every write, and any sight of a draft, requires a signed-in session. The same
 rule is enforced three times over: the proxy redirects signed-out visitors, and
@@ -76,10 +83,25 @@ rule is enforced three times over: the proxy redirects signed-out visitors, and
 because a Server Action is a public endpoint. Postgres itself refuses the write
 regardless.
 
-Both buckets also cap what they will accept — 10 MB of image for `blog-images`,
-15 MB of image or MP4/WebM for `case-study-media`. The editor checks a file
-before uploading it and explains what is wrong in plain words; these caps are
-the backstop, so the limits hold even if that check is bypassed.
+Every bucket also caps what it will accept — 10 MB of image for `blog-images`,
+15 MB of image or MP4/WebM for `case-study-media`, 5 MB for `site-assets`. The
+editor checks a file before uploading it and explains what is wrong in plain
+words; these caps are the backstop, so the limits hold even if that check is
+bypassed. `site-assets` is the only bucket that accepts SVG, because a favicon
+is commonly drawn as one; it is served from the Supabase domain and only ever
+referenced by `<link rel="icon">`, never rendered as a document on ours.
+
+## Where the search settings came from
+
+The **SEO & AI** section did not move any content: every page's title and
+description are still written in `app/lib/seo/pages.ts`, exactly as they were
+in the page files before. The database only holds what somebody has since
+changed, so an empty `page_seo` table and an untouched `site_settings` row
+leave the live site word for word as it was built.
+
+The same is true of the favicon. `public/favicon.ico` is still the site's icon;
+uploading one in the CMS points the pages at the uploaded file instead, and
+removing it puts the committed one back.
 
 ## Moving the existing content in
 

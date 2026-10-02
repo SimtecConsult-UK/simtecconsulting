@@ -1,5 +1,5 @@
 import { blocksLength } from "../../../lib/blog/html";
-import { checkLimits, type FieldCheck } from "../../validation";
+import { SEO_LIMITS, checkLimits, type FieldCheck } from "../../validation";
 import type { PostInput } from "./actions";
 
 /**
@@ -12,9 +12,9 @@ import type { PostInput } from "./actions";
 export const LIMITS = {
   title: 90,
   standfirst: 260,
-  metaTitle: 60,
-  metaDescription: 160,
-  keyTakeaway: 300,
+  // The search-listing fields are the same three the site's own pages use, so
+  // they come from one place.
+  ...SEO_LIMITS,
   body: 20000,
 } as const;
 

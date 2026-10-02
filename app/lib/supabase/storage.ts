@@ -4,6 +4,8 @@ import { SUPABASE_URL } from "./config";
 export const BUCKETS = {
   blogImages: "blog-images",
   caseStudyMedia: "case-study-media",
+  /** The favicon and the default share image, which belong to no one page. */
+  siteAssets: "site-assets",
 } as const;
 
 export type Bucket = (typeof BUCKETS)[keyof typeof BUCKETS];

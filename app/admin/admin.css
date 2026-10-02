@@ -855,6 +855,48 @@
   gap: 12px;
 }
 
+/* The body of a panel: the stack of groups inside .cms-editor. */
+.cms-editor-body {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* The web-address box: a fixed prefix, sometimes followed by an editable slug.
+   Both children restate their size rather than inheriting it from here, because
+   they also carry .cms-mono, and a font-size set on the element beats anything
+   inherited from its parent. */
+.cms-addr {
+  display: flex;
+  align-items: center;
+  background: var(--cms-field);
+  border: 1px solid var(--cms-field-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.cms-addr-prefix {
+  font-size: 13px;
+}
+
+.cms-addr-input {
+  font-size: 13px;
+  color: var(--cms-ink);
+  background: none;
+  border: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+/* "Add question", "Add a profile" — a dashed outline that reads as a slot. */
+.cms-btn--add {
+  align-self: flex-start;
+  border-style: dashed;
+  color: var(--cms-teal);
+}
+
 /* A panel inside a card — the SEO preview and each FAQ pair sit on one. */
 .cms-subcard {
   background: var(--cms-field);
