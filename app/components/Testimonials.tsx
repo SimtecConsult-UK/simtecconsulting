@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 
 import { SECTION_IDS } from "../lib/sections";
 
-const testimonials = [
+type Testimonial = {
+  name: string;
+  role: string;
+  /** Headshot in /public/people, square. Anyone without one keeps their initials. */
+  photo?: string;
+  paragraphs: string[];
+};
+
+const testimonials: Testimonial[] = [
   {
     name: "Alex Collman",
+    photo: "/people/alex-collman.jpg",
     role: "Founder, SoilEx",
     paragraphs: [
       "We engaged Simtec as we looked to take our business digital. With a lack of expertise in-house, we needed a partner who could guide us through the minefield.",
@@ -25,7 +35,8 @@ const testimonials = [
     ],
   },
   {
-    name: "Daniel Mallett",
+    name: "Daniel Mallet",
+    photo: "/people/daniel-mallet.jpg",
     role: "Commercial Director, Jackson Geo Services",
     paragraphs: [
       "Creating a holistic business management system that supports compliance, management decisions, staff and client requirements had been a goal for our business for years.",
@@ -35,6 +46,7 @@ const testimonials = [
   },
   {
     name: "Kerry Murray",
+    photo: "/people/kerry-murray.jpg",
     role: "Co-Director, Murray Environmental",
     paragraphs: [
       "Joseph goes above and beyond to understand client goals, pain points and operational blockers before building solutions aligned to the needs and culture of the business.",
@@ -44,6 +56,7 @@ const testimonials = [
   },
   {
     name: "Steve Edgar",
+    photo: "/people/steve-edgar.jpg",
     role: "Managing Director, Vertase FLI",
     paragraphs: [
       "Simtec listens, understands the requirement and delivers. Rare these days.",
@@ -51,6 +64,7 @@ const testimonials = [
   },
   {
     name: "Simon Raven",
+    photo: "/people/simon-raven.jpg",
     role: "CEO, Ecofficiency (Reconomy)",
     paragraphs: [
       "Simtec understands the waste business, gets what you're trying to achieve and delivers.",
@@ -58,6 +72,7 @@ const testimonials = [
   },
   {
     name: "James Taylor",
+    photo: "/people/james-taylor.jpg",
     role: "Managing Director, Geotechnical Engineering Ltd",
     paragraphs: [
       "We engaged Simtec to design and build a bespoke site records application to help streamline operational processes across the business.",
@@ -66,6 +81,7 @@ const testimonials = [
   },
   {
     name: "Jonathan Evans",
+    photo: "/people/jonathan-evans.jpg",
     role: "Director of Operational Sales, Jacobs",
     paragraphs: [
       "Joseph's intuitive, solution-oriented mindset makes him someone you want involved when tackling operational challenges or embedding new systems.",
@@ -74,6 +90,7 @@ const testimonials = [
   },
   {
     name: "Jacob Loats",
+    photo: "/people/jacob-loats.jpg",
     role: "Head of Data & Visualisations, Vertase FLI",
     paragraphs: [
       "Joe and Andrew have been instrumental in helping us realise our vision and move our business further into the digital world.",
@@ -115,16 +132,25 @@ function buildCard(idx: number, v: Variant) {
   const t = testimonials[idx];
   const s = CARD_STYLE[v];
   return {
-    name: t.name, role: t.role,
+    ...t,
+    ...s,
     initials: getInitials(t.name),
     quote: "“" + t.paragraphs.join("\n\n") + "”",
-    isDark: s.isDark, bg: s.bg, color: s.color, quoteColor: s.quoteColor, ava: s.ava,
   };
 }
 
-function Avatar({ initials, bg, color, size, fontSize }: {
-  initials: string; bg: string; color: string; size: number; fontSize: number;
+/* A headshot where we have one, the speaker's initials where we don't — both
+   drawn in the same circle so a card with no photo still lines up. The photo is
+   decorative: the name it belongs to is written out right beside it. */
+function Avatar({ photo, initials, bg, color, size, fontSize }: {
+  photo?: string; initials: string; bg: string; color: string; size: number; fontSize: number;
 }) {
+  if (photo) {
+    return (
+      <Image src={photo} alt="" width={size} height={size} style={{ width: size, height: size, borderRadius: "50%", flexShrink: 0, objectFit: "cover" }} />
+    );
+  }
+
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize, fontWeight: 600, letterSpacing: ".02em", background: bg, color }}>
       {initials}
@@ -294,7 +320,7 @@ export function Testimonials() {
               {featured.quote}
             </blockquote>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 22 }}>
-              <Avatar initials={featured.initials} bg={featured.ava.background} color={featured.ava.color} size={52} fontSize={16} />
+              <Avatar photo={featured.photo} initials={featured.initials} bg={featured.ava.background} color={featured.ava.color} size={52} fontSize={16} />
               <div>
                 <div className="font-heading" style={{ fontWeight: 600, fontSize: 19, lineHeight: 1.1 }}>{featured.name}</div>
                 <div style={{ fontSize: 13, lineHeight: 1.3, marginTop: 3, color: "rgba(255,255,255,.5)" }}>{featured.role}</div>
@@ -333,7 +359,7 @@ export function Testimonials() {
                     {card.quote}
                   </p>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14 }}>
-                    <Avatar initials={card.initials} bg={card.ava.background} color={card.ava.color} size={36} fontSize={12} />
+                    <Avatar photo={card.photo} initials={card.initials} bg={card.ava.background} color={card.ava.color} size={36} fontSize={12} />
                     <div>
                       <div className="font-heading" style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.1 }}>{card.name}</div>
                       <div style={{ fontSize: 11, lineHeight: 1.3, marginTop: 3, color: card.isDark ? "rgba(255,255,255,.5)" : "rgba(26,21,48,.5)" }}>

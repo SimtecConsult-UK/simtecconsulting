@@ -225,6 +225,9 @@
 }
 
 .cs-quote figcaption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid #c9d3fb;
@@ -234,6 +237,16 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-primary-container);
+}
+
+/* A square headshot drawn as a circle, as in the testimonials section. Studies
+   without one simply have no element here and the caption sits on its own. */
+.cs-quote-face {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 /* ── Chapters ──
@@ -913,6 +926,11 @@
 
   .cs-quote figcaption {
     font-size: 13px;
+  }
+
+  .cs-quote-face {
+    width: 44px;
+    height: 44px;
   }
 
   .cs-rail {
