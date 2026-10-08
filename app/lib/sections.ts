@@ -5,8 +5,19 @@ export const SECTION_IDS = {
   testimonials: "testimonials",
 } as const;
 
+/**
+ * Where the "Book a Workshop" CTAs send people. External scheduling, so these
+ * are plain anchors opened in a new tab rather than next/link — the visitor
+ * keeps the site open behind the booking page.
+ *
+ * ROUTES.discovery is no longer linked from anywhere on the site; it stays
+ * reachable by direct link for the people we send to it.
+ */
+export const BOOKING_URL = "https://calendly.com/simtec/simtec-software";
+
 export const ROUTES = {
   home: "/",
+  /** The discovery questionnaire. Issued by direct link; see BOOKING_URL. */
   discovery: "/discovery",
   blog: "/blog",
   /** The content manager. Signed-in editors only, and kept out of search. */

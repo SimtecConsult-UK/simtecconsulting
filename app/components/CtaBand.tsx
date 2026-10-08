@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { ROUTES } from "../lib/sections";
+import { BOOKING_URL } from "../lib/sections";
 
 const OUTPUTS = [
   "High-level workflow review",
@@ -83,7 +83,9 @@ export function CtaBand() {
 
               <div className="mt-8 flex flex-col items-start gap-3">
                 <a
-                  href={ROUTES.discovery}
+                  href={BOOKING_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="font-sans inline-flex items-center gap-[9px] rounded-[8px] bg-[#2dd4bf] px-[26px] py-3.5 text-[15px] font-semibold text-[#06241f] no-underline transition-opacity hover:opacity-85"
                 >
                   Book a Workshop

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ROUTES, SECTION_IDS } from "../lib/sections";
+import { BOOKING_URL, SECTION_IDS } from "../lib/sections";
 import { MODULE_CATALOG } from "../lib/moduleCatalog";
 
 // Accent matches the nav "Book a Workshop" CTA (brand teal + dark ink text on fills)
@@ -232,7 +232,9 @@ export function ModulePicker() {
                 Every module runs on one shared core. Start with a few — switch more on whenever you&apos;re ready.
               </p>
               <a
-                href={ROUTES.discovery}
+                href={BOOKING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="font-heading block w-full cursor-pointer rounded-[9px] bg-[var(--color-brand-blue)] py-[12px] text-center text-[14px] font-semibold transition-colors hover:bg-[#85f0e4] lg:py-[13px]"
                 style={{ color: ON_ACCENT }}
               >

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useScrollEffect } from "../hooks/useScrollEffect";
 import { useModalOverlay } from "../hooks/useModalOverlay";
 import { useHomeLinkClick } from "../hooks/useHomeLinkClick";
-import { ROUTES, SECTION_IDS } from "../lib/sections";
+import { BOOKING_URL, ROUTES, SECTION_IDS } from "../lib/sections";
 
 const links = [
   { label: "Solutions", href: `#${SECTION_IDS.solutions}` },
@@ -123,12 +123,14 @@ export function Nav({ solid = false }: NavProps) {
           </ul>
 
           <div className="flex items-center gap-3.5">
-            <Link
-              href={ROUTES.discovery}
+            <a
+              href={BOOKING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="hidden min-[521px]:inline-flex items-center justify-center gap-2 rounded-full border border-[#2dd4bf] px-6 py-[11px] text-[14px] font-semibold text-[#2dd4bf] transition-colors duration-150 hover:bg-[#2dd4bf] hover:text-[#06241f]"
             >
               Book a Workshop
-            </Link>
+            </a>
 
             <button
               type="button"
@@ -200,8 +202,10 @@ export function Nav({ solid = false }: NavProps) {
             ))}
           </ul>
 
-          <Link
-            href={ROUTES.discovery}
+          <a
+            href={BOOKING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={() => setMenuOpen(false)}
             className="mt-auto flex items-center justify-center gap-2 rounded-[14px] border border-[#2dd4bf] py-4 text-[16px] font-semibold text-[#2dd4bf]"
           >
@@ -209,7 +213,7 @@ export function Nav({ solid = false }: NavProps) {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 8h10M9 4l4 4-4 4" />
             </svg>
-          </Link>
+          </a>
         </div>
       )}
     </>

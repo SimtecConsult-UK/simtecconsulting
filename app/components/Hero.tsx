@@ -1,4 +1,4 @@
-import { ROUTES } from "../lib/sections";
+import { BOOKING_URL } from "../lib/sections";
 
 export function Hero() {
   return (
@@ -22,7 +22,9 @@ export function Hero() {
               sub→crane proportions). Centered on tablet/mobile, left-aligned
               on laptop+ to match the text. */}
           <a
-            href={ROUTES.discovery}
+            href={BOOKING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="absolute left-1/2 top-full mt-7 inline-flex -translate-x-1/2 items-center justify-center rounded-full bg-[var(--color-brand-blue)] px-6 py-2.5 text-[13px] font-semibold text-[#0c2421] transition-colors hover:bg-[#85f0e4] md:text-[14px] min-[1000px]:left-0 min-[1000px]:mt-8 min-[1000px]:translate-x-0"
           >
             Book a Workshop
@@ -99,14 +101,15 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Video — scaled up slightly to crop any dark border baked into the recording */}
+          {/* Video — the recording already sits on a white page with its own margin,
+              so it needs no crop; scaling it up here clipped the sidebar labels. */}
           <div style={{ background: "#ffffff", overflow: "hidden", flexShrink: 0 }}>
             <video
               autoPlay
               loop
               muted
               playsInline
-              style={{ width: "100%", display: "block", transform: "scale(1.04) translate(3px, 4px)", transformOrigin: "center center" }}
+              style={{ width: "100%", display: "block" }}
             >
               <source src="/simtechero.webm" type="video/webm" />
               <source src="/simtechero.mp4" type="video/mp4" />
