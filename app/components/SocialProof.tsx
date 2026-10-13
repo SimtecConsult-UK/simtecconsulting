@@ -141,7 +141,7 @@ export function SocialProof() {
           >
             <p className="font-heading text-[44px] font-bold leading-none tracking-tight text-white">95%</p>
             <p className="mt-2 text-[14px] font-medium leading-snug text-white/70">
-              of clients stay with us for over 4 years
+              of customers come back for more
             </p>
           </div>
         </div>
@@ -178,7 +178,7 @@ export function SocialProof() {
             >
               <p className="font-heading text-[56px] font-bold leading-none tracking-tight text-white lg:text-[72px]">95%</p>
               <p className="mt-3 text-[17px] font-medium leading-snug text-white/70 lg:text-[22px]">
-                of clients stay with us<br />for over 4 years
+                of customers<br />come back for more
               </p>
             </div>
           </div>
