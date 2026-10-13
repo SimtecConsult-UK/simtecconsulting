@@ -3,6 +3,7 @@ import { CtaBand } from "./components/CtaBand";
 import { ModulePicker } from "./components/ModulePicker";
 import { CaseStudies } from "./components/CaseStudies";
 import { getCaseStudies } from "./lib/caseStudiesData";
+import { getHero, getTeamPhotos } from "./lib/homepage/data";
 import { Footer } from "./components/Footer";
 import { BlueprintBackground } from "./components/BlueprintBackground";
 import { Hero } from "./components/Hero";
@@ -21,7 +22,11 @@ export function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const caseStudies = await getCaseStudies();
+  // Hero and Team read their own content, but React cannot call them until this
+  // function returns, so awaiting the case studies alone would make their two
+  // queries wait a whole round trip. Started together here; both reads are
+  // `cache()`d, so the components then await a promise that is already settled.
+  const [caseStudies] = await Promise.all([getCaseStudies(), getHero(), getTeamPhotos()]);
 
   return (
     <>

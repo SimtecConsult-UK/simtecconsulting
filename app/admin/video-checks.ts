@@ -3,9 +3,14 @@
  *
  * Nothing here converts a file — it only checks one and explains what is wrong,
  * which is the trade-off that was chosen over adding a transcoding service. The
- * numbers are what the homepage section was designed and tested against: a
- * recording outside them either looks wrong in the MacBook mockup or is too
- * heavy for the page.
+ * numbers are what the homepage was designed and tested against: a recording
+ * outside them either looks wrong in the browser mock-up or is too heavy for
+ * the page.
+ *
+ * One set of numbers for both recordings on the homepage — the hero's and the
+ * case studies' — because both sit in the same mock-up at the same size. Moved
+ * up here out of the case-studies folder when the hero became editable, so the
+ * two cannot drift apart.
  */
 
 export const VIDEO_SPEC = {
@@ -19,6 +24,23 @@ export const VIDEO_SPEC = {
   /** 16:9 to within a rounding error, since encoders are not exact. */
   ratioTolerance: 0.02,
 } as const;
+
+/** What a file picker accepts, so the dialogue offers what `checkVideo` allows. */
+export const VIDEO_ACCEPT = VIDEO_SPEC.types.join(",");
+
+/**
+ * The requirements as the one line shown under a drop zone.
+ *
+ * Built from the numbers above rather than typed out beside them: it was the
+ * same sentence in both editors, and a sentence that restates a constant is
+ * the half that drifts once the constant moves.
+ */
+export const VIDEO_HINT = [
+  "MP4 or WebM",
+  "16:9",
+  `${VIDEO_SPEC.minDuration}–${VIDEO_SPEC.maxDuration}s`,
+  `under ${VIDEO_SPEC.maxBytes / 1024 / 1024} MB`,
+].join(" · ");
 
 export type Check = { label: string; ok: boolean; detail?: string };
 

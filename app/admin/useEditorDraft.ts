@@ -26,11 +26,23 @@ export function useEditorDraft<T extends object>(initial: T | (() => T)) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  /** Write several fields at once — an upload sets a path and its size together. */
-  const patch = (fields: Partial<T>) => {
-    setDraft((current) => ({ ...current, ...fields }));
+  /**
+   * Change the draft from whatever it is *now*, rather than from what it was
+   * when the handler was created.
+   *
+   * This matters for anything that writes back after an await. An upload runs
+   * for seconds, and the handler that finishes it closed over the draft as it
+   * was when the file was chosen — so rebuilding the draft from that copy
+   * silently throws away everything typed, or uploaded elsewhere, in between.
+   * `patch` is this with the fields already merged.
+   */
+  const edit = (change: (current: T) => T) => {
+    setDraft(change);
     setStatus("dirty");
   };
+
+  /** Write several fields at once — an upload sets a path and its size together. */
+  const patch = (fields: Partial<T>) => edit((current) => ({ ...current, ...fields }));
 
   const set = <K extends keyof T>(key: K, value: T[K]) =>
     patch({ [key]: value } as unknown as Partial<T>);
@@ -89,6 +101,7 @@ export function useEditorDraft<T extends object>(initial: T | (() => T)) {
     setDraft,
     set,
     patch,
+    edit,
     status,
     error,
     setError,
