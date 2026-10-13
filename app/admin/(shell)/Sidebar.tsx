@@ -8,6 +8,8 @@ import { signOut } from "../auth-actions";
 const SECTIONS = [
   { href: "/admin/newsletter", label: "Newsletter" },
   { href: "/admin/case-studies", label: "Case studies" },
+  { href: "/admin/hero", label: "Hero" },
+  { href: "/admin/team", label: "Team" },
   { href: "/admin/seo", label: "SEO & AI" },
   { href: "/admin/submissions", label: "Submissions" },
 ];
@@ -15,11 +17,14 @@ const SECTIONS = [
 type SidebarProps = {
   email: string;
   /**
-   * The number beside each section. Newsletter, Case studies and SEO & AI show
-   * how many items they hold; Submissions shows how many are unread, so it
+   * The number beside a section. Newsletter, Case studies, Team and SEO & AI
+   * show how many items they hold; Submissions shows how many are unread, so it
    * drops to zero once they have all been opened.
+   *
+   * A section that is one of a kind — the Hero — supplies nothing and gets no
+   * pill, rather than a number that can only ever read "1".
    */
-  counts: Record<string, number>;
+  counts: Record<string, number | undefined>;
 };
 
 export function Sidebar({ email, counts }: SidebarProps) {
@@ -46,7 +51,9 @@ export function Sidebar({ email, counts }: SidebarProps) {
             aria-current={pathname.startsWith(section.href) ? "page" : undefined}
           >
             <span>{section.label}</span>
-            <span className="cms-side-count">{counts[section.href] ?? 0}</span>
+            {counts[section.href] !== undefined && (
+              <span className="cms-side-count">{counts[section.href]}</span>
+            )}
           </Link>
         ))}
       </nav>

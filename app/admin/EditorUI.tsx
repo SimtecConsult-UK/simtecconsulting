@@ -1,6 +1,7 @@
 "use client";
 
 import { CharCount, isOver } from "./CharCount";
+import { VIDEO_ACCEPT, VIDEO_HINT, type Check } from "./video-checks";
 
 /**
  * The parts both editors draw the same way. They were copied between the two
@@ -116,6 +117,78 @@ export function ImageField({
         <span>{uploading ? "Uploading…" : choose}</span>
         <span className="cms-mono">{hint}</span>
       </FilePicker>
+    </>
+  );
+}
+
+/**
+ * A screen recording: its player and Replace/Remove buttons once there is one,
+ * the drop zone before that, and the row of ticks saying which requirements the
+ * last file met.
+ *
+ * The hero's recording and a case study's are the same thing in the same
+ * mock-up, so they are chosen the same way. Pair it with `useVideoUpload`.
+ */
+export function VideoField({
+  url,
+  uploading,
+  disabled,
+  checks,
+  choose,
+  onPick,
+  onRemove,
+}: {
+  url: string | null;
+  uploading: boolean;
+  /** True while any upload on the page is running, not only this one. */
+  disabled?: boolean;
+  /** The last file's results, or an empty list before anything is chosen. */
+  checks: Check[];
+  /** The drop zone's first line. Its second is the shared requirements line. */
+  choose: string;
+  onPick: (file: File) => void;
+  onRemove: () => void;
+}) {
+  const busy = disabled || uploading;
+
+  return (
+    <>
+      {url ? (
+        <>
+          <div className="cms-preview">
+            <video src={url} controls muted playsInline />
+          </div>
+          <div className="cms-file-row">
+            <FilePicker
+              accept={VIDEO_ACCEPT}
+              disabled={busy}
+              onPick={onPick}
+              className="cms-btn cms-btn--secondary"
+            >
+              {uploading ? "Checking…" : "Replace video"}
+            </FilePicker>
+            <button type="button" className="cms-btn cms-btn--danger" onClick={onRemove}>
+              Remove
+            </button>
+          </div>
+        </>
+      ) : (
+        <FilePicker accept={VIDEO_ACCEPT} disabled={busy} onPick={onPick}>
+          <span>{uploading ? "Checking…" : choose}</span>
+          <span className="cms-mono">{VIDEO_HINT}</span>
+        </FilePicker>
+      )}
+
+      {checks.length > 0 && (
+        <div className="cms-specs">
+          {checks.map((check) => (
+            <span key={check.label} className={`cms-spec cms-spec--${check.ok ? "ok" : "bad"}`}>
+              {check.ok ? "✓" : "✕"} {check.label}
+              {check.detail ? ` · ${check.detail}` : ""}
+            </span>
+          ))}
+        </div>
+      )}
     </>
   );
 }

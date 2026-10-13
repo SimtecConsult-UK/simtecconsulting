@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { getTeamPhotos } from "../lib/homepage/data";
 import { SECTION_IDS } from "../lib/sections";
 
 // Hero photo + 4-photo grid (design: "Team Section 1b"). Asymmetric corner
@@ -12,14 +13,14 @@ const GRID_SIZES =
   "(min-width:1328px) 290px, (min-width:1000px) calc(25vw - 42px), (min-width:768px) calc(50vw - 46px), calc(50vw - 25px)";
 const HERO_SIZES =
   "(min-width:1328px) 1200px, (min-width:1024px) calc(100vw - 128px), (min-width:768px) calc(100vw - 80px), calc(100vw - 40px)";
-const GRID = [
-  "/team-photos/2.jpeg",
-  "/team-photos/3.jpeg",
-  "/team-photos/4.jpeg",
-  "/team-photos/5.jpeg",
-];
 
-export function Team() {
+/**
+ * The photos themselves come from /admin/team — five fixed tiles, each showing
+ * the file committed in /public until one is uploaded over it.
+ */
+export async function Team() {
+  const [hero, ...grid] = await getTeamPhotos();
+
   return (
     <section
       id={SECTION_IDS.team}
@@ -39,8 +40,8 @@ export function Team() {
         {/* Hero photo */}
         <div className="team-tile team-hero" style={{ marginTop: 32 }}>
           <Image
-            src="/team-photos/1.jpeg"
-            alt="The Simtec team"
+            src={hero.src}
+            alt={hero.alt}
             fill
             sizes={HERO_SIZES}
             style={{ objectFit: "cover" }}
@@ -49,11 +50,11 @@ export function Team() {
 
         {/* 4-photo grid */}
         <div className="team-grid">
-          {GRID.map((src, i) => (
-            <div key={src} className="team-tile">
+          {grid.map((photo) => (
+            <div key={photo.slot} className="team-tile">
               <Image
-                src={src}
-                alt={`Simtec team member ${i + 2}`}
+                src={photo.src}
+                alt={photo.alt}
                 fill
                 sizes={GRID_SIZES}
                 style={{ objectFit: "cover" }}

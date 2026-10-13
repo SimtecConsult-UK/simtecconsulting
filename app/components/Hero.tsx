@@ -1,6 +1,13 @@
+import { getHero } from "../lib/homepage/data";
 import { BOOKING_URL } from "../lib/sections";
 
-export function Hero() {
+/**
+ * The wording and the recording come from /admin/hero. Everything else here —
+ * the layout, the browser chrome, the glow — is the design and is not editable.
+ */
+export async function Hero() {
+  const hero = await getHero();
+
   return (
     <section className="hero-root">
       {/* Blueprint background now lives at the hero-zone level (see page.tsx) so it
@@ -11,12 +18,12 @@ export function Hero() {
         <div className="hero-block relative mx-auto w-full max-w-[1200px]">
           <h1 className="hero-h1">
             {/* .hero-root already sets white text; only the accent span needs a color */}
-            <span>Construction software built to work </span>
-            <span style={{ color: "var(--color-brand-blue)" }}>the way you do.</span>
+            {/* The space belongs to the markup rather than to either field, so
+                an editor cannot lose it by trimming a trailing space away. */}
+            <span>{hero.headlineLead} </span>
+            <span style={{ color: "var(--color-brand-blue)" }}>{hero.headlineAccent}</span>
           </h1>
-          <p className="hero-sub">
-            We partner with construction, environmental and infrastructure businesses to understand how you work, then engineer bespoke systems that fit your operation perfectly.
-          </p>
+          <p className="hero-sub">{hero.subhead}</p>
           {/* Absolutely placed below the text block so it doesn't grow the
               vertically-centered header+sub (preserves the nav→header /
               sub→crane proportions). Centered on tablet/mobile, left-aligned
@@ -27,7 +34,7 @@ export function Hero() {
             rel="noopener noreferrer"
             className="absolute left-1/2 top-full mt-7 inline-flex -translate-x-1/2 items-center justify-center rounded-full bg-[var(--color-brand-blue)] px-6 py-2.5 text-[13px] font-semibold text-[#0c2421] transition-colors hover:bg-[#85f0e4] md:text-[14px] min-[1000px]:left-0 min-[1000px]:mt-8 min-[1000px]:translate-x-0"
           >
-            Book a Workshop
+            {hero.ctaLabel}
           </a>
         </div>
       </div>
@@ -111,8 +118,11 @@ export function Hero() {
               playsInline
               style={{ width: "100%", display: "block" }}
             >
-              <source src="/simtechero.webm" type="video/webm" />
-              <source src="/simtechero.mp4" type="video/mp4" />
+              {/* One source for a recording uploaded in the CMS, two for the
+                  committed one — the data layer has already worked out which. */}
+              {hero.video.sources.map((source) => (
+                <source key={source.src} src={source.src} type={source.type} />
+              ))}
             </video>
           </div>
         </div>

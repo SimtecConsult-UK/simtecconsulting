@@ -3,14 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CharCount } from "../../CharCount";
-import { Banners, DeleteFooter, FilePicker, TextField } from "../../EditorUI";
+import { Banners, DeleteFooter, FilePicker, TextField, VideoField } from "../../EditorUI";
 import { statusLabel, useEditorDraft } from "../../useEditorDraft";
+import { useVideoUpload } from "../../useVideoUpload";
 import { deleteCaseStudy, saveCaseStudy, type CaseStudyInput } from "./actions";
 import { LIMITS, caseStudyTooLong, chapterLength } from "./limits";
 import type { EditableCaseStudy } from "./data";
 import { BUCKETS, publicUrl } from "../../../lib/supabase/storage";
-import { uploadFile, uploadImage, videoInfo } from "../../upload";
-import { checkVideo, describeFailures, type Check } from "./video-checks";
+import { uploadFile, uploadImage } from "../../upload";
 import { chapterToText, textToChapter } from "./chapter-text";
 import {
   CHAPTERS,
@@ -80,12 +80,23 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
   );
 
   const [logoUrl, setLogoUrl] = useState(caseStudy?.logo.url ?? null);
-  const [videoUrl, setVideoUrl] = useState(caseStudy?.video.url ?? null);
   const [posterUrl, setPosterUrl] = useState(caseStudy?.poster.url ?? null);
   const [quotePhotoUrl, setQuotePhotoUrl] = useState(caseStudy?.quotePhoto.url ?? null);
-  const [videoChecks, setVideoChecks] = useState<Check[]>([]);
   const [tab, setTab] = useState<ChapterKey>(DEFAULT_CHAPTER);
   const [busy, setBusy] = useState<string | null>(null);
+
+  const video = useVideoUpload({
+    bucket: BUCKETS.caseStudyMedia,
+    folder: "videos",
+    onError: setError,
+    onUploaded: (path) => set("videoPath", path),
+  });
+
+  // Derived, not held: the preview is always the public URL of what is stored.
+  const videoUrl = publicUrl(BUCKETS.caseStudyMedia, draft.videoPath);
+
+  /** True while any upload on the page is running — they share the pickers. */
+  const uploading = busy !== null || video.uploading;
 
   /**
    * What is actually in the box, per chapter, kept exactly as typed.
@@ -127,36 +138,6 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
       setLogoUrl(result.url);
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : "That logo could not be read.");
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const onVideo = async (file: File) => {
-    setBusy("video");
-    setError(null);
-    try {
-      const info = await videoInfo(file);
-      const checks = checkVideo(file, info);
-      setVideoChecks(checks);
-
-      const failure = describeFailures(checks);
-      if (failure) {
-        // Rejected before upload: nothing that would look wrong on the
-        // homepage reaches storage in the first place.
-        setError(failure);
-        return;
-      }
-
-      const result = await uploadFile(BUCKETS.caseStudyMedia, "videos", file);
-      if (!result.ok) {
-        setError(`That recording did not upload: ${result.error}`);
-        return;
-      }
-      set("videoPath", result.path);
-      setVideoUrl(publicUrl(BUCKETS.caseStudyMedia, result.path));
-    } catch (problem) {
-      setError(problem instanceof Error ? problem.message : "That recording could not be read.");
     } finally {
       setBusy(null);
     }
@@ -247,50 +228,18 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
 
       <div className="cms-card">
         <span className="cms-label">Screen recording</span>
-        {videoUrl ? (
-          <>
-            <div className="cms-preview">
-              <video src={videoUrl} controls muted playsInline />
-            </div>
-            <div className="cms-file-row">
-              <FilePicker
-                accept="video/mp4,video/webm"
-                disabled={busy !== null}
-                onPick={onVideo}
-                className="cms-btn cms-btn--secondary"
-              >
-                Replace video
-              </FilePicker>
-              <button
-                type="button"
-                className="cms-btn cms-btn--danger"
-                onClick={() => {
-                  set("videoPath", null);
-                  setVideoUrl(null);
-                  setVideoChecks([]);
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          </>
-        ) : (
-          <FilePicker accept="video/mp4,video/webm" disabled={busy !== null} onPick={onVideo}>
-            <span>{busy === "video" ? "Checking…" : "Choose the screen recording"}</span>
-            <span className="cms-mono">MP4 or WebM · 16:9 · 10–45s · under 15 MB</span>
-          </FilePicker>
-        )}
-
-        {videoChecks.length > 0 && (
-          <div className="cms-specs">
-            {videoChecks.map((check) => (
-              <span key={check.label} className={`cms-spec cms-spec--${check.ok ? "ok" : "bad"}`}>
-                {check.ok ? "✓" : "✕"} {check.label}
-                {check.detail ? ` · ${check.detail}` : ""}
-              </span>
-            ))}
-          </div>
-        )}
+        <VideoField
+          url={videoUrl}
+          uploading={video.uploading}
+          disabled={busy !== null}
+          checks={video.checks}
+          choose="Choose the screen recording"
+          onPick={video.pick}
+          onRemove={() => {
+            set("videoPath", null);
+            video.clearChecks();
+          }}
+        />
 
         <p className="cms-help">
           The top-left of the recording is always visible, and phones crop it to 16:10 —
@@ -310,7 +259,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
               </div>
               <FilePicker
                 accept="image/*"
-                disabled={busy !== null}
+                disabled={uploading}
                 onPick={onLogo}
                 className="cms-btn cms-btn--secondary"
               >
@@ -318,7 +267,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
               </FilePicker>
             </>
           ) : (
-            <FilePicker accept="image/*" disabled={busy !== null} onPick={onLogo}>
+            <FilePicker accept="image/*" disabled={uploading} onPick={onLogo}>
               <span>{busy === "logo" ? "Uploading…" : "Choose the client's logo"}</span>
               <span className="cms-mono">SVG or transparent PNG</span>
             </FilePicker>
@@ -334,7 +283,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
               <img src={posterUrl} alt="" />
             </div>
           ) : (
-            <FilePicker accept="image/*" disabled={busy !== null} onPick={onPoster}>
+            <FilePicker accept="image/*" disabled={uploading} onPick={onPoster}>
               <span>{busy === "poster" ? "Uploading…" : "Choose a poster image"}</span>
               <span className="cms-mono">1920×1080 JPG or WebP</span>
             </FilePicker>
@@ -401,7 +350,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
             <div className="cms-file-row">
               <FilePicker
                 accept="image/*"
-                disabled={busy !== null}
+                disabled={uploading}
                 onPick={onQuotePhoto}
                 className="cms-btn cms-btn--secondary"
               >
@@ -420,7 +369,7 @@ export function CaseStudyEditor({ caseStudy, nextPosition }: Props) {
             </div>
           </>
         ) : (
-          <FilePicker accept="image/*" disabled={busy !== null} onPick={onQuotePhoto}>
+          <FilePicker accept="image/*" disabled={uploading} onPick={onQuotePhoto}>
             <span>{busy === "quotePhoto" ? "Uploading…" : "Choose a photo"}</span>
             <span className="cms-mono">Square head-and-shoulders JPG or PNG</span>
           </FilePicker>

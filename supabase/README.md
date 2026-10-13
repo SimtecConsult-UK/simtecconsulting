@@ -1,11 +1,11 @@
 # Supabase — the content manager's database
 
-The content manager at `/admin` reads and writes four collections here:
-newsletter posts (the blog), homepage case studies, the submissions the
-discovery wizard sends, and what the website tells search engines and AI
-assistants about itself. The editable ones are the posts, the case studies and
-the search settings; submissions are only read and deleted, since they are a
-record of what somebody sent.
+The content manager at `/admin` reads and writes six collections here:
+newsletter posts (the blog), homepage case studies, the homepage hero, the
+team photos, the submissions the discovery wizard sends, and what the website
+tells search engines and AI assistants about itself. All of those are editable
+except submissions, which are only read and deleted, since they are a record of
+what somebody sent.
 
 ## What is here
 
@@ -19,6 +19,7 @@ record of what somebody sent.
 | `migrations/0006_case_study_quote_photo.sql` | The optional photo beside a case-study quote |
 | `migrations/0007_case_study_corrections.sql` | Vertase's colour logo, and the names and photos for the three seeded quotes |
 | `migrations/0008_site_seo.sql` | The `site_settings` and `page_seo` tables behind **SEO & AI**, and the `site-assets` bucket holding the favicon and share pictures |
+| `migrations/0009_homepage_hero_team.sql` | The `homepage_hero` and `team_photos` tables behind **Hero** and **Team**, and the widening of `site-assets` to hold the hero recording |
 
 The columns are the fields of the editors in the CMS handover, one for one.
 
@@ -34,13 +35,17 @@ The columns are the fields of the editors in the CMS handover, one for one.
    section at all. Skipping `0005` means the discovery wizard has nowhere to
    send completed enquiries. Skipping `0007` leaves Vertase with the
    placeholder black logo and the three quotes without their photos and
-   speakers' names. Skipping `0008` leaves the **SEO & AI** section with
+   speakers' names. Skipping `0009` leaves **Hero** and **Team** with nothing
+   to save to — the homepage still works, because both fall back to the wording
+   and the photos committed in the repository. Skipping `0008` leaves the **SEO & AI** section with
    nothing to save to — the live pages still work, because they fall back to
    the wording written in `app/lib/seo/pages.ts`.
 
-   `0006` and `0007` are safe to run on a database that is already live, and
-   safe to run twice. `0007` only changes a value that is still the one
-   `0003`/`0004` seeded, so anything edited in the CMS since is left alone.
+   `0006`, `0007` and `0009` are safe to run on a database that is already
+   live: they only add to it. `0006` and `0007` are also safe to run twice —
+   `0007` only changes a value that is still the one `0003`/`0004` seeded, so
+   anything edited in the CMS since is left alone. `0009` creates tables, so
+   like `0001`–`0005` and `0008` it is run once and will refuse a second time.
 
 3. **Create the one editor account.** Authentication → Users → Add user. Give
    it the email you want to sign in with, set a password, and tick
@@ -75,6 +80,7 @@ the anon key. That key can:
 - read case studies;
 - read the site's search settings, which are by definition public — they are
   what the pages put in their own `<head>`;
+- read the homepage hero and the team photos, which are the page itself;
 - read files in all three buckets.
 
 Every write, and any sight of a draft, requires a signed-in session. The same
@@ -84,7 +90,9 @@ because a Server Action is a public endpoint. Postgres itself refuses the write
 regardless.
 
 Every bucket also caps what it will accept — 10 MB of image for `blog-images`,
-15 MB of image or MP4/WebM for `case-study-media`, 5 MB for `site-assets`. The
+and 15 MB of image or MP4/WebM for both `case-study-media` and `site-assets`
+(`0009` raised the latter from 5 MB of image only, so it could hold the hero
+recording). The
 editor checks a file before uploading it and explains what is wrong in plain
 words; these caps are the backstop, so the limits hold even if that check is
 bypassed. `site-assets` is the only bucket that accepts SVG, because a favicon
@@ -102,6 +110,22 @@ leave the live site word for word as it was built.
 The same is true of the favicon. `public/favicon.ico` is still the site's icon;
 uploading one in the CMS points the pages at the uploaded file instead, and
 removing it puts the committed one back.
+
+## Where the hero and the team photos came from
+
+Neither moved either. The hero's headline, sub-heading and button wording are
+still written in `app/lib/homepage/types.ts`, word for word as they were in
+`Hero.tsx`, and the five team photos are still the files in
+`public/team-photos`. `homepage_hero` holds only what somebody has since typed,
+and `team_photos` holds only the tiles somebody has uploaded over — a tile with
+no row shows the committed photo, which is exactly what its **Remove** button
+goes back to.
+
+The hero recording works the same way, with one wrinkle worth knowing: the
+committed one ships as both `public/simtechero.webm` and `public/simtechero.mp4`,
+so a browser that cannot read WebM still has something to play. A recording
+uploaded in the CMS is a single file, so it has no such fallback — which is
+only a consideration for very old browsers, and is why **Remove** exists.
 
 ## Moving the existing content in
 

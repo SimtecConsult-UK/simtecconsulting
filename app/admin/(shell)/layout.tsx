@@ -1,4 +1,5 @@
 import { requireEditor } from "../../lib/auth";
+import { TEAM_SLOTS } from "../../lib/homepage/types";
 import { SEO_PAGES } from "../../lib/seo/pages";
 import { isSupabaseConfigured } from "../../lib/supabase/config";
 import { countCaseStudies, countPosts, countUnreadSubmissions } from "./counts";
@@ -45,7 +46,11 @@ export default async function ShellLayout({
         counts={{
           "/admin/newsletter": posts,
           "/admin/case-studies": caseStudies,
-          // Fixed: the pages the site has, not something that is added to.
+          // Fixed: the tiles the section draws and the pages the site has,
+          // neither of them something an editor adds to, so a constant rather
+          // than a query. The hero is one of a kind and so has no number — see
+          // Sidebar's `counts`.
+          "/admin/team": TEAM_SLOTS.length,
           "/admin/seo": SEO_PAGES.length,
           "/admin/submissions": submissions,
         }}
