@@ -1,0 +1,147 @@
+/* 404 page — see the handover README ("design_handoff_404_page") for the spec.
+   Desktop (≥1024) and mobile (<768) are mocked; tablet takes the README's
+   first option, the stacked mobile layout held to 560px, because the desktop
+   grid's right column is too narrow there for the mascot and outline. */
+
+.nf-root {
+  font-family: var(--font-ibm-plex-sans), "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  /* the site nav is fixed; the handover's nav is in flow */
+  padding: calc(var(--nav-height) + 96px) 80px 96px;
+  min-height: calc(640px + var(--nav-height));
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  --nf-glow: radial-gradient(ellipse 60% 70% at 78% 55%, rgba(20, 184, 166, 0.16), transparent 70%);
+  background: var(--nf-glow), #16171b;
+}
+
+.nf-grid {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: center;
+}
+
+.nf-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.nf-eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5eead4;
+}
+
+.nf-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 64px;
+  line-height: 1.02;
+  letter-spacing: -0.022em;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.nf-body {
+  font-size: 19px;
+  line-height: 1.6;
+  color: #c9cdd3;
+  max-width: 520px;
+}
+
+/* Looks come from components/pill-button.css; centred for the full-width mobile button. */
+.nf-btn {
+  margin-top: 6px;
+  justify-content: center;
+}
+.nf-btn:focus-visible {
+  outline: 2px solid #14b8a6;
+  outline-offset: 4px;
+}
+
+/* ── mascot in front of the outlined "404" ─────────────────────────────── */
+
+/* sized by the robot; the outline is out of flow */
+.nf-art {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.nf-outline {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  /* 300px at the 1280 reference, easing to 240px at 1024 so it stays inside its column */
+  font-size: clamp(240px, 23.4vw, 300px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(94, 234, 212, 0.28);
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
+.nf-robot {
+  position: relative;
+  width: 340px;
+  height: 520px;
+  /* a flex item would otherwise narrow while its height stays put, squashing it */
+  flex-shrink: 0;
+}
+
+/* ── mobile and tablet ─────────────────────────────────────────────────── */
+
+@media (max-width: 1023px) {
+  /* no bottom padding: the mascot sits flush with the footer */
+  .nf-root {
+    padding: calc(var(--nav-height) + 48px) 24px 0;
+    min-height: 0;
+    --nf-glow: radial-gradient(ellipse 90% 45% at 50% 82%, rgba(20, 184, 166, 0.18), transparent 70%);
+  }
+  .nf-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    max-width: 560px;
+  }
+  .nf-copy {
+    gap: 20px;
+    align-items: stretch;
+  }
+  .nf-eyebrow {
+    font-size: 11px;
+  }
+  .nf-title {
+    font-size: 40px;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+  }
+  .nf-body {
+    font-size: 17px;
+  }
+  .nf-art {
+    margin-top: 12px;
+  }
+  .nf-outline {
+    top: 44%;
+    font-size: 170px;
+    -webkit-text-stroke-width: 1.5px;
+  }
+  .nf-robot {
+    width: 250px;
+    height: 380px;
+  }
+}

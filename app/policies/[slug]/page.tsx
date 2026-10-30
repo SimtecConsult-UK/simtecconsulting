@@ -14,7 +14,7 @@ import {
   getPolicySlugs,
   getSiblings,
 } from "../../lib/legal/policies";
-import { ROUTES } from "../../lib/sections";
+import { ROUTES, policyHref } from "../../lib/sections";
 import "../../components/legal/legal.css";
 
 /** The section that closes several policies with an approval and signature. */
@@ -145,7 +145,7 @@ export default async function PolicyPage(props: PageProps<"/policies/[slug]">) {
                   {siblings.map((sibling) => (
                     <Link
                       key={sibling.slug}
-                      href={`/policies/${sibling.slug}`}
+                      href={policyHref(sibling.slug)}
                       className="lg-p-other-link"
                     >
                       {sibling.name}

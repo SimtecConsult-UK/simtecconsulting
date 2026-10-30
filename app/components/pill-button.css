@@ -1,0 +1,33 @@
+/* The rounded "pill" button shared by the About and 404 pages. Colour variants
+   that only one page uses (About's secondary and ghost) stay in its own CSS,
+   which must load after this file so their border colours win. */
+
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 15px 26px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.pill-btn-sm {
+  font-size: 15px;
+  padding: 12px 20px;
+}
+.pill-btn-lg {
+  padding: 16px 28px;
+}
+/* White on #FF2D7A fails contrast, so the pink button carries charcoal text. */
+.pill-btn-primary {
+  background: #ff2d7a;
+  color: #16171b;
+  font-weight: 700;
+}
+.pill-btn-primary:hover {
+  background: #ff4f90;
+}

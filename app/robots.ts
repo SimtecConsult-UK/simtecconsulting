@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { ROUTES } from "./lib/sections";
+import { UNLISTED_ROUTES, absoluteUrl } from "./lib/sections";
 
 // AI/LLM crawlers that respect robots.txt (training + browsing agents), in addition
 // to the wildcard rule below which already covers standard search engine bots.
@@ -33,12 +33,13 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: [ROUTES.discovery, ROUTES.termsProject, ROUTES.admin],
+        disallow: UNLISTED_ROUTES,
       },
       {
         userAgent: AI_CRAWLER_USER_AGENTS,
         disallow: "/",
       },
     ],
+    sitemap: absoluteUrl("/sitemap.xml"),
   };
 }
