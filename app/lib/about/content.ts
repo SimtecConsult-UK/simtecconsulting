@@ -225,13 +225,13 @@ export const ENGAGEMENT = {
 };
 
 export const COST = {
-  tiles: [
-    { label: "Many initial projects", value: "around £40,000" },
-    { label: "Focused projects", value: "around 8–12 weeks" },
-  ],
+  title: "How much does bespoke software cost?",
   paragraphs: [
-    "Many initial projects are around £40,000, although the price can be lower or significantly higher depending on complexity. This is a reference point, not a package or a promise of specific features for that amount. A typical scoped proposal covers the agreed discovery/design activities, development, project coordination, testing and launch deliverables as expressly listed; integrations, migration and training are included only where specified. Ongoing hosting, maintenance and support are quoted separately.",
-    "Focused projects can take around 8–12 weeks once work starts, but timing depends on the scope, integrations, customer availability and agreed milestones. We set the actual plan in the proposal.",
+    "There’s no standard price for bespoke software, because there’s no standard project.",
+    "We’ve delivered projects starting at £10,000, while larger, more complex systems require considerably greater investment.",
+    "We can work with a wide range of budgets. The important thing is understanding what you’re trying to achieve and what’s realistically possible within your available investment.",
+    "We’ll help you prioritise what matters, challenge anything that doesn’t justify its cost and define a scope that makes commercial sense.",
+    "You’ll receive a clear proposal covering costs, deliverables and timescales before committing to development.",
   ],
   cta: "Want a view on your project?",
 };

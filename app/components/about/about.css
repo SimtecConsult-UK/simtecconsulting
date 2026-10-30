@@ -421,37 +421,6 @@
   line-height: 1.7;
 }
 
-/* ── cost ──────────────────────────────────────────────────────────────── */
-
-.ab-tiles {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-.ab-tile {
-  background: #16171b;
-  border-radius: 14px;
-  padding: 24px 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.ab-tile-label {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #5eead4;
-}
-.ab-tile-value {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 40px;
-  line-height: 1;
-  color: #ffffff;
-}
-
 /* ── FAQ ───────────────────────────────────────────────────────────────── */
 
 .ab-faq {
@@ -702,7 +671,6 @@
     font-size: 20px;
   }
   .ab-cards,
-  .ab-tiles,
   .ab-card--wide .ab-dots {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -710,9 +678,6 @@
   .ab-card--feature,
   .ab-cap {
     padding: 20px;
-  }
-  .ab-tile-value {
-    font-size: 32px;
   }
   .ab-bar {
     padding: 20px;
