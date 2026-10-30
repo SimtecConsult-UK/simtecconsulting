@@ -57,7 +57,9 @@ function WhatWeStore() {
         <dd className="mt-1 text-white/60">
           Keeps the site working: it remembers your answers if you start the
           discovery workshop form, and it remembers the choice you make here.
-          These cannot be switched off without breaking those features.
+          Our WhatsApp chat, provided by Elfsight, also notes when you first
+          visited and whether it has greeted you, so it does not keep popping
+          up. These cannot be switched off without breaking those features.
         </dd>
       </div>
       <div>
@@ -70,8 +72,8 @@ function WhatWeStore() {
             </>
           ) : (
             <>
-              We do not use any at the moment — this site loads no analytics,
-              advertising or third-party tracking. Your choice is recorded now
+              We do not use any at the moment — this site loads no analytics
+              or advertising. Your choice is recorded now
               so that it already applies if that ever changes.
             </>
           )}

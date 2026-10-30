@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CookieSettingsLink } from "./CookieSettingsLink";
+import { FooterContactIcons, WhatsAppChatWidget } from "./FooterContactIcons";
 import { FooterLogoLink } from "./FooterLogoLink";
 import { ROUTES } from "../lib/sections";
 import { hasPublishedPosts } from "../lib/blog/posts";
@@ -128,6 +129,7 @@ export async function Footer() {
             >
               hello@simtecconsult.com
             </a>
+            <FooterContactIcons />
           </div>
 
           <div>
@@ -152,6 +154,7 @@ export async function Footer() {
           <span>&copy; {new Date().getFullYear()} Simtec Consult Ltd. All rights reserved.</span>
         </div>
       </div>
+      <WhatsAppChatWidget />
     </footer>
   );
 }

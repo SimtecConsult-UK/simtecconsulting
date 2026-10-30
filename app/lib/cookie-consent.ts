@@ -1,8 +1,11 @@
 /**
  * The visitor's cookie choice, and the one switch that decides whether we ask.
  *
- * The site currently loads no analytics, advertising or third-party embeds, so
- * there is nothing optional to consent to and no banner interrupts anyone. The
+ * The site currently loads no analytics or advertising, so there is nothing
+ * optional to consent to and no banner interrupts anyone. The one third-party
+ * embed, the Elfsight WhatsApp chat (WhatsAppChatWidget), is deliberately left
+ * outside this gate: it is how visitors reach us, so it loads for everyone and
+ * is described under "Essential" in the settings dialog. The
  * machinery is here so that the gate exists *before* something optional is
  * added rather than after: set `OPTIONAL_COOKIES_IN_USE` to true at that point
  * and the banner starts appearing for visitors who have not yet chosen.
