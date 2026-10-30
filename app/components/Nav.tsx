@@ -8,12 +8,28 @@ import { useModalOverlay } from "../hooks/useModalOverlay";
 import { useHomeLinkClick } from "../hooks/useHomeLinkClick";
 import { BOOKING_URL, ROUTES, SECTION_IDS } from "../lib/sections";
 
+// Entries starting with "#" are sections of the homepage; the rest are pages
+// of their own, linked as such and lit up while they are open.
 const links = [
   { label: "Solutions", href: `#${SECTION_IDS.solutions}` },
-  { label: "Our Team", href: `#${SECTION_IDS.team}` },
+  { label: "About", href: ROUTES.about },
+  { label: "People", href: `#${SECTION_IDS.team}` },
   { label: "Case Studies", href: `#${SECTION_IDS.caseStudies}` },
   { label: "Testimonials", href: `#${SECTION_IDS.testimonials}` },
 ];
+
+const CURRENT_LINK = "text-[#2dd4bf]";
+
+/** One nav entry. Pages go through next/link, without prefetching the page
+    already open; sections stay plain <a> (see `navLink` in Nav). */
+function NavAnchor({
+  page,
+  current,
+  ...props
+}: React.ComponentProps<"a"> & { href: string; page: boolean; current: boolean }) {
+  const shared = { ...props, "aria-current": current ? ("page" as const) : undefined };
+  return page ? <Link {...shared} prefetch={current ? false : undefined} /> : <a {...shared} />;
+}
 
 /** The white wordmark, linking home. Both nav surfaces render the same asset
     and accessible name; only the size hints and the menu-closing click differ. */
@@ -72,6 +88,10 @@ export function Nav({ solid = false }: NavProps) {
   // smooth scrolling for hash targets, which would turn the glide down to a
   // section into an abrupt jump.
   const sectionHref = (href: string) => (onHome ? href : `/${href}`);
+  const navLink = (href: string) => {
+    const page = !href.startsWith("#");
+    return { page, current: pathname === href, href: page ? href : sectionHref(href) };
+  };
   // On the homepage the logo points at the page we are already on, so skip the
   // viewport prefetch that would re-download the home payload for nothing.
   const logoPrefetch = onHome ? false : undefined;
@@ -109,17 +129,22 @@ export function Nav({ solid = false }: NavProps) {
             onClick={onHome ? scrollToHero : undefined}
           />
 
-          <ul className="hidden min-[900px]:flex items-center gap-[38px]">
-            {links.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={sectionHref(link.href)}
-                  className="text-[15px] font-semibold text-white/70 transition-colors duration-150 hover:text-white"
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
+          <ul className="hidden min-[900px]:flex items-center gap-[26px] min-[1100px]:gap-[38px]">
+            {links.map((link) => {
+              const nav = navLink(link.href);
+              return (
+                <li key={link.href}>
+                  <NavAnchor
+                    {...nav}
+                    className={`text-[15px] font-semibold transition-colors duration-150 ${
+                      nav.current ? CURRENT_LINK : "text-white/70 hover:text-white"
+                    }`}
+                  >
+                    {link.label}
+                  </NavAnchor>
+                </li>
+              );
+            })}
           </ul>
 
           <div className="flex items-center gap-3.5">
@@ -184,22 +209,27 @@ export function Nav({ solid = false }: NavProps) {
           </div>
 
           <ul className="mt-10 flex flex-col">
-            {links.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={sectionHref(link.href)}
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 py-[17px] text-[24px] font-bold text-white"
-                  style={{
-                    fontFamily: "var(--font-league-spartan)",
-                    letterSpacing: "-0.005em",
-                    borderBottom: "1px solid rgba(255,255,255,0.08)",
-                  }}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
+            {links.map((link) => {
+              const nav = navLink(link.href);
+              return (
+                <li key={link.href}>
+                  <NavAnchor
+                    {...nav}
+                    onClick={() => setMenuOpen(false)}
+                    className={`flex items-center gap-3 py-[17px] text-[24px] font-bold ${
+                      nav.current ? CURRENT_LINK : "text-white"
+                    }`}
+                    style={{
+                      fontFamily: "var(--font-league-spartan)",
+                      letterSpacing: "-0.005em",
+                      borderBottom: "1px solid rgba(255,255,255,0.08)",
+                    }}
+                  >
+                    {link.label}
+                  </NavAnchor>
+                </li>
+              );
+            })}
           </ul>
 
           <a

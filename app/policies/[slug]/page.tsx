@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Nav } from "../../components/Nav";
 import { Footer } from "../../components/Footer";
 import { Blocks } from "../../components/legal/Blocks";
-import { ContentsNav } from "../../components/legal/ContentsNav";
+import { ContentsNav } from "../../components/contents/ContentsNav";
 import { DownloadIcon } from "../../components/legal/icons";
 import { ibmPlexSans } from "../../lib/fonts";
 import { POLICY_COUNT } from "../../lib/legal/catalog";
@@ -128,7 +128,9 @@ export default async function PolicyPage(props: PageProps<"/policies/[slug]">) {
             <aside className="lg-p-side">
               <div className="lg-p-sidecard lg-p-contents">
                 <ContentsNav
-                  variant="side"
+                  listClassName="lg-p-side-list"
+                  linkClassName="lg-p-side-link"
+                  labelClassName="lg-eyebrow"
                   label="Contents"
                   items={policy.sections.map((section) => ({
                     id: section.id,

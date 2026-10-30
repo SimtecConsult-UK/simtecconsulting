@@ -1,15 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { useScrollEffect } from "../../hooks/useScrollEffect";
-import { ChevronIcon } from "./icons";
+import { ChevronIcon } from "../legal/icons";
+import "./contents-nav.css";
 
 export type ContentsItem = { id: string; label: string };
 
 type Props = {
   items: ContentsItem[];
-  /** "rail" is the Terms index rail (1a); "side" is the policy sidebar card (1c). */
-  variant: "rail" | "side";
+  /** The page's own look for the list and its links; the current link also
+      gets `is-active`. */
+  listClassName: string;
+  linkClassName: string;
+  /** The page's look for the label, shown above the list on desktop and in
+      the toggle on small screens. */
+  labelClassName: string;
+  /** Prefix each label with its position, as the Terms clause index does. */
+  numbered?: boolean;
   /** Shown above the list on desktop, and inside the toggle on small screens. */
   label?: string;
 };
@@ -41,44 +49,49 @@ function useActiveSection(ids: string[]) {
   return active;
 }
 
-export function ContentsNav({ items, variant, label = "Contents" }: Props) {
+export function ContentsNav({
+  items,
+  listClassName,
+  linkClassName,
+  labelClassName,
+  numbered = false,
+  label = "Contents",
+}: Props) {
   const ids = useMemo(() => items.map((item) => item.id), [items]);
   const active = useActiveSection(ids);
   const [open, setOpen] = useState(false);
 
-  const linkClass = variant === "rail" ? "lg-t-rail-link" : "lg-p-side-link";
-  const listClass = variant === "rail" ? "lg-t-rail-list" : "lg-p-side-list";
-  const navId = `lg-contents-${variant}`;
+  const navId = useId();
 
   return (
     <>
       <button
         type="button"
-        className="lg-toggle"
+        className="cn-toggle"
         aria-expanded={open}
         aria-controls={navId}
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="lg-eyebrow">{label}</span>
+        <span className={labelClassName}>{label}</span>
         <ChevronIcon />
       </button>
 
-      <span className="lg-eyebrow lg-collapsed">{label}</span>
+      <span className={`${labelClassName} cn-collapsed`}>{label}</span>
 
       <nav
         id={navId}
-        className={open ? listClass : `${listClass} lg-collapsed`}
+        className={open ? listClassName : `${listClassName} cn-collapsed`}
         aria-label={label}
       >
         {items.map((item, index) => (
           <a
             key={item.id}
             href={`#${item.id}`}
-            className={item.id === active ? `${linkClass} is-active` : linkClass}
+            className={item.id === active ? `${linkClassName} is-active` : linkClassName}
             onClick={() => setOpen(false)}
           >
             <span>
-              {variant === "rail" ? `${index + 1}. ${item.label}` : item.label}
+              {numbered ? `${index + 1}. ${item.label}` : item.label}
             </span>
           </a>
         ))}

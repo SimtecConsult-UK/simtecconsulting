@@ -155,6 +155,11 @@ export function PageSeoEditor({
           takeawayPlaceholder="In one or two sentences, what is the plain answer this page gives?"
           faqs={draft.faqs}
           onFaqs={(faqs) => set("faqs", faqs)}
+          faqsLockedNote={
+            page.faqsInCode
+              ? "This page shows its own questions on screen, and those are what search engines and AI assistants are given. Changing them is a copy change, so ask the developer."
+              : undefined
+          }
           schemaType={draft.schemaType}
           schemaOptions={PAGE_SCHEMA_TYPES}
           onSchemaType={(value) => set("schemaType", value)}

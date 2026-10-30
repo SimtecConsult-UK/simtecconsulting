@@ -74,6 +74,11 @@ export async function Footer() {
             </h4>
             <ul className="mt-4 space-y-3">
               <li>
+                <Link href={ROUTES.about} className="text-black/60 hover:text-black">
+                  About Simtec
+                </Link>
+              </li>
+              <li>
                 {blogIsLive ? (
                   <Link href={ROUTES.blog} className="text-black/60 hover:text-black">
                     Blog

@@ -13,6 +13,9 @@
   --lg-accent: #0fae9a;
   --lg-accent-deep: #0b8d7d;
   --lg-gutter: 56px;
+  /* the contents toggle (components/contents) outlines itself in each
+     template's own rule colour */
+  --contents-border: var(--lg-rule);
 }
 
 .lg-t {
@@ -829,35 +832,10 @@
   .lg-p-other {
     order: 1;
   }
-  .lg-p-sidecard .lg-toggle {
+  .lg-p-sidecard .cn-toggle {
     border: 0;
     padding: 0;
     background: none;
-  }
-
-  .lg-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    background: #ffffff;
-    border: 1px solid var(--lg-rule);
-    border-radius: 12px;
-    padding: 14px 18px;
-    font: inherit;
-    cursor: pointer;
-    text-align: left;
-  }
-  .lg-toggle svg {
-    flex: none;
-    transition: transform 150ms ease;
-  }
-  .lg-toggle[aria-expanded="true"] svg {
-    transform: rotate(180deg);
-  }
-  .lg-collapsed {
-    display: none;
   }
   .lg-t-rail {
     position: static;
@@ -866,12 +844,6 @@
   .lg-clause {
     grid-template-columns: minmax(0, 1fr);
     gap: 4px;
-  }
-}
-
-@media (min-width: 900px) {
-  .lg-toggle {
-    display: none;
   }
 }
 
