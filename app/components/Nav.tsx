@@ -13,10 +13,10 @@ import { ArrowIcon } from "./ArrowIcon";
 // of their own, linked as such and lit up while they are open.
 const links = [
   { label: "Solutions", href: `#${SECTION_IDS.solutions}` },
-  { label: "About", href: ROUTES.about },
   { label: "People", href: `#${SECTION_IDS.team}` },
   { label: "Case Studies", href: `#${SECTION_IDS.caseStudies}` },
   { label: "Testimonials", href: `#${SECTION_IDS.testimonials}` },
+  { label: "About", href: ROUTES.about },
 ];
 
 const CURRENT_LINK = "text-[#2dd4bf]";

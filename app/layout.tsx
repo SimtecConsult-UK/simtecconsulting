@@ -62,7 +62,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${leagueSpartan.variable} ${jetbrainsMono.variable} h-full antialiased`}>
+    // data-scroll-behavior tells Next to suspend the smooth scrolling set in
+    // globals.css while it moves to a new page. Without it the jump to the top
+    // of the new page is animated, and on long pages it stalls partway down.
+    <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${leagueSpartan.variable} ${jetbrainsMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-surface text-on-surface">
         {children}
         <CookieConsent />
