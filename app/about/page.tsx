@@ -19,7 +19,7 @@ import {
   COST,
   ENGAGEMENT,
   FAQS,
-  FOUNDER_PHOTO,
+  FOUNDER_PHOTOS,
   HERO,
   PEOPLE,
   PROOF,
@@ -65,15 +65,25 @@ export default function AboutPage() {
           <div className="ab-grid">
             <div className="ab-panel">
               <Section id={S.story.id} title="Our story" gap={18}>
-                {FOUNDER_PHOTO && (
-                  <Image
-                    className="ab-photo"
-                    src={FOUNDER_PHOTO.src}
-                    alt={FOUNDER_PHOTO.alt}
-                    width={FOUNDER_PHOTO.width}
-                    height={FOUNDER_PHOTO.height}
-                    sizes="(min-width: 1180px) 686px, (min-width: 900px) calc(100vw - 430px), (min-width: 640px) calc(100vw - 106px), calc(100vw - 74px)"
-                  />
+                {FOUNDER_PHOTOS.length > 0 && (
+                  <div className="ab-founders">
+                    {FOUNDER_PHOTOS.map((p) => (
+                      <figure key={p.src} className="ab-founder">
+                        <Image
+                          className="ab-photo"
+                          src={p.src}
+                          alt={p.name}
+                          width={p.width}
+                          height={p.height}
+                          sizes="(min-width: 900px) 370px, (min-width: 420px) 50vw, 260px"
+                        />
+                        <figcaption>
+                          <strong>{p.name}</strong>
+                          <span>{p.role}</span>
+                        </figcaption>
+                      </figure>
+                    ))}
+                  </div>
                 )}
                 <Paragraphs items={STORY.paragraphs} />
                 <blockquote className="ab-quote">
