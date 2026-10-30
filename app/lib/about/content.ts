@@ -18,17 +18,32 @@ export const WORK_HREF = `${ROUTES.home}#${SECTION_IDS.caseStudies}`;
 export type Rich = (string | { text: string; href: string })[];
 
 /**
- * The founders' photo for the "Our story" section. The handover leaves a slot
- * for it; until the file is supplied the section simply has no photo.
- * Drop the image in /public and fill this in — width and height are the file's
- * own pixel size, used for the aspect ratio only.
+ * The founders' portraits for the "Our story" section, shown side by side in
+ * this order. Width and height are each file's own pixel size; the photo is
+ * shown at that shape, so keep both portraits the same shape.
  */
-export const FOUNDER_PHOTO: {
+export const FOUNDER_PHOTOS: {
   src: string;
-  alt: string;
+  name: string;
+  role: string;
   width: number;
   height: number;
-} | null = null;
+}[] = [
+  {
+    src: "/founders/joseph-osullivan.jpg",
+    name: "Joseph O’Sullivan",
+    role: "Founder & Managing Director",
+    width: 720,
+    height: 899,
+  },
+  {
+    src: "/founders/andrew-brooks.jpg",
+    name: "Andrew Brooks",
+    role: "Technical architecture & engineering",
+    width: 720,
+    height: 899,
+  },
+];
 
 /** Each section's anchor and its shorter label in the "On this page" card. */
 export const ABOUT_SECTIONS = {

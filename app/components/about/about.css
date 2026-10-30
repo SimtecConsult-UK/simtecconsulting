@@ -181,13 +181,39 @@
 
 /* ── our story ─────────────────────────────────────────────────────────── */
 
+.ab-founders {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 4px 0 8px;
+}
+.ab-founder {
+  margin: 0;
+}
 .ab-photo {
   display: block;
   width: 100%;
-  height: 300px;
-  object-fit: cover;
+  height: auto;
   border-radius: 12px;
-  margin: 4px 0 8px;
+}
+.ab-founder figcaption {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.ab-founder figcaption strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ab-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+/* On the narrowest phones two columns leave tiny photos and ragged captions. */
+@media (max-width: 419px) {
+  .ab-founders {
+    grid-template-columns: minmax(0, 260px);
+    gap: 24px;
+  }
 }
 .ab-quote {
   border-left: 3px solid var(--ab-teal);
