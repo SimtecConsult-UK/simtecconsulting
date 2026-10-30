@@ -39,7 +39,7 @@ export const FOUNDER_PHOTOS: {
   {
     src: "/founders/andrew-brooks.jpg",
     name: "Andrew Brooks",
-    role: "Technical architecture & engineering",
+    role: "Director & Technical Lead",
     width: 720,
     height: 899,
   },
