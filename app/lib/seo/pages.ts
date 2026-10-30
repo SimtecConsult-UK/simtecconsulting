@@ -36,6 +36,9 @@ export type SeoPage = {
   fallbackDescription: string;
   /** What this page is, before anybody chooses otherwise. */
   defaultSchemaType: PageSchemaType;
+  /** The page shows a FAQ of its own and publishes that one, so the CMS's FAQ
+      pairs would never reach anyone; the editor says so instead of offering them. */
+  faqsInCode?: boolean;
 };
 
 export const SEO_PAGES: SeoPage[] = [
@@ -48,6 +51,17 @@ export const SEO_PAGES: SeoPage[] = [
     fallbackDescription:
       "Construction management software that helps teams deliver projects faster, safer, and on budget.",
     defaultSchemaType: "WebPage",
+  },
+  {
+    id: "about",
+    path: ROUTES.about,
+    name: "About",
+    blurb: "Who Simtec is, how an engagement works, cost guidance and buyer FAQs.",
+    fallbackTitle: "About Simtec — Bespoke operational software",
+    fallbackDescription:
+      "Simtec designs and builds bespoke operational software for construction, infrastructure and environmental businesses, around the way your teams actually work.",
+    defaultSchemaType: "AboutPage",
+    faqsInCode: true,
   },
   {
     id: "newsletter",

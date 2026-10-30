@@ -1,4 +1,5 @@
 import { ROUTES, absoluteUrl } from "../lib/sections";
+import type { FaqPair } from "../lib/blog/types";
 import { faqNode, organisationNode } from "../lib/seo/jsonLd";
 import { resolvePage } from "../lib/seo/metadata";
 import { JsonLd } from "./JsonLd";
@@ -14,7 +15,15 @@ import { JsonLd } from "./JsonLd";
  * Blog posts emit their own, shaped as an Article, from `app/blog/[slug]` —
  * built from the same `organisationNode` and `faqNode` as these.
  */
-export async function SeoJsonLd({ path }: { path: string }) {
+export async function SeoJsonLd({
+  path,
+  faqs,
+}: {
+  path: string;
+  /** A FAQ the page itself shows. Wins over the CMS pairs, because Google only
+      honours FAQ markup that matches the questions on screen. */
+  faqs?: FaqPair[];
+}) {
   const { page, settings, title, description, shareImage } = await resolvePage(path);
   // JSON-LD is emitted verbatim rather than resolved by Next, so every address
   // in it has to be absolute.
@@ -37,7 +46,7 @@ export async function SeoJsonLd({ path }: { path: string }) {
             ? { provider: organisation }
             : { publisher: organisation }),
         },
-        faqNode(page.faqs),
+        faqNode(faqs ?? page.faqs),
         // Who Simtec is, said once, on the page an assistant is most likely to read.
         path === ROUTES.home ? { "@context": "https://schema.org", ...organisation } : null,
       ]}

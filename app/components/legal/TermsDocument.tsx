@@ -1,5 +1,5 @@
 import { Blocks } from "./Blocks";
-import { ContentsNav } from "./ContentsNav";
+import { ContentsNav } from "../contents/ContentsNav";
 import { ibmPlexSans } from "../../lib/fonts";
 import type { TermsDoc } from "../../lib/legal/types";
 import "./legal.css";
@@ -35,7 +35,10 @@ export function TermsDocument({ doc }: { doc: TermsDoc }) {
       <div className="lg-t-body">
         <aside className="lg-t-rail">
           <ContentsNav
-            variant="rail"
+            listClassName="lg-t-rail-list"
+            linkClassName="lg-t-rail-link"
+            labelClassName="lg-eyebrow"
+            numbered
             label="On this page"
             items={doc.sections.map((section) => ({
               id: section.id,

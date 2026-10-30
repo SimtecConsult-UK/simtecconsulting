@@ -17,6 +17,7 @@ export const BOOKING_URL = "https://calendly.com/simtec/simtec-software";
 
 export const ROUTES = {
   home: "/",
+  about: "/about",
   /** The discovery questionnaire. Issued by direct link; see BOOKING_URL. */
   discovery: "/discovery",
   blog: "/blog",

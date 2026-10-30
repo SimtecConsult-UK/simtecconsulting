@@ -1,0 +1,40 @@
+/* The contents list's own behaviour: below 900px it collapses behind a toggle.
+   Imported by ContentsNav itself, so any page using it gets this without
+   pulling in a whole page family's stylesheet. Pages style the label, list and
+   links through the class names they pass in, and can set --contents-border
+   for the toggle's outline. */
+
+@media (max-width: 899px) {
+  .cn-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid var(--contents-border, #e2e7ea);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+  }
+  .cn-toggle svg {
+    flex: none;
+    transition: transform 150ms ease;
+  }
+  .cn-toggle[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+  /* Important because it has to beat whatever `display` the page gives its
+     list, and this sheet's position relative to the page's is not fixed. */
+  .cn-collapsed {
+    display: none !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .cn-toggle {
+    display: none;
+  }
+}

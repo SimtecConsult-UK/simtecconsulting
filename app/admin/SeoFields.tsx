@@ -236,6 +236,7 @@ export function AnswerContentFields<T extends string>({
   takeawayPlaceholder = "State the answer plainly in one or two sentences.",
   faqs,
   onFaqs,
+  faqsLockedNote,
   schemaType,
   schemaOptions,
   onSchemaType,
@@ -251,6 +252,9 @@ export function AnswerContentFields<T extends string>({
   takeawayPlaceholder?: string;
   faqs: FaqPair[];
   onFaqs: (faqs: FaqPair[]) => void;
+  /** Shown instead of the FAQ list when the page publishes its own on-screen
+      FAQ, which is what search engines get regardless of anything typed here. */
+  faqsLockedNote?: React.ReactNode;
   schemaType: T;
   schemaOptions: { value: T; label: string }[];
   onSchemaType: (value: T) => void;
@@ -266,7 +270,14 @@ export function AnswerContentFields<T extends string>({
         onChange={onKeyTakeaway}
       />
 
-      <FaqEditor faqs={faqs} onChange={onFaqs} />
+      {faqsLockedNote ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span className="cms-label">FAQ pairs</span>
+          <p className="cms-help">{faqsLockedNote}</p>
+        </div>
+      ) : (
+        <FaqEditor faqs={faqs} onChange={onFaqs} />
+      )}
 
       <label className="cms-field" style={{ maxWidth: 260 }}>
         <span className="cms-label">Schema type</span>
