@@ -58,7 +58,18 @@ export function absoluteUrl(path: string): string {
   return path.startsWith("http") ? path : `${SITE_URL}${path}`;
 }
 
+/**
+ * Kept out of search: disallowed in app/robots.ts and left out of app/sitemap.ts,
+ * so the two cannot disagree about a page.
+ */
+export const UNLISTED_ROUTES: string[] = [ROUTES.discovery, ROUTES.termsProject, ROUTES.admin];
+
 /** The path of one blog post. Keeps `/blog` spelt in exactly one place. */
 export function postHref(slug: string): string {
   return `${ROUTES.blog}/${slug}`;
+}
+
+/** The path of one policy, likewise. */
+export function policyHref(slug: string): string {
+  return `${ROUTES.policies}/${slug}`;
 }

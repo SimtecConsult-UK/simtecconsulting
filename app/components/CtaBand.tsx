@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { BOOKING_URL } from "../lib/sections";
+import { ArrowIcon } from "./ArrowIcon";
 
 const OUTPUTS = [
   "High-level workflow review",
@@ -89,9 +90,7 @@ export function CtaBand() {
                   className="font-sans inline-flex items-center gap-[9px] rounded-[8px] bg-[#2dd4bf] px-[26px] py-3.5 text-[15px] font-semibold text-[#06241f] no-underline transition-opacity hover:opacity-85"
                 >
                   Book a Workshop
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 8h10M9 4l4 4-4 4" />
-                  </svg>
+                  <ArrowIcon strokeWidth={2} />
                 </a>
                 <span className="text-[13px] text-white/40">*With no obligation to proceed</span>
               </div>

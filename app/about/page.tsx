@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowIcon } from "../components/ArrowIcon";
 import { Nav } from "../components/Nav";
 import { Footer } from "../components/Footer";
 import { SeoJsonLd } from "../components/SeoJsonLd";
@@ -27,6 +28,7 @@ import {
   WORK_HREF,
   type Rich,
 } from "../lib/about/content";
+import "../components/pill-button.css";
 import "../components/about/about.css";
 
 export function generateMetadata(): Promise<Metadata> {
@@ -263,7 +265,7 @@ function RichText({ parts }: { parts: Rich }) {
 
 type ButtonSize = "sm" | "lg";
 
-const sizeClass = (size?: ButtonSize) => (size ? ` ab-btn-${size}` : "");
+const sizeClass = (size?: ButtonSize) => (size ? ` pill-btn-${size}` : "");
 
 /** "Book a Workshop" goes to the same external booking page as the site nav. */
 function BookButton({ size, withArrow = false }: { size?: ButtonSize; withArrow?: boolean }) {
@@ -272,14 +274,10 @@ function BookButton({ size, withArrow = false }: { size?: ButtonSize; withArrow?
       href={BOOKING_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className={`ab-btn ab-btn-primary${sizeClass(size)}`}
+      className={`pill-btn pill-btn-primary${sizeClass(size)}`}
     >
       Book a Workshop
-      {withArrow && (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M3 8h10M9 4l4 4-4 4" />
-        </svg>
-      )}
+      {withArrow && <ArrowIcon />}
     </a>
   );
 }
@@ -288,7 +286,7 @@ function WorkButton({ size, onDark = false }: { size?: ButtonSize; onDark?: bool
   return (
     <a
       href={WORK_HREF}
-      className={`ab-btn ${onDark ? "ab-btn-ghost" : "ab-btn-secondary"}${sizeClass(size)}`}
+      className={`pill-btn ${onDark ? "ab-btn-ghost" : "ab-btn-secondary"}${sizeClass(size)}`}
     >
       See our work
     </a>

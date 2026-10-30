@@ -98,35 +98,7 @@
 .ab-contact-actions {
   gap: 12px;
 }
-.ab-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  border-radius: 999px;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.2;
-  padding: 15px 26px;
-  text-decoration: none;
-  border: 1px solid transparent;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
-}
-.ab-btn-sm {
-  font-size: 15px;
-  padding: 12px 20px;
-}
-.ab-btn-lg {
-  padding: 16px 28px;
-}
-/* White on #FF2D7A fails contrast, so the pink button carries charcoal text. */
-.ab-btn-primary {
-  background: #ff2d7a;
-  color: #16171b;
-  font-weight: 700;
-}
-.ab-btn-primary:hover {
-  background: #ff4f90;
-}
+/* The base button, sizes and pink primary are shared: components/pill-button.css. */
 .ab-btn-secondary {
   background: #ffffff;
   color: var(--ab-ink);

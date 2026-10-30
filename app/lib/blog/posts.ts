@@ -151,21 +151,52 @@ export const getPost = cache(async (slug: string): Promise<Post | undefined> => 
   return data ? toPost(data as PostRow) : undefined;
 });
 
-/** Every published slug — pre-renders the post pages, and answers hasPublishedPosts(). */
-export const getPostSlugs = cache(async (): Promise<string[]> => {
-  if (!isSupabaseConfigured) return samples().map((post) => post.slug);
+export type PostDates = { slug: string; publishedAt: string; updatedAt: string | null };
+
+/**
+ * Every published post's slug and dates, newest first. Null when the read
+ * failed, so each caller can choose between "no posts" and giving up.
+ */
+const readPostDates = cache(async (): Promise<PostDates[] | null> => {
+  if (!isSupabaseConfigured) {
+    return samples().map(({ slug, publishedAt, updatedAt }) => ({ slug, publishedAt, updatedAt }));
+  }
 
   const { data, error } = await supabasePublic()
     .from("posts")
-    .select("slug")
-    .eq("status", "published");
+    .select("slug,published_at,updated_at")
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
 
   if (error) {
     logRead("slugs", error);
-    return [];
+    return null;
   }
-  return (data as { slug: string }[]).map((row) => row.slug);
+  return (data as PostRow[]).map((row) => ({
+    slug: row.slug,
+    publishedAt: row.published_at,
+    updatedAt: row.updated_at ?? null,
+  }));
 });
+
+/** Every published slug — pre-renders the post pages, and answers hasPublishedPosts(). */
+export const getPostSlugs = cache(async (): Promise<string[]> =>
+  ((await readPostDates()) ?? []).map((post) => post.slug)
+);
+
+/**
+ * What the sitemap lists. Unlike the pages, it never shows the samples (they are
+ * placeholders, not something to put in front of Google), and a failed read
+ * throws rather than returning nothing: Next then keeps serving the last good
+ * sitemap instead of caching one with the whole blog missing from it.
+ */
+export async function getSitemapPosts(): Promise<PostDates[]> {
+  if (!isSupabaseConfigured) return [];
+
+  const posts = await readPostDates();
+  if (!posts) throw new Error("[blog] could not read posts for the sitemap");
+  return posts;
+}
 
 /**
  * Whether there is anything to read yet — the footer links to the blog only

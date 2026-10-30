@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { POLICY_CATEGORIES, POLICY_COUNT } from "../lib/legal/catalog";
-import { ROUTES } from "../lib/sections";
-import { ArrowIcon, SearchIcon } from "../components/legal/icons";
+import { ROUTES, policyHref } from "../lib/sections";
+import { ArrowIcon } from "../components/ArrowIcon";
+import { SearchIcon } from "../components/legal/icons";
 
 /** Handover screen 1c-index: browse and choose one of the policies. */
 export function PoliciesBrowser() {
@@ -99,11 +100,11 @@ export function PoliciesBrowser() {
                 {group.policies.map((policy) => (
                   <Link
                     key={policy.slug}
-                    href={`/policies/${policy.slug}`}
+                    href={policyHref(policy.slug)}
                     className="lg-x-card"
                   >
                     <span>{policy.name}</span>
-                    <ArrowIcon />
+                    <ArrowIcon color="#0fae9a" strokeWidth={1.8} />
                   </Link>
                 ))}
               </div>

@@ -7,6 +7,7 @@ import { useScrollEffect } from "../hooks/useScrollEffect";
 import { useModalOverlay } from "../hooks/useModalOverlay";
 import { useHomeLinkClick } from "../hooks/useHomeLinkClick";
 import { BOOKING_URL, ROUTES, SECTION_IDS } from "../lib/sections";
+import { ArrowIcon } from "./ArrowIcon";
 
 // Entries starting with "#" are sections of the homepage; the rest are pages
 // of their own, linked as such and lit up while they are open.
@@ -240,9 +241,7 @@ export function Nav({ solid = false }: NavProps) {
             className="mt-auto flex items-center justify-center gap-2 rounded-[14px] border border-[#2dd4bf] py-4 text-[16px] font-semibold text-[#2dd4bf]"
           >
             Book a Workshop
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 8h10M9 4l4 4-4 4" />
-            </svg>
+            <ArrowIcon strokeWidth={2} />
           </a>
         </div>
       )}
