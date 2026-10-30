@@ -157,15 +157,7 @@ export default function AboutPage() {
                 </div>
               </Section>
 
-              <Section id={S.cost.id} title="What does it cost?" gap={20}>
-                <div className="ab-tiles">
-                  {COST.tiles.map((tile) => (
-                    <div key={tile.label} className="ab-tile">
-                      <span className="ab-tile-label">{tile.label}</span>
-                      <span className="ab-tile-value">{tile.value}</span>
-                    </div>
-                  ))}
-                </div>
+              <Section id={S.cost.id} title={COST.title} gap={20}>
                 <Paragraphs items={COST.paragraphs} />
                 <div className="ab-bar ab-bar--light">
                   <span className="ab-bar-title">{COST.cta}</span>
