@@ -100,7 +100,21 @@ export type Question = {
    * just regenerate it on the next render, making the remove button on a
    * generated row a no-op. Returns the updated answers. */
   removeSource?: (row: RepRow, answers: Answers) => Answers;
+  /** text only: returns a plain-English problem when a typed value is the
+   * wrong shape (e.g. an email with no "@"), or null when it's fine. A value
+   * with a problem doesn't count as answered and blocks moving forward, so a
+   * typo is caught on the question itself rather than after all 16 sections. */
+  format?: (value: string) => string | null;
 };
+
+// Cheap sanity check only — anything stricter rejects addresses that work.
+// The server runs every question's `format` too (submission.ts), so the
+// wizard never lets through an answer the server would then refuse.
+function emailFormat(value: string): string | null {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+    ? null
+    : "That email address does not look right. Please check it.";
+}
 
 export type Section = {
   name: string;
@@ -259,7 +273,7 @@ export const SECTIONS: Section[] = [
       { id: "company", type: "text", label: "Company", placeholder: "Company name", required: true },
       { id: "contactName", type: "text", label: "Contact name", placeholder: "Full name", required: true },
       { id: "contactRole", type: "text", label: "Contact role/title", placeholder: "e.g. Operations Director" },
-      { id: "email", type: "text", label: "Email", placeholder: "name@company.co.uk", required: true },
+      { id: "email", type: "text", label: "Email", placeholder: "name@company.co.uk", required: true, format: emailFormat },
       { id: "phone", type: "text", label: "Phone", placeholder: "Best number to reach you" },
       { id: "projectName", type: "text", label: "Project name", placeholder: "e.g. Job management system", required: true },
       { id: "projectType", type: "choice", label: "Project type", required: true, options: ["New system", "Replacement", "Enhancement", "Automation", "Reporting/dashboard", "AI/document automation", "Not sure"] },
@@ -1524,19 +1538,60 @@ export function reconcileRepRows(question: Question, answers: Answers, saved: Re
   if (saved === undefined) return generated && generated.length > 0 ? generated : [];
   if (!generated) return saved;
   const generatedKeys = new Set(generated.map((r) => r.__key));
-  const kept = saved.filter(
-    (r) =>
-      !isGeneratedRowKey(r.__key as string | undefined) ||
-      generatedKeys.has(r.__key) ||
-      isRowEdited(question, r)
-  );
-  const keptKeys = new Set(kept.map((r) => r.__key));
   const seedValueOf = (row: RepRow) => question.seedColumns?.map((c) => row[c]).join(" ");
+  // Seed values of rows the user typed in by hand. A generated row that's
+  // still untouched and matches one of these is the same thing twice — e.g.
+  // a stored "Site" row coming back after Site is re-ticked, next to a
+  // "Site" row typed in while it was unticked — so the hand-typed one wins.
+  const handTypedSeedValues = question.seedColumns
+    ? new Set(saved.filter((r) => !isGeneratedRowKey(r.__key as string | undefined)).map(seedValueOf))
+    : null;
+  const kept = saved.filter((r) => {
+    if (!isGeneratedRowKey(r.__key as string | undefined)) return true;
+    if (isRowEdited(question, r)) return true;
+    if (!generatedKeys.has(r.__key)) return false;
+    return !(handTypedSeedValues && handTypedSeedValues.has(seedValueOf(r)));
+  });
+  const keptKeys = new Set(kept.map((r) => r.__key));
   const keptSeedValues = question.seedColumns ? new Set(kept.map(seedValueOf)) : null;
   const added = generated.filter(
     (r) => !keptKeys.has(r.__key) && !(keptSeedValues && keptSeedValues.has(seedValueOf(r)))
   );
   return [...kept, ...added];
+}
+
+// Writing a table's rows back to storage starts from what's on screen, which
+// leaves out generated rows whose source is currently deselected (e.g. a
+// module under a system the user just unticked). Dropping those for good
+// would mean ticking the system again brings its modules back with every
+// priority and note wiped. So the writer carries these along, out of sight —
+// `reconcileRepRows` keeps hiding them until their source is selected again,
+// at which point the saved row (with its edits) is what comes back. Only the
+// on-screen rows are ever reviewed or sent; these never leave the browser.
+//
+// Each hidden row goes back in right after the row it followed before, so
+// when it reappears it's where the user left it, not tacked onto the end.
+export function withParkedRows(saved: RepRow[] | undefined, onScreen: RepRow[], next: RepRow[]): RepRow[] {
+  if (!saved) return next;
+  const onScreenKeys = new Set(onScreen.map((r) => r.__key));
+  const isParked = (r: RepRow) => isGeneratedRowKey(r.__key as string | undefined) && !onScreenKeys.has(r.__key);
+  if (!saved.some(isParked)) return next;
+  const out = [...next];
+  saved.forEach((row, i) => {
+    if (!isParked(row)) return;
+    // Nearest earlier saved row still present (a parked one already placed,
+    // or an on-screen one this change didn't remove); none → the very top.
+    let at = 0;
+    for (let j = i - 1; j >= 0; j--) {
+      const found = out.findIndex((r) => r.__key === saved[j].__key);
+      if (found >= 0) {
+        at = found + 1;
+        break;
+      }
+    }
+    out.splice(at, 0, row);
+  });
+  return out;
 }
 
 // `__`-prefixed keys (`__key`, `__group`, …) are structural bookkeeping the
@@ -1571,12 +1626,22 @@ function groupedMultiVisibleOptions(question: Question, answers: Answers): Set<s
   );
 }
 
+// The current answer's format problem, if it has one — only once something
+// has been typed (an empty optional field is fine; an empty required one is
+// handled by the ordinary "required" check instead).
+export function formatProblem(question: Question, answers: Answers): string | null {
+  const value = answers[question.id];
+  if (!question.format || typeof value !== "string" || !hasText(value)) return null;
+  return question.format(value);
+}
+
 // Shared answered-check for a question given its (already-resolved, for rep
 // questions) rows — used directly by the active question screen, which
 // already has its rows resolved via `rowsFor`.
 export function isQuestionComplete(question: Question, answers: Answers, rows: RepRow[]): boolean {
   switch (question.type) {
     case "text":
+      return hasText(answers[question.id] as string | undefined) && !formatProblem(question, answers);
     case "number":
     case "long":
       return hasText(answers[question.id] as string | undefined);

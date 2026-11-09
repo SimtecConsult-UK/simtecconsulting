@@ -1,4 +1,4 @@
-import { SECTIONS, hasText, sanitizeAnswers, type Answers, type RepRow } from "./data";
+import { SECTIONS, formatProblem, hasText, sanitizeAnswers, type Answers, type RepRow } from "./data";
 import { checkLimits, type FieldCheck } from "../admin/validation";
 
 /**
@@ -223,10 +223,14 @@ export function validateSubmission(input: SubmissionInput): string | null {
     }
   }
 
-  const email = typeof answers.email === "string" ? answers.email.trim() : "";
-  // Cheap sanity check only. Anything stricter rejects addresses that work.
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return "That email address does not look right. Please check it.";
+  // Every visible question's own format rule (e.g. the email check) — the
+  // same rules the wizard applies on the question itself. A question hidden
+  // by `showIf` is skipped, as in the wizard: a leftover answer there is one
+  // the visitor can no longer see, so it couldn't be fixed from the form.
+  for (const question of SECTIONS.flatMap((s) => s.questions)) {
+    if (question.showIf && !question.showIf(answers)) continue;
+    const formatIssue = formatProblem(question, answers);
+    if (formatIssue) return formatIssue;
   }
 
   return null;
