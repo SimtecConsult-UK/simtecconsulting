@@ -1139,102 +1139,114 @@ function RepTable({
     </>
   );
 
+  // Each row and each cell get a wrapper that is `display: contents` on wide
+  // screens — invisible to the shared grid above, so desktop is unchanged —
+  // and turns into a labelled card on phones, where a many-column grid would
+  // otherwise scroll sideways (see `.dw-reprow` in discovery.css).
   const renderRowCells = (row: RepRow, rowIndex: number) => (
-    <>
-      {columns.map((col) => {
-        if (col.chips) {
-          const value = row[col.key];
-          return (
-            <div className="dw-chips" key={col.key}>
-              {["Must", "Nice", "Future"].map((label) => (
-                <span
-                  key={label}
-                  className={`dw-pchip${value === label ? " dw-on" : ""}`}
-                  onClick={() => onSetCell(question, rowIndex, col.key, label)}
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
-          );
-        }
-        if (col.linkOrFile) {
-          const inputId = `${question.id}-${rowIndex}-${col.key}`;
-          const kindKey = `__${col.key}Kind`;
-          return (
-            <div className="dw-linkfile" key={col.key}>
-              <input
-                className="dw-rinp"
-                placeholder={col.placeholder || "https://…"}
-                value={cellText(row[col.key])}
-                onChange={(e) => {
-                  onSetCell(question, rowIndex, col.key, e.target.value);
-                  onSetCell(question, rowIndex, kindKey, "link");
-                }}
-              />
-              <label className="dw-fbtn dw-fbtn-icon" htmlFor={inputId} title="Upload a file instead">
-                ⬆
-                <input
-                  id={inputId}
-                  type="file"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const fileName = e.target.files?.[0]?.name || "";
-                    onSetCell(question, rowIndex, col.key, fileName);
-                    if (fileName) onSetCell(question, rowIndex, kindKey, "file");
-                  }}
-                />
-              </label>
-            </div>
-          );
-        }
-        if (col.options || col.dynamicOptions) {
-          const opts = getOptions(col, row);
-          if (col.multiSelect) {
-            const selected = cellArray(row[col.key]);
-            return (
-              <MultiSelectCell
-                key={col.key}
-                options={opts}
-                selected={selected}
-                placeholder={col.placeholder}
-                onChange={(next) => onSetCell(question, rowIndex, col.key, next)}
-              />
-            );
-          }
-          return (
-            <select
-              key={col.key}
-              className="dw-rinp"
-              value={cellText(row[col.key])}
-              onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
+    <div className="dw-reprow">
+      {columns.map((col) => (
+        <div className="dw-rcell" key={col.key}>
+          <span className="dw-rcl" aria-hidden="true">
+            {col.header}
+          </span>
+          {renderCell(col, row, rowIndex)}
+        </div>
+      ))}
+      <button className="dw-xbtn" onClick={() => onRemoveRow(rowIndex)} aria-label="Remove row">
+        ×<span className="dw-xlbl"> Remove row</span>
+      </button>
+    </div>
+  );
+
+  const renderCell = (col: RepColumn, row: RepRow, rowIndex: number) => {
+    if (col.chips) {
+      const value = row[col.key];
+      return (
+        <div className="dw-chips">
+          {["Must", "Nice", "Future"].map((label) => (
+            <span
+              key={label}
+              className={`dw-pchip${value === label ? " dw-on" : ""}`}
+              onClick={() => onSetCell(question, rowIndex, col.key, label)}
             >
-              <option value="" disabled hidden>
-                {col.placeholder || "Select…"}
-              </option>
-              {opts.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          );
-        }
-        return (
+              {label}
+            </span>
+          ))}
+        </div>
+      );
+    }
+    if (col.linkOrFile) {
+      const inputId = `${question.id}-${rowIndex}-${col.key}`;
+      const kindKey = `__${col.key}Kind`;
+      return (
+        <div className="dw-linkfile">
           <input
-            key={col.key}
             className="dw-rinp"
-            placeholder={col.placeholder}
+            placeholder={col.placeholder || "https://…"}
             value={cellText(row[col.key])}
-            onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
+            onChange={(e) => {
+              onSetCell(question, rowIndex, col.key, e.target.value);
+              onSetCell(question, rowIndex, kindKey, "link");
+            }}
+          />
+          <label className="dw-fbtn dw-fbtn-icon" htmlFor={inputId} title="Upload a file instead">
+            ⬆
+            <input
+              id={inputId}
+              type="file"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const fileName = e.target.files?.[0]?.name || "";
+                onSetCell(question, rowIndex, col.key, fileName);
+                if (fileName) onSetCell(question, rowIndex, kindKey, "file");
+              }}
+            />
+          </label>
+        </div>
+      );
+    }
+    if (col.options || col.dynamicOptions) {
+      const opts = getOptions(col, row);
+      if (col.multiSelect) {
+        const selected = cellArray(row[col.key]);
+        return (
+          <MultiSelectCell
+            options={opts}
+            selected={selected}
+            placeholder={col.placeholder}
+            onChange={(next) => onSetCell(question, rowIndex, col.key, next)}
           />
         );
-      })}
-      <button className="dw-xbtn" onClick={() => onRemoveRow(rowIndex)} aria-label="Remove row">
-        ×
-      </button>
-    </>
-  );
+      }
+      return (
+        <select
+          className="dw-rinp"
+          value={cellText(row[col.key])}
+          onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
+          aria-label={col.header}
+        >
+          <option value="" disabled hidden>
+            {col.placeholder || "Select…"}
+          </option>
+          {opts.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      );
+    }
+    return (
+      <input
+        className="dw-rinp"
+        placeholder={col.placeholder}
+        value={cellText(row[col.key])}
+        onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
+        aria-label={col.header}
+      />
+    );
+  };
 
   const renderTable = (indices: number[], extra?: Record<string, string>) => (
     <>
