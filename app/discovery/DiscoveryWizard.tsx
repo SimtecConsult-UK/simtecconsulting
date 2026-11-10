@@ -1219,121 +1219,140 @@ function RepTable({
   // than a separate grid per row) so "auto"-sized columns — the priority
   // chips — settle on a single shared width instead of sizing independently
   // per row and drifting out of alignment with the header.
+  const isRequiredColumn = (col: RepColumn) => !!question.required && !!question.requiredColumns?.includes(col.key);
   const renderHeaderCells = () => (
     <>
       {columns.map((c) => (
         <span className="dw-rh" key={c.key}>
           {c.header}
-          {question.required && question.requiredColumns?.includes(c.key) && (
+          {isRequiredColumn(c) && (
             <span className="dw-rh-req" title="Required on every row">
               {" "}*<span className="sr-only"> (required)</span>
             </span>
           )}
         </span>
       ))}
-      <span />
+      <span className="dw-rh" />
     </>
   );
 
+  // Each row and each cell get a wrapper that is `display: contents` on wide
+  // screens — invisible to the shared grid above, so desktop is unchanged —
+  // and turns into a labelled card on phones, where a many-column grid would
+  // otherwise scroll sideways (see `.dw-reprow` in discovery.css).
   // `position` is the row's place within its own section (1-based), which
   // is what a row-number placeholder should show; `rowIndex` is its place
   // in the whole table, used for writes.
   const renderRowCells = (row: RepRow, rowIndex: number, position: number) => (
-    <>
-      {columns.map((col) => {
-        if (col.chips) {
-          const value = row[col.key];
-          return (
-            <div className="dw-chips" key={col.key}>
-              {["Must", "Nice", "Future"].map((label) => (
-                <span
-                  key={label}
-                  className={`dw-pchip${value === label ? " dw-on" : ""}`}
-                  onClick={() => onSetCell(question, rowIndex, col.key, label)}
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
-          );
-        }
-        if (col.linkOrFile) {
-          const inputId = `${question.id}-${rowIndex}-${col.key}`;
-          const kindKey = `__${col.key}Kind`;
-          return (
-            <div className="dw-linkfile" key={col.key}>
-              <input
-                className="dw-rinp"
-                placeholder={col.placeholder || "https://…"}
-                value={cellText(row[col.key])}
-                onChange={(e) => {
-                  onSetCell(question, rowIndex, col.key, e.target.value);
-                  onSetCell(question, rowIndex, kindKey, "link");
-                }}
-              />
-              <label className="dw-fbtn dw-fbtn-icon" htmlFor={inputId} title="Upload a file instead">
-                ⬆
-                <input
-                  id={inputId}
-                  type="file"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const fileName = e.target.files?.[0]?.name || "";
-                    onSetCell(question, rowIndex, col.key, fileName);
-                    if (fileName) onSetCell(question, rowIndex, kindKey, "file");
-                  }}
-                />
-              </label>
-            </div>
-          );
-        }
-        if (col.options || col.dynamicOptions) {
-          const opts = getOptions(col, row);
-          if (col.multiSelect) {
-            const selected = cellArray(row[col.key]);
-            return (
-              <MultiSelectCell
-                key={col.key}
-                options={opts}
-                selected={selected}
-                placeholder={col.placeholder}
-                onChange={(next) => onSetCell(question, rowIndex, col.key, next)}
-              />
-            );
-          }
-          return (
-            <select
-              key={col.key}
-              className="dw-rinp"
-              value={cellText(row[col.key])}
-              onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
+    <div className="dw-reprow">
+      {columns.map((col) => (
+        <div className="dw-rcell" key={col.key}>
+          <span className="dw-rcl" aria-hidden="true">
+            {col.header}
+            {isRequiredColumn(col) && <span className="dw-rh-req"> *</span>}
+          </span>
+          {renderCell(col, row, rowIndex, position)}
+        </div>
+      ))}
+      <button className="dw-xbtn" onClick={() => onRemoveRow(rowIndex)} aria-label="Remove row">
+        ×<span className="dw-xlbl"> Remove row</span>
+      </button>
+    </div>
+  );
+
+  const renderCell = (col: RepColumn, row: RepRow, rowIndex: number, position: number) => {
+    if (col.chips) {
+      const value = row[col.key];
+      return (
+        <div className="dw-chips" role="group" aria-label={col.header}>
+          {["Must", "Nice", "Future"].map((label) => (
+            <button
+              type="button"
+              key={label}
+              className={`dw-pchip${value === label ? " dw-on" : ""}`}
+              aria-pressed={value === label}
+              onClick={() => onSetCell(question, rowIndex, col.key, label)}
             >
-              <option value="" disabled hidden>
-                {col.placeholder || "Select…"}
-              </option>
-              {opts.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          );
-        }
-        return (
+              {label}
+            </button>
+          ))}
+        </div>
+      );
+    }
+    if (col.linkOrFile) {
+      const inputId = `${question.id}-${rowIndex}-${col.key}`;
+      const kindKey = `__${col.key}Kind`;
+      return (
+        <div className="dw-linkfile">
           <input
-            key={col.key}
             className="dw-rinp"
-            placeholder={col.rowNumberPlaceholder ? String(position) : col.placeholder}
+            aria-label={col.header}
+            placeholder={col.placeholder || "https://…"}
             value={cellText(row[col.key])}
-            onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
+            onChange={(e) => {
+              onSetCell(question, rowIndex, col.key, e.target.value);
+              onSetCell(question, rowIndex, kindKey, "link");
+            }}
+          />
+          <label className="dw-fbtn dw-fbtn-icon" htmlFor={inputId} title="Upload a file instead">
+            ⬆
+            <input
+              id={inputId}
+              type="file"
+              aria-label={`Upload a file for ${col.header}`}
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const fileName = e.target.files?.[0]?.name || "";
+                onSetCell(question, rowIndex, col.key, fileName);
+                if (fileName) onSetCell(question, rowIndex, kindKey, "file");
+              }}
+            />
+          </label>
+        </div>
+      );
+    }
+    if (col.options || col.dynamicOptions) {
+      const opts = getOptions(col, row);
+      if (col.multiSelect) {
+        const selected = cellArray(row[col.key]);
+        return (
+          <MultiSelectCell
+            label={col.header}
+            options={opts}
+            selected={selected}
+            placeholder={col.placeholder}
+            onChange={(next) => onSetCell(question, rowIndex, col.key, next)}
           />
         );
-      })}
-      <button className="dw-xbtn" onClick={() => onRemoveRow(rowIndex)} aria-label="Remove row">
-        ×
-      </button>
-    </>
-  );
+      }
+      return (
+        <select
+          className="dw-rinp"
+          value={cellText(row[col.key])}
+          onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
+          aria-label={col.header}
+        >
+          <option value="" disabled hidden>
+            {col.placeholder || "Select…"}
+          </option>
+          {opts.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      );
+    }
+    return (
+      <input
+        className="dw-rinp"
+        placeholder={col.rowNumberPlaceholder ? String(position) : col.placeholder}
+        value={cellText(row[col.key])}
+        onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
+        aria-label={col.header}
+      />
+    );
+  };
 
   const renderTable = (indices: number[], extra?: Record<string, string>) => (
     <>
@@ -1381,11 +1400,13 @@ function RepTable({
 // the other cell inputs) that opens a checkable-options popover, matching
 // the "click outside to close" pattern the section-jump flyout already uses.
 function MultiSelectCell({
+  label,
   options,
   selected,
   placeholder,
   onChange,
 }: {
+  label: string;
   options: string[];
   selected: string[];
   placeholder?: string;
@@ -1401,7 +1422,14 @@ function MultiSelectCell({
 
   return (
     <div className="dw-mswrap" ref={wrapRef}>
-      <button type="button" className="dw-rinp dw-msbtn" onClick={() => setOpen((o) => !o)}>
+      <button
+        type="button"
+        className="dw-rinp dw-msbtn"
+        aria-label={`${label}: ${selected.length > 0 ? selected.join(", ") : "none selected"}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
         <span className={`dw-mssummary${selected.length === 0 ? " dw-msempty" : ""}`}>
           {selected.length > 0 ? selected.join(", ") : placeholder || "Select…"}
         </span>

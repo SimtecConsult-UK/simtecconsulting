@@ -49,7 +49,9 @@ export function ReviewTable({ columns, rows, groupBy }: { columns: RepColumn[]; 
             {group.rows.map((row, i) => (
               <tr key={cellText(row.__key) || `${group.header ?? ""}:${i}`}>
                 {columns.map((c) => (
-                  <td key={c.key}>{cellDisplay(c, row)}</td>
+                  <td key={c.key} data-label={c.header}>
+                    {cellDisplay(c, row)}
+                  </td>
                 ))}
               </tr>
             ))}
