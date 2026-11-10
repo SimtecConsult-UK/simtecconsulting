@@ -3,7 +3,7 @@
 import { Fragment, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { Logo } from "../components/Logo";
-import { clearModulePicks, loadModulePicks } from "../lib/modulePicks";
+import { clearModulePicks, loadModulePickIds } from "../lib/modulePicks";
 import { DiscoveryBrief } from "./DiscoveryBrief";
 import { ReviewSheet } from "./ReviewSheet";
 import { submitDiscovery } from "./actions";
@@ -39,6 +39,8 @@ import {
   reconcileRepRows,
   withParkedRows,
   sanitizeAnswers,
+  answersFromModuleIds,
+  hasText,
 } from "./data";
 
 const STORAGE_KEY = "simtec_discovery_wizard";
@@ -56,37 +58,34 @@ type PersistedState = {
 // questionnaire" resets to.
 const EMPTY_DRAFT: PersistedState = { idx: 0, answers: {}, repRows: {}, consent: false, submitted: false };
 
-// Section 5's two questions the homepage module picker can pre-fill.
-const CARRIED_OVER_IDS = new Set(["primarySystemType", "selectedModules"]);
-const CARRIED_OVER_NOTE =
-  "We've ticked what you picked on our homepage. Change anything you like.";
-
-function hasPicks(value: Answers[string] | undefined): boolean {
-  return Array.isArray(value) ? value.length > 0 : !!value;
-}
-
 /**
- * Pre-fills section 5 with the modules picked on the homepage (see
- * lib/modulePicks.ts), if any. Only when the visitor hasn't answered either
- * question themselves — their own answers always win — and never into a
- * questionnaire that's already been sent. The saved picks are used up either
- * way (unless the draft was sent: then they wait for "Start a new
- * questionnaire"), so they can't reappear later over answers since cleared.
+ * Pre-fills the questions the homepage module picker covers (see
+ * lib/modulePicks.ts), if any picks were saved. Only when the visitor hasn't
+ * answered any of them — their own answers always win — and never into a
+ * questionnaire that's already been sent (the picks then wait for "Start a
+ * new questionnaire"). `carried` lists the pre-filled question ids.
+ *
+ * The picks are used up once read, so they can't reappear later over answers
+ * since changed. A pre-filled draft is saved before that, so reading again
+ * (React re-runs mount effects in development) finds the same result.
  */
-function withHomepagePicks(draft: PersistedState): { draft: PersistedState; carried: boolean } {
-  if (draft.submitted) return { draft, carried: false };
-  const picks = loadModulePicks();
-  clearModulePicks();
-  if (!picks || hasPicks(draft.answers.primarySystemType) || hasPicks(draft.answers.selectedModules)) {
-    return { draft, carried: false };
+function withHomepagePicks(draft: PersistedState): { draft: PersistedState; carried: string[] } {
+  if (draft.submitted) return { draft, carried: [] };
+  const ids = loadModulePickIds();
+  const prefill = ids && answersFromModuleIds(ids);
+  const carried = prefill ? Object.keys(prefill) : [];
+  if (!prefill || carried.some((id) => hasText(draft.answers[id]))) {
+    clearModulePicks();
+    return { draft, carried: [] };
   }
-  return {
-    draft: {
-      ...draft,
-      answers: { ...draft.answers, primarySystemType: picks.headers, selectedModules: picks.moduleNames },
-    },
-    carried: true,
-  };
+  const next = { ...draft, answers: { ...draft.answers, ...prefill } };
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // storage unavailable — the pre-fill just lasts for this visit
+  }
+  clearModulePicks();
+  return { draft: next, carried };
 }
 
 // Rows carry a "__key" field purely so React can track row identity across
@@ -195,9 +194,9 @@ export function DiscoveryWizard() {
   const [sending, startSending] = useTransition();
   const submitted = submitState.kind === "sent";
   const [hydrated, setHydrated] = useState(false);
-  // True when section 5 was pre-filled from the homepage picker on this
-  // visit — shows a short note there. Not saved: it's a one-off heads-up.
-  const [carriedOver, setCarriedOver] = useState(false);
+  // Questions pre-filled from the homepage picker on this visit — they show
+  // a short note saying so. Not saved: it's a one-off heads-up.
+  const [carriedIds, setCarriedIds] = useState<string[]>([]);
   const [navOpen, setNavOpen] = useState(false);
   // The latest blocked attempt to move on (Enter, arrow keys, section menu):
   // which step it was on, and a count so a repeat attempt is announced to
@@ -239,13 +238,19 @@ export function DiscoveryWizard() {
     setSubmitState(draft.submitted ? { kind: "sent" } : { kind: "idle" });
   }, []);
 
+  // `applyDraft` plus any homepage picks (see `withHomepagePicks`). Only ever
+  // turns the note on, so a repeat run that finds the picks used up keeps it.
+  const applyDraftWithPicks = useCallback(
+    (base: PersistedState) => {
+      const { draft, carried } = withHomepagePicks(base);
+      applyDraft(draft);
+      if (carried.length > 0) setCarriedIds(carried);
+    },
+    [applyDraft]
+  );
+
   // Rehydrate the saved draft on mount.
-  // Runs once: the homepage picks are used up on read, so React's dev-only
-  // second effect run would otherwise find none and blank the pre-fill.
-  const rehydrated = useRef(false);
   useEffect(() => {
-    if (rehydrated.current) return;
-    rehydrated.current = true;
     let draft = EMPTY_DRAFT;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -262,11 +267,9 @@ export function DiscoveryWizard() {
     } catch {
       // ignore malformed drafts
     }
-    const { draft: withPicks, carried } = withHomepagePicks(draft);
-    applyDraft(withPicks);
-    setCarriedOver(carried);
+    applyDraftWithPicks(draft);
     setHydrated(true);
-  }, [applyDraft]);
+  }, [applyDraftWithPicks]);
 
   // Auto-save on state change, debounced so fast typing doesn't serialize the
   // whole draft on every keystroke (skip the initial pre-hydration render).
@@ -540,12 +543,11 @@ export function DiscoveryWizard() {
     clearTimeout(advanceTimer.current);
     // Picks made on the homepage since this one was sent (e.g. before booking
     // another workshop) pre-fill the new one; older ones were already used up.
-    const { draft, carried } = withHomepagePicks(EMPTY_DRAFT);
-    applyDraft(draft);
-    setCarriedOver(carried);
+    setCarriedIds([]);
+    applyDraftWithPicks(EMPTY_DRAFT);
     setOverlay("none");
     setNavOpen(false);
-  }, [applyDraft]);
+  }, [applyDraftWithPicks]);
 
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
@@ -807,7 +809,7 @@ export function DiscoveryWizard() {
               key={current.question.id}
               question={current.question}
               secLabel={`${secNo} · ${section.name}`}
-              carriedNote={carriedOver && CARRIED_OVER_IDS.has(current.question.id) ? CARRIED_OVER_NOTE : null}
+              carried={carriedIds.includes(current.question.id)}
               answers={answers}
               rows={currentRows}
               repRows={reconciledRepRows}
@@ -1028,7 +1030,7 @@ function NeedHelpPanel({ questionId, needHelp }: { questionId: string; needHelp:
 function QuestionScreen({
   question,
   secLabel,
-  carriedNote,
+  carried,
   answers,
   rows,
   repRows,
@@ -1045,8 +1047,8 @@ function QuestionScreen({
 }: {
   question: Question;
   secLabel: string;
-  /** "These came from the homepage" note, when section 5 was pre-filled. */
-  carriedNote: string | null;
+  /** Pre-filled from the homepage module picker on this visit. */
+  carried: boolean;
   answers: Answers;
   rows: RepRow[];
   repRows: Record<string, RepRow[]>;
@@ -1101,7 +1103,9 @@ function QuestionScreen({
         ) : (
           <p className="dw-help dw-qhelp">{question.help || ""}</p>
         )}
-        {carriedNote && <p className="dw-help dw-carried">{carriedNote}</p>}
+        {carried && (
+          <p className="dw-help dw-carried">We&apos;ve carried over the modules from our homepage. Change anything you like.</p>
+        )}
       </div>
 
       <div className="dw-qanswer">

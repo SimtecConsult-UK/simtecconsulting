@@ -221,6 +221,23 @@ export function modulesForGroup(answers: Answers, group: string | undefined): st
 // always get its own section in any rep table grouped by system, even
 // before it has any rows — otherwise a system with nothing pre-picked would
 // never get a place to add its first one.
+// The section 5 answers matching a set of homepage-picker module ids (see
+// lib/modulePicks.ts): every system that holds a picked module, and the
+// picked module names, both in catalog order. `null` if no id is in the
+// catalog any more.
+export function answersFromModuleIds(ids: string[]): Answers | null {
+  const picked = new Set(ids);
+  const headers: string[] = [];
+  const names: string[] = [];
+  MODULE_CATALOG.forEach((group) => {
+    const modules = group.modules.filter((m) => picked.has(m.id));
+    if (modules.length === 0) return;
+    headers.push(group.header);
+    modules.forEach((m) => names.push(m.name));
+  });
+  return names.length > 0 ? { primarySystemType: headers, selectedModules: names } : null;
+}
+
 export function primarySystemTypeHeaders(answers: Answers): string[] {
   const selectedSystems = (answers.primarySystemType as string[] | undefined) || [];
   return MODULE_CATALOG.map((g) => g.header).filter((h) => selectedSystems.includes(h));

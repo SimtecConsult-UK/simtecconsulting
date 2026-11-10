@@ -70,6 +70,9 @@ export function ModulePicker() {
   }
 
   const currentPicks = picks[activeType] ?? RECOMMENDED[activeType];
+  // Remembered when they head off to book, so the discovery questionnaire
+  // (where Calendly sends them afterwards) opens with these already ticked.
+  const rememberPicks = () => saveModulePicks(currentPicks);
 
   return (
     <section id={SECTION_IDS.solutions} className="bg-white px-5 py-8 md:px-10 md:py-11 lg:px-16 lg:py-16">
@@ -236,11 +239,9 @@ export function ModulePicker() {
                 href={BOOKING_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                // Remembered so the discovery questionnaire (where Calendly
-                // sends them after booking) opens with these already ticked.
                 // onAuxClick covers a middle-click "open in new tab".
-                onClick={() => saveModulePicks(currentPicks, TYPES[activeType])}
-                onAuxClick={() => saveModulePicks(currentPicks, TYPES[activeType])}
+                onClick={rememberPicks}
+                onAuxClick={(e) => e.button === 1 && rememberPicks()}
                 className="font-heading block w-full cursor-pointer rounded-[9px] bg-[var(--color-brand-blue)] py-[12px] text-center text-[14px] font-semibold transition-colors hover:bg-[#85f0e4] lg:py-[13px]"
                 style={{ color: ON_ACCENT }}
               >
