@@ -21,6 +21,10 @@ import {
   cellArray,
   cellText,
   formatProblem,
+  hasNonKeyValue,
+  missingRequiredColumns,
+  clearUnofferedCells,
+  stepKey,
   isBottomBarVisible,
   isGeneratedRowKey,
   isQuestionAnswered,
@@ -54,14 +58,21 @@ const EMPTY_DRAFT: PersistedState = { idx: 0, answers: {}, repRows: {}, consent:
 // Rows carry a "__key" field purely so React can track row identity across
 // add/remove — it's not real column data and should be ignored by anything
 // that reads a row's answers (all rendering here does, via `columns`).
-let repRowKeySeq = 0;
+// Random, so a new row can never reuse the key of one saved in an earlier
+// visit. `crypto.randomUUID` is missing on older iPads (before iOS 15.4) and
+// on plain-http pages, hence the fallback.
 function makeRepRow(): RepRow {
-  repRowKeySeq += 1;
-  return { __key: `r${repRowKeySeq}` };
+  const id =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  return { __key: `r-${id}` };
 }
 
+// Fixed keys: these placeholders are rebuilt every render until the table is
+// first written to, and a changing key would remount the input mid-typing.
 function defaultRows(): RepRow[] {
-  return [makeRepRow(), makeRepRow()];
+  return [{ __key: "blank-1" }, { __key: "blank-2" }];
 }
 
 // `reconcileRepRows` (data.ts) is the single source of truth for which rows
@@ -86,6 +97,27 @@ function rowsFor(map: Record<string, RepRow[]>, question: Question, answers: Ans
   // permanent blank rows the reconciler can never clean up.
   if (question.getDefaultRows) return reconciled;
   return reconciled.length > 0 ? reconciled : defaultRows();
+}
+
+// "a", "a and b", "a, b and c" — by hand rather than `Intl.ListFormat`,
+// which older iPads (before iOS 14.5) don't have.
+function joinList(items: string[]): string {
+  return items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}` : items[0] || "";
+}
+
+// Plain-English "why can't I continue" for a blocked question. For tables it
+// names the empty required columns, using the same rule that blocks Continue
+// (`missingRequiredColumns`), so the message and the block can't disagree.
+function describeMissing(question: Question, rows: RepRow[]): string {
+  if (question.type === "rep") {
+    // Empty rows already on screen just need filling in, not more rows.
+    if (!rows.some(hasNonKeyValue)) {
+      return rows.length > 0 ? "Fill in at least one row to continue" : `${question.addLabel || "Add a row"} to continue`;
+    }
+    const missing = missingRequiredColumns(question, rows);
+    if (missing.length > 0) return `Fill in ${joinList(missing.map((col) => col.header))} on every row to continue`;
+  }
+  return "Add an answer to continue";
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -130,6 +162,10 @@ export function DiscoveryWizard() {
   const submitted = submitState.kind === "sent";
   const [hydrated, setHydrated] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  // The latest blocked attempt to move on (Enter, arrow keys, section menu):
+  // which step it was on, and a count so a repeat attempt is announced to
+  // screen readers again. Cleared as soon as the step changes (below).
+  const [nudge, setNudge] = useState<{ step: string; attempt: number } | null>(null);
   const [robotTop, setRobotTop] = useState<number | null>(null);
   // "brief" (the download/print view) only ever opens from within "review"
   // (the review sheet's "Download a copy" button), so a single three-state
@@ -238,15 +274,22 @@ export function DiscoveryWizard() {
   // *another* question's rows (e.g. `dashboardsReports.audience`'s
   // `dynamicOptions`, via `userRoleOptions`) needs the reconciled view too,
   // or it misses seeded rows that were never directly touched.
+  //
+  // Every table goes through it — not just the seeded ones — because rows can
+  // also be hidden for other reasons (e.g. filed under a system since
+  // unticked), and this map is what the review sheet and the submission read.
+  // Then any dropdown pick no longer offered (a module from an unticked
+  // system) is cleared, so what's reviewed and sent matches the blank
+  // dropdown the visitor sees.
   const reconciledRepRows = useMemo(() => {
     const map: Record<string, RepRow[]> = { ...repRows };
-    SECTIONS.forEach((sec) =>
-      sec.questions.forEach((q) => {
-        if (q.type === "rep" && q.getDefaultRows) {
-          map[q.id] = reconcileRepRows(q, answers, repRows[q.id]);
-        }
-      })
-    );
+    const repQuestions = SECTIONS.flatMap((sec) => sec.questions).filter((q) => q.type === "rep");
+    repQuestions.forEach((q) => {
+      map[q.id] = reconcileRepRows(q, answers, repRows[q.id]);
+    });
+    repQuestions.forEach((q) => {
+      map[q.id] = clearUnofferedCells(q, answers, map, map[q.id]);
+    });
     return map;
   }, [repRows, answers]);
 
@@ -260,6 +303,26 @@ export function DiscoveryWizard() {
   );
 
   const currentIndex = clamp(idx, 0, visibleSteps.length - 1);
+  const currentStepKey = visibleSteps[currentIndex] ? stepKey(visibleSteps[currentIndex]) : "";
+  // Leaving a step drops its nudge — done during render (React's "adjust
+  // state when a value changes" pattern) so the next step never shows it,
+  // not even for one frame, and coming back later starts clean.
+  const [nudgeStep, setNudgeStep] = useState(currentStepKey);
+  if (nudgeStep !== currentStepKey) {
+    setNudgeStep(currentStepKey);
+    if (nudge) setNudge(null);
+  }
+  const nudgeAttempt = nudge && nudge.step === currentStepKey ? nudge.attempt : 0;
+  const recordBlockedAttempt = useCallback(() => {
+    setNudge((prev) => ({ step: currentStepKey, attempt: prev && prev.step === currentStepKey ? prev.attempt + 1 : 1 }));
+  }, [currentStepKey]);
+
+  // Arriving on a new step by clicking (Next, a choice) leaves focus on that
+  // button, and the Enter shortcut deliberately ignores focused buttons — so
+  // Enter seemed dead. Move focus to the step itself instead.
+  useEffect(() => {
+    if (document.activeElement instanceof HTMLButtonElement) mainRef.current?.focus({ preventScroll: true });
+  }, [currentIndex]);
   const current = visibleSteps[currentIndex];
   const currentRows = current?.kind === "question" ? getRows(current.question) : [];
   // Required-but-unanswered blocks moving forward off this step — "required"
@@ -284,14 +347,21 @@ export function DiscoveryWizard() {
       clearTimeout(advanceTimer.current);
       // Moving forward off the required-but-unanswered current question is
       // blocked. Moving backward is always allowed.
-      if (!(delta > 0 && blockedForward)) {
+      if (delta > 0 && blockedForward) {
+        recordBlockedAttempt();
+      } else {
         setIdx((prev) => clamp(prev + delta, 0, visibleSteps.length - 1));
       }
       setNavOpen(false);
     },
-    [visibleSteps.length, blockedForward]
+    [visibleSteps.length, blockedForward, recordBlockedAttempt]
   );
   const next = useCallback(() => nav(1), [nav]);
+  // The latest `nav`, for the choice auto-advance timer (see `chooseSingle`).
+  const latestNav = useRef(nav);
+  useEffect(() => {
+    latestNav.current = nav;
+  }, [nav]);
   const prev = useCallback(() => nav(-1), [nav]);
 
   const jumpToSection = useCallback(
@@ -303,7 +373,11 @@ export function DiscoveryWizard() {
       // Same required-question gate as `nav`: the section-nav flyout/segments
       // are always clickable, so without this a blocked question could just
       // be jumped past instead of answered.
-      if (requestedTarget > currentIndex && blockedForward) return;
+      if (requestedTarget > currentIndex && blockedForward) {
+        setNavOpen(false);
+        recordBlockedAttempt();
+        return;
+      }
       // Jumping ahead must not skip over an earlier section whose required
       // questions aren't answered yet — otherwise a later question that
       // depends on an earlier answer (e.g. a dropdown fed by modules chosen
@@ -459,9 +533,12 @@ export function DiscoveryWizard() {
     (id: string, option: string) => {
       setAnswer(id, option);
       clearTimeout(advanceTimer.current);
-      advanceTimer.current = setTimeout(() => next(), 300);
+      // Through the ref, not `next` itself: `next` from this click's render
+      // still sees the question as unanswered (and so blocked), which made
+      // the first click select without moving on.
+      advanceTimer.current = setTimeout(() => latestNav.current(1), 300);
     },
-    [setAnswer, next]
+    [setAnswer]
   );
 
   // The one way a table's rows get written: change what's on screen, then
@@ -651,7 +728,7 @@ export function DiscoveryWizard() {
         </div>
       )}
 
-      <div className="dw-main" ref={mainRef}>
+      <div className="dw-main" ref={mainRef} tabIndex={-1}>
         {current.kind === "intro" && (
           <div
             className="dw-robot-frame"
@@ -685,6 +762,7 @@ export function DiscoveryWizard() {
               repRows={reconciledRepRows}
               blocked={blockedForward}
               formatMessage={currentFormatProblem}
+              nudgeAttempt={nudgeAttempt}
               onSetAnswer={setAnswer}
               onToggleMulti={toggleMulti}
               onChooseSingle={chooseSingle}
@@ -904,6 +982,7 @@ function QuestionScreen({
   repRows,
   blocked,
   formatMessage,
+  nudgeAttempt,
   onSetAnswer,
   onToggleMulti,
   onChooseSingle,
@@ -920,6 +999,9 @@ function QuestionScreen({
   blocked: boolean;
   /** The typed answer's format problem (e.g. a malformed email), if any. */
   formatMessage: string | null;
+  /** How many times the visitor has tried to move on from this step while
+   * blocked (0 = not yet) — say why, visibly and to screen readers. */
+  nudgeAttempt: number;
   onSetAnswer: (id: string, value: string) => void;
   onToggleMulti: (id: string, option: string) => void;
   onChooseSingle: (id: string, option: string) => void;
@@ -936,16 +1018,16 @@ function QuestionScreen({
   // Back, the review sheet's EDIT, or a section-jump redirect) shows it
   // straight away — there's no typing in progress to wait for.
   const [formatTouched, setFormatTouched] = useState(() => !!formatMessage);
-  const showFormatMessage = !!formatMessage && formatTouched;
+  const showFormatMessage = !!formatMessage && (formatTouched || nudgeAttempt > 0);
+  const blockedReason = blocked && !formatMessage ? describeMissing(question, rows) : null;
   const enterHint = showFormatMessage
     ? "Check your answer to continue"
     : formatMessage
-    ? "Finish your answer to continue"
-    : blocked
-    ? "Add an answer to continue"
-    : question.type === "long"
-      ? "Enter to continue · ⌘+Enter for new line"
-      : ENTER_HINT;
+      ? "Finish your answer to continue"
+      : (blockedReason ?? (question.type === "long" ? "Enter to continue · ⌘+Enter for new line" : ENTER_HINT));
+  // After a blocked attempt the hint itself turns into the error — choice
+  // questions have no hint row, so they get the message on its own line.
+  const nudgeShown = nudgeAttempt > 0 && !!blockedReason;
 
   return (
     <>
@@ -1079,13 +1161,22 @@ function QuestionScreen({
         )}
       </div>
 
+      {nudgeShown && !showOk && <p className="dw-fielderr">{blockedReason}</p>}
+      {/* Re-created on every attempt (keyed by the count), so screen readers
+          announce each one, including a repeat with the same wording. */}
+      {nudgeShown && (
+        <span className="sr-only" role="alert" key={nudgeAttempt}>
+          {blockedReason}
+        </span>
+      )}
+
       <div className="dw-okrow">
         {showOk && (
           <>
             <button className="dw-btn" onClick={onNext} disabled={blocked}>
               Continue ✓
             </button>
-            <span className="dw-enter">{enterHint}</span>
+            <span className={`dw-enter${nudgeShown ? " dw-enter-err" : ""}`}>{enterHint}</span>
           </>
         )}
       </div>
@@ -1128,11 +1219,17 @@ function RepTable({
   // than a separate grid per row) so "auto"-sized columns — the priority
   // chips — settle on a single shared width instead of sizing independently
   // per row and drifting out of alignment with the header.
+  const isRequiredColumn = (col: RepColumn) => !!question.required && !!question.requiredColumns?.includes(col.key);
   const renderHeaderCells = () => (
     <>
       {columns.map((c) => (
         <span className="dw-rh" key={c.key}>
           {c.header}
+          {isRequiredColumn(c) && (
+            <span className="dw-rh-req" title="Required on every row">
+              {" "}*<span className="sr-only"> (required)</span>
+            </span>
+          )}
         </span>
       ))}
       <span />
@@ -1143,14 +1240,18 @@ function RepTable({
   // screens — invisible to the shared grid above, so desktop is unchanged —
   // and turns into a labelled card on phones, where a many-column grid would
   // otherwise scroll sideways (see `.dw-reprow` in discovery.css).
-  const renderRowCells = (row: RepRow, rowIndex: number) => (
+  // `position` is the row's place within its own section (1-based), which
+  // is what a row-number placeholder should show; `rowIndex` is its place
+  // in the whole table, used for writes.
+  const renderRowCells = (row: RepRow, rowIndex: number, position: number) => (
     <div className="dw-reprow">
       {columns.map((col) => (
         <div className="dw-rcell" key={col.key}>
           <span className="dw-rcl" aria-hidden="true">
             {col.header}
+            {isRequiredColumn(col) && <span className="dw-rh-req"> *</span>}
           </span>
-          {renderCell(col, row, rowIndex)}
+          {renderCell(col, row, rowIndex, position)}
         </div>
       ))}
       <button className="dw-xbtn" onClick={() => onRemoveRow(rowIndex)} aria-label="Remove row">
@@ -1159,7 +1260,7 @@ function RepTable({
     </div>
   );
 
-  const renderCell = (col: RepColumn, row: RepRow, rowIndex: number) => {
+  const renderCell = (col: RepColumn, row: RepRow, rowIndex: number, position: number) => {
     if (col.chips) {
       const value = row[col.key];
       return (
@@ -1240,7 +1341,7 @@ function RepTable({
     return (
       <input
         className="dw-rinp"
-        placeholder={col.placeholder}
+        placeholder={col.rowNumberPlaceholder ? String(position) : col.placeholder}
         value={cellText(row[col.key])}
         onChange={(e) => onSetCell(question, rowIndex, col.key, e.target.value)}
         aria-label={col.header}
@@ -1252,8 +1353,8 @@ function RepTable({
     <>
       <div className="dw-reptable" style={{ gridTemplateColumns: gridTemplate }}>
         {renderHeaderCells()}
-        {indices.map((rowIndex) => (
-          <Fragment key={cellText(rows[rowIndex].__key) || rowIndex}>{renderRowCells(rows[rowIndex], rowIndex)}</Fragment>
+        {indices.map((rowIndex, i) => (
+          <Fragment key={cellText(rows[rowIndex].__key) || rowIndex}>{renderRowCells(rows[rowIndex], rowIndex, i + 1)}</Fragment>
         ))}
       </div>
       <button className="dw-addbtn" onClick={() => onAddRow(extra)}>

@@ -575,6 +575,17 @@
   text-transform: uppercase;
   color: #8a93a3;
 }
+/* Marks a table column that must be filled on every row. */
+.dw-rh-req {
+  color: var(--dw-err);
+}
+/* Focus is moved here on each new step (so Enter works); no ring needed. */
+.dw-main:focus {
+  outline: none;
+}
+.dw-enter.dw-enter-err {
+  color: var(--dw-err);
+}
 .dw-rinp {
   width: 100%;
   height: 42px;

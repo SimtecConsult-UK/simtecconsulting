@@ -32,6 +32,9 @@ export type RepColumn = {
    * of checkable options) instead of a single native `<select>`. The cell's
    * value becomes a string[]. */
   multiSelect?: boolean;
+  /** Show the row's own position (1, 2, 3…) as this cell's placeholder,
+   * instead of one fixed placeholder repeated on every row. */
+  rowNumberPlaceholder?: boolean;
 };
 
 export type GroupField = {
@@ -195,6 +198,8 @@ export function userRoleOptions(repRows: Record<string, RepRow[]>): string[] {
 // per-module rep tables (e.g. dashboards/reports) so each module gets its
 // own group of rows, the same way `primarySystemTypeHeaders` sections
 // per-system tables.
+// Use this (not raw `selectedModules`, which keeps modules of systems since
+// unticked) wherever "the modules in scope" is meant.
 export function selectedModuleHeaders(answers: Answers): string[] {
   return selectedModuleEntries(answers).map(({ module }) => module.name);
 }
@@ -206,8 +211,7 @@ export function selectedModuleHeaders(answers: Answers): string[] {
 // the flat list when there's no group to scope by (e.g. a row from before
 // this column existed).
 export function modulesForGroup(answers: Answers, group: string | undefined): string[] {
-  const allSelected = (answers.selectedModules as string[] | undefined) || [];
-  if (!group) return allSelected;
+  if (!group) return selectedModuleHeaders(answers);
   return selectedModuleEntries(answers)
     .filter((entry) => entry.group.header === group)
     .map((entry) => entry.module.name);
@@ -502,7 +506,7 @@ export const SECTIONS: Section[] = [
           whoMayKnow: "The people completing each step and the manager responsible for the full process.",
         },
         columns: [
-          { key: "stepNumber", header: "No.", placeholder: "1", width: "48px" },
+          { key: "stepNumber", header: "No.", rowNumberPlaceholder: true, width: "48px" },
           { key: "stepName", header: "Step name", placeholder: "e.g. Quote" },
           { key: "whatHappens", header: "What happens", placeholder: "", width: "1.3fr" },
           { key: "whoDoesIt", header: "Who does it", placeholder: "" },
@@ -726,7 +730,7 @@ export const SECTIONS: Section[] = [
             header: "Applies to",
             placeholder: "Select module",
             width: ".8fr",
-            dynamicOptions: (answers) => (answers.selectedModules as string[] | undefined) || [],
+            dynamicOptions: selectedModuleHeaders,
           },
           { key: "howSet", header: "How set", placeholder: "Select", width: ".9fr", options: ["Manual", "Calculated"] },
           { key: "reminder", header: "Reminder?", placeholder: "Select", width: ".6fr", options: ["Yes", "No"] },
@@ -898,7 +902,7 @@ export const SECTIONS: Section[] = [
             header: "Module",
             placeholder: "Select module",
             width: ".8fr",
-            dynamicOptions: (answers) => (answers.selectedModules as string[] | undefined) || [],
+            dynamicOptions: selectedModuleHeaders,
           },
           { key: "storeLink", header: "Store/Link", placeholder: "Select", width: ".8fr", options: ["Stored", "Linked", "Hybrid", "Not sure"] },
           { key: "versionControl", header: "Version control", placeholder: "Select", width: ".8fr", options: ["Yes", "No", "Possibly"] },
@@ -1061,7 +1065,13 @@ export const SECTIONS: Section[] = [
         label: "Which tools can you keep using without an automatic connection for now?",
         help: "Choose from the tools you selected earlier.",
         showIf: (a) => a.integrationsNeeded === "Yes" && ((a.currentTools as string[] | undefined) || []).length > 0,
-        dynamicOptions: (a) => (a.currentTools as string[] | undefined) || [],
+        // Leaves out any tool already marked "must connect from the start" —
+        // one tool can't be both. Picking it there later also drops it here
+        // (see `reconcileDynamicMultiAnswers`).
+        dynamicOptions: (a) => {
+          const mustConnect = cellArray(a.mustConnectDayOne);
+          return cellArray(a.currentTools).filter((tool) => !mustConnect.includes(tool));
+        },
         needHelp: {
           whatToInclude: "Identify tools that can remain separate for the first version. For example, people could enter information themselves or move files between systems.",
           whyWeAsk: "This helps us identify connections that can wait until later.",
@@ -1428,6 +1438,14 @@ function buildSteps(sections: Section[]): Step[] {
 
 export const STEPS = buildSteps(SECTIONS);
 
+// A stable identity for a step (unlike its position, which shifts as
+// conditional questions appear and disappear).
+export function stepKey(step: Step): string {
+  if (step.kind === "question") return `q:${step.question.id}`;
+  if (step.kind === "sintro") return `s:${step.sectionIndex}`;
+  return step.kind;
+}
+
 export function isStepVisible(step: Step, answers: Answers): boolean {
   if (step.kind !== "question") return true;
   return !step.question.showIf || step.question.showIf(answers);
@@ -1534,6 +1552,18 @@ function isRowEdited(question: Question, row: RepRow): boolean {
 // values (e.g. a "Site" row someone typed in before this question had a
 // generator) isn't added a second time.
 export function reconcileRepRows(question: Question, answers: Answers, saved: RepRow[] | undefined): RepRow[] {
+  const rows = reconcileGeneratedRows(question, answers, saved);
+  // In a table split into sections, a row under a section no longer offered
+  // (its system or module was unticked) is hidden too — see `withParkedRows`.
+  const headers = question.groupRowsBy && question.groupHeadersFor ? new Set(question.groupHeadersFor(answers)) : null;
+  if (!headers) return rows;
+  return rows.filter((row) => {
+    const group = cellText(row[question.groupRowsBy!]);
+    return !group || headers.has(group);
+  });
+}
+
+function reconcileGeneratedRows(question: Question, answers: Answers, saved: RepRow[] | undefined): RepRow[] {
   const generated = question.getDefaultRows?.(answers);
   if (saved === undefined) return generated && generated.length > 0 ? generated : [];
   if (!generated) return saved;
@@ -1560,21 +1590,42 @@ export function reconcileRepRows(question: Question, answers: Answers, saved: Re
   return [...kept, ...added];
 }
 
-// Writing a table's rows back to storage starts from what's on screen, which
-// leaves out generated rows whose source is currently deselected (e.g. a
-// module under a system the user just unticked). Dropping those for good
-// would mean ticking the system again brings its modules back with every
-// priority and note wiped. So the writer carries these along, out of sight —
-// `reconcileRepRows` keeps hiding them until their source is selected again,
-// at which point the saved row (with its edits) is what comes back. Only the
-// on-screen rows are ever reviewed or sent; these never leave the browser.
-//
-// Each hidden row goes back in right after the row it followed before, so
-// when it reappears it's where the user left it, not tacked onto the end.
+// Dropdown cells whose value is no longer one of the column's computed
+// options (e.g. "Applies to: Dispatch & Logistics" after Fleet was unticked)
+// are cleared in these rows, so the review and the submission match the
+// blank dropdown on screen. Only the returned copy is changed: the stored
+// value is kept, and comes back if that option is offered again.
+export function clearUnofferedCells(
+  question: Question,
+  answers: Answers,
+  repRows: Record<string, RepRow[]>,
+  rows: RepRow[]
+): RepRow[] {
+  const dynamicColumns = (question.columns || []).filter((col) => col.dynamicOptions);
+  if (dynamicColumns.length === 0) return rows;
+  return rows.map((row) => {
+    let next = row;
+    dynamicColumns.forEach((col) => {
+      const value = row[col.key];
+      if (!hasText(value)) return;
+      const offered = new Set(col.dynamicOptions!(answers, repRows, row));
+      const kept = Array.isArray(value) ? value.filter((v) => offered.has(v)) : offered.has(value as string) ? value : "";
+      if (Array.isArray(value) ? kept.length !== value.length : kept !== value) {
+        next = { ...next, [col.key]: kept };
+      }
+    });
+    return next;
+  });
+}
+
+// Rows `reconcileRepRows` hides (their system/module/role is unticked) are
+// carried along when a table is written back, each right after the row it
+// followed, so re-ticking brings them back as the user left them. Only
+// on-screen rows are ever reviewed or sent.
 export function withParkedRows(saved: RepRow[] | undefined, onScreen: RepRow[], next: RepRow[]): RepRow[] {
   if (!saved) return next;
   const onScreenKeys = new Set(onScreen.map((r) => r.__key));
-  const isParked = (r: RepRow) => isGeneratedRowKey(r.__key as string | undefined) && !onScreenKeys.has(r.__key);
+  const isParked = (r: RepRow) => !onScreenKeys.has(r.__key);
   if (!saved.some(isParked)) return next;
   const out = [...next];
   saved.forEach((row, i) => {
@@ -1604,9 +1655,16 @@ export function hasNonKeyValue(row: RepRow): boolean {
 // that set `requiredColumns` (e.g. proposedModules) instead require every
 // row to have those specific columns filled in — half-finished rows don't
 // count as done.
+// Required columns (see `requiredColumns`) left empty on at least one row.
+export function missingRequiredColumns(question: Question, rows: RepRow[]): RepColumn[] {
+  return (question.columns || []).filter(
+    (col) => question.requiredColumns?.includes(col.key) && rows.some((row) => !hasText(row[col.key]))
+  );
+}
+
 export function isRepFullyAnswered(question: Question, rows: RepRow[]): boolean {
   if (question.requiredColumns && question.requiredColumns.length > 0) {
-    return rows.length > 0 && rows.every((row) => question.requiredColumns!.every((key) => hasText(row[key])));
+    return rows.length > 0 && missingRequiredColumns(question, rows).length === 0;
   }
   return rows.some(hasNonKeyValue);
 }
