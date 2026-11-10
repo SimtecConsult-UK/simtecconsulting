@@ -58,6 +58,32 @@ type PersistedState = {
 // questionnaire" resets to.
 const EMPTY_DRAFT: PersistedState = { idx: 0, answers: {}, repRows: {}, consent: false, submitted: false };
 
+// The one place the draft is written to and read from browser storage.
+function writeDraft(draft: PersistedState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+  } catch {
+    // storage unavailable — draft simply won't persist
+  }
+}
+
+// A saved draft (as text) back into a full draft; `null` if malformed.
+function parseDraft(raw: string): PersistedState | null {
+  try {
+    const saved = JSON.parse(raw) as Partial<PersistedState> | null;
+    if (!saved) return null;
+    return {
+      idx: saved.idx || EMPTY_DRAFT.idx,
+      answers: saved.answers || EMPTY_DRAFT.answers,
+      repRows: saved.repRows || EMPTY_DRAFT.repRows,
+      consent: !!saved.consent,
+      submitted: !!saved.submitted,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Pre-fills the questions the homepage module picker covers (see
  * lib/modulePicks.ts), if any picks were saved. Only when the visitor hasn't
@@ -79,11 +105,7 @@ function withHomepagePicks(draft: PersistedState): { draft: PersistedState; carr
     return { draft, carried: [] };
   }
   const next = { ...draft, answers: { ...draft.answers, ...prefill } };
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    // storage unavailable — the pre-fill just lasts for this visit
-  }
+  writeDraft(next);
   clearModulePicks();
   return { draft: next, carried };
 }
@@ -219,11 +241,7 @@ export function DiscoveryWizard() {
 
   const flushSave = useCallback(() => {
     if (!pendingSave.current) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingSave.current));
-    } catch {
-      // storage unavailable — draft simply won't persist
-    }
+    writeDraft(pendingSave.current);
     pendingSave.current = null;
   }, []);
 
@@ -251,25 +269,33 @@ export function DiscoveryWizard() {
 
   // Rehydrate the saved draft on mount.
   useEffect(() => {
-    let draft = EMPTY_DRAFT;
+    let raw: string | null = null;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as Partial<PersistedState>;
-        draft = {
-          idx: saved.idx || EMPTY_DRAFT.idx,
-          answers: saved.answers || EMPTY_DRAFT.answers,
-          repRows: saved.repRows || EMPTY_DRAFT.repRows,
-          consent: !!saved.consent,
-          submitted: !!saved.submitted,
-        };
-      }
+      raw = localStorage.getItem(STORAGE_KEY);
     } catch {
-      // ignore malformed drafts
+      // storage unavailable — start blank
     }
-    applyDraftWithPicks(draft);
+    applyDraftWithPicks((raw && parseDraft(raw)) || EMPTY_DRAFT);
     setHydrated(true);
   }, [applyDraftWithPicks]);
+
+  // Another tab of this questionnaire saved (e.g. Calendly opened a second
+  // one, pre-filled from the homepage, while an older one was still open):
+  // follow it, instead of this tab later saving its out-of-date copy over it.
+  // Once both hold the same draft, saving it again is a no-op (the browser
+  // only notifies other tabs of real changes), so the tabs can't ping-pong.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY || !e.newValue) return;
+      const draft = parseDraft(e.newValue);
+      if (!draft) return;
+      clearTimeout(saveTimer.current);
+      pendingSave.current = null;
+      applyDraft(draft);
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [applyDraft]);
 
   // Auto-save on state change, debounced so fast typing doesn't serialize the
   // whole draft on every keystroke (skip the initial pre-hydration render).
@@ -809,7 +835,7 @@ export function DiscoveryWizard() {
               key={current.question.id}
               question={current.question}
               secLabel={`${secNo} · ${section.name}`}
-              carried={carriedIds.includes(current.question.id)}
+              carried={carriedIds.includes(current.question.id) && hasText(answers[current.question.id])}
               answers={answers}
               rows={currentRows}
               repRows={reconciledRepRows}
@@ -1047,7 +1073,7 @@ function QuestionScreen({
 }: {
   question: Question;
   secLabel: string;
-  /** Pre-filled from the homepage module picker on this visit. */
+  /** Pre-filled from the homepage module picker on this visit, and still has something ticked. */
   carried: boolean;
   answers: Answers;
   rows: RepRow[];
