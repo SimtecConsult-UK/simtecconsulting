@@ -23,7 +23,7 @@ import {
   formatProblem,
   hasNonKeyValue,
   missingRequiredColumns,
-  clearUnofferedCells,
+  reconcileAllRepRows,
   stepKey,
   isBottomBarVisible,
   isGeneratedRowKey,
@@ -162,10 +162,11 @@ export function DiscoveryWizard() {
   const submitted = submitState.kind === "sent";
   const [hydrated, setHydrated] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  // The latest blocked attempt to move on (Enter, arrow keys, section menu):
-  // which step it was on, and a count so a repeat attempt is announced to
-  // screen readers again. Cleared as soon as the step changes (below).
-  const [nudge, setNudge] = useState<{ step: string; attempt: number } | null>(null);
+  // How many times the visitor has tried to move on from the current step
+  // while blocked (Enter, arrow keys, section menu) — a count so a repeat
+  // attempt is announced to screen readers again. Reset to 0 as soon as the
+  // step changes (below).
+  const [nudgeAttempt, setNudgeAttempt] = useState(0);
   const [robotTop, setRobotTop] = useState<number | null>(null);
   // "brief" (the download/print view) only ever opens from within "review"
   // (the review sheet's "Download a copy" button), so a single three-state
@@ -281,17 +282,7 @@ export function DiscoveryWizard() {
   // Then any dropdown pick no longer offered (a module from an unticked
   // system) is cleared, so what's reviewed and sent matches the blank
   // dropdown the visitor sees.
-  const reconciledRepRows = useMemo(() => {
-    const map: Record<string, RepRow[]> = { ...repRows };
-    const repQuestions = SECTIONS.flatMap((sec) => sec.questions).filter((q) => q.type === "rep");
-    repQuestions.forEach((q) => {
-      map[q.id] = reconcileRepRows(q, answers, repRows[q.id]);
-    });
-    repQuestions.forEach((q) => {
-      map[q.id] = clearUnofferedCells(q, answers, map, map[q.id]);
-    });
-    return map;
-  }, [repRows, answers]);
+  const reconciledRepRows = useMemo(() => reconcileAllRepRows(answers, repRows), [repRows, answers]);
 
   // Built once here (rather than separately inside each of the review sheet
   // and discovery brief) so switching between them — "Download a copy" and
@@ -310,12 +301,9 @@ export function DiscoveryWizard() {
   const [nudgeStep, setNudgeStep] = useState(currentStepKey);
   if (nudgeStep !== currentStepKey) {
     setNudgeStep(currentStepKey);
-    if (nudge) setNudge(null);
+    setNudgeAttempt(0);
   }
-  const nudgeAttempt = nudge && nudge.step === currentStepKey ? nudge.attempt : 0;
-  const recordBlockedAttempt = useCallback(() => {
-    setNudge((prev) => ({ step: currentStepKey, attempt: prev && prev.step === currentStepKey ? prev.attempt + 1 : 1 }));
-  }, [currentStepKey]);
+  const recordBlockedAttempt = useCallback(() => setNudgeAttempt((n) => n + 1), []);
 
   // Arriving on a new step by clicking (Next, a choice) leaves focus on that
   // button, and the Enter shortcut deliberately ignores focused buttons — so
