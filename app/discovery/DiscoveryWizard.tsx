@@ -1232,7 +1232,7 @@ function RepTable({
           )}
         </span>
       ))}
-      <span />
+      <span className="dw-rh" />
     </>
   );
 
@@ -1264,15 +1264,17 @@ function RepTable({
     if (col.chips) {
       const value = row[col.key];
       return (
-        <div className="dw-chips">
+        <div className="dw-chips" role="group" aria-label={col.header}>
           {["Must", "Nice", "Future"].map((label) => (
-            <span
+            <button
+              type="button"
               key={label}
               className={`dw-pchip${value === label ? " dw-on" : ""}`}
+              aria-pressed={value === label}
               onClick={() => onSetCell(question, rowIndex, col.key, label)}
             >
               {label}
-            </span>
+            </button>
           ))}
         </div>
       );
@@ -1284,6 +1286,7 @@ function RepTable({
         <div className="dw-linkfile">
           <input
             className="dw-rinp"
+            aria-label={col.header}
             placeholder={col.placeholder || "https://…"}
             value={cellText(row[col.key])}
             onChange={(e) => {
@@ -1296,6 +1299,7 @@ function RepTable({
             <input
               id={inputId}
               type="file"
+              aria-label={`Upload a file for ${col.header}`}
               style={{ display: "none" }}
               onChange={(e) => {
                 const fileName = e.target.files?.[0]?.name || "";
@@ -1313,6 +1317,7 @@ function RepTable({
         const selected = cellArray(row[col.key]);
         return (
           <MultiSelectCell
+            label={col.header}
             options={opts}
             selected={selected}
             placeholder={col.placeholder}
@@ -1395,11 +1400,13 @@ function RepTable({
 // the other cell inputs) that opens a checkable-options popover, matching
 // the "click outside to close" pattern the section-jump flyout already uses.
 function MultiSelectCell({
+  label,
   options,
   selected,
   placeholder,
   onChange,
 }: {
+  label: string;
   options: string[];
   selected: string[];
   placeholder?: string;
@@ -1415,7 +1422,14 @@ function MultiSelectCell({
 
   return (
     <div className="dw-mswrap" ref={wrapRef}>
-      <button type="button" className="dw-rinp dw-msbtn" onClick={() => setOpen((o) => !o)}>
+      <button
+        type="button"
+        className="dw-rinp dw-msbtn"
+        aria-label={`${label}: ${selected.length > 0 ? selected.join(", ") : "none selected"}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
         <span className={`dw-mssummary${selected.length === 0 ? " dw-msempty" : ""}`}>
           {selected.length > 0 ? selected.join(", ") : placeholder || "Select…"}
         </span>
