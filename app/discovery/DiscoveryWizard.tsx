@@ -3,6 +3,7 @@
 import { Fragment, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { Logo } from "../components/Logo";
+import { clearModulePicks, loadModulePicks } from "../lib/modulePicks";
 import { DiscoveryBrief } from "./DiscoveryBrief";
 import { ReviewSheet } from "./ReviewSheet";
 import { submitDiscovery } from "./actions";
@@ -54,6 +55,39 @@ type PersistedState = {
 // A blank questionnaire — the starting state, and what "Start a new
 // questionnaire" resets to.
 const EMPTY_DRAFT: PersistedState = { idx: 0, answers: {}, repRows: {}, consent: false, submitted: false };
+
+// Section 5's two questions the homepage module picker can pre-fill.
+const CARRIED_OVER_IDS = new Set(["primarySystemType", "selectedModules"]);
+const CARRIED_OVER_NOTE =
+  "We've ticked what you picked on our homepage. Change anything you like.";
+
+function hasPicks(value: Answers[string] | undefined): boolean {
+  return Array.isArray(value) ? value.length > 0 : !!value;
+}
+
+/**
+ * Pre-fills section 5 with the modules picked on the homepage (see
+ * lib/modulePicks.ts), if any. Only when the visitor hasn't answered either
+ * question themselves — their own answers always win — and never into a
+ * questionnaire that's already been sent. The saved picks are used up either
+ * way (unless the draft was sent: then they wait for "Start a new
+ * questionnaire"), so they can't reappear later over answers since cleared.
+ */
+function withHomepagePicks(draft: PersistedState): { draft: PersistedState; carried: boolean } {
+  if (draft.submitted) return { draft, carried: false };
+  const picks = loadModulePicks();
+  clearModulePicks();
+  if (!picks || hasPicks(draft.answers.primarySystemType) || hasPicks(draft.answers.selectedModules)) {
+    return { draft, carried: false };
+  }
+  return {
+    draft: {
+      ...draft,
+      answers: { ...draft.answers, primarySystemType: picks.headers, selectedModules: picks.moduleNames },
+    },
+    carried: true,
+  };
+}
 
 // Rows carry a "__key" field purely so React can track row identity across
 // add/remove — it's not real column data and should be ignored by anything
@@ -161,6 +195,9 @@ export function DiscoveryWizard() {
   const [sending, startSending] = useTransition();
   const submitted = submitState.kind === "sent";
   const [hydrated, setHydrated] = useState(false);
+  // True when section 5 was pre-filled from the homepage picker on this
+  // visit — shows a short note there. Not saved: it's a one-off heads-up.
+  const [carriedOver, setCarriedOver] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   // The latest blocked attempt to move on (Enter, arrow keys, section menu):
   // which step it was on, and a count so a repeat attempt is announced to
@@ -203,22 +240,31 @@ export function DiscoveryWizard() {
   }, []);
 
   // Rehydrate the saved draft on mount.
+  // Runs once: the homepage picks are used up on read, so React's dev-only
+  // second effect run would otherwise find none and blank the pre-fill.
+  const rehydrated = useRef(false);
   useEffect(() => {
+    if (rehydrated.current) return;
+    rehydrated.current = true;
+    let draft = EMPTY_DRAFT;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const saved = JSON.parse(raw) as Partial<PersistedState>;
-        applyDraft({
+        draft = {
           idx: saved.idx || EMPTY_DRAFT.idx,
           answers: saved.answers || EMPTY_DRAFT.answers,
           repRows: saved.repRows || EMPTY_DRAFT.repRows,
           consent: !!saved.consent,
           submitted: !!saved.submitted,
-        });
+        };
       }
     } catch {
       // ignore malformed drafts
     }
+    const { draft: withPicks, carried } = withHomepagePicks(draft);
+    applyDraft(withPicks);
+    setCarriedOver(carried);
     setHydrated(true);
   }, [applyDraft]);
 
@@ -492,7 +538,11 @@ export function DiscoveryWizard() {
    */
   const startOver = useCallback(() => {
     clearTimeout(advanceTimer.current);
-    applyDraft(EMPTY_DRAFT);
+    // Picks made on the homepage since this one was sent (e.g. before booking
+    // another workshop) pre-fill the new one; older ones were already used up.
+    const { draft, carried } = withHomepagePicks(EMPTY_DRAFT);
+    applyDraft(draft);
+    setCarriedOver(carried);
     setOverlay("none");
     setNavOpen(false);
   }, [applyDraft]);
@@ -757,6 +807,7 @@ export function DiscoveryWizard() {
               key={current.question.id}
               question={current.question}
               secLabel={`${secNo} · ${section.name}`}
+              carriedNote={carriedOver && CARRIED_OVER_IDS.has(current.question.id) ? CARRIED_OVER_NOTE : null}
               answers={answers}
               rows={currentRows}
               repRows={reconciledRepRows}
@@ -977,6 +1028,7 @@ function NeedHelpPanel({ questionId, needHelp }: { questionId: string; needHelp:
 function QuestionScreen({
   question,
   secLabel,
+  carriedNote,
   answers,
   rows,
   repRows,
@@ -993,6 +1045,8 @@ function QuestionScreen({
 }: {
   question: Question;
   secLabel: string;
+  /** "These came from the homepage" note, when section 5 was pre-filled. */
+  carriedNote: string | null;
   answers: Answers;
   rows: RepRow[];
   repRows: Record<string, RepRow[]>;
@@ -1047,6 +1101,7 @@ function QuestionScreen({
         ) : (
           <p className="dw-help dw-qhelp">{question.help || ""}</p>
         )}
+        {carriedNote && <p className="dw-help dw-carried">{carriedNote}</p>}
       </div>
 
       <div className="dw-qanswer">

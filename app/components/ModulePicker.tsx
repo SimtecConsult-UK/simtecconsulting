@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BOOKING_URL, SECTION_IDS } from "../lib/sections";
 import { MODULE_CATALOG } from "../lib/moduleCatalog";
+import { saveModulePicks } from "../lib/modulePicks";
 
 // Accent matches the nav "Book a Workshop" CTA (brand teal + dark ink text on fills)
 const ACCENT = "var(--color-brand-blue)";
@@ -235,6 +236,11 @@ export function ModulePicker() {
                 href={BOOKING_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                // Remembered so the discovery questionnaire (where Calendly
+                // sends them after booking) opens with these already ticked.
+                // onAuxClick covers a middle-click "open in new tab".
+                onClick={() => saveModulePicks(currentPicks, TYPES[activeType])}
+                onAuxClick={() => saveModulePicks(currentPicks, TYPES[activeType])}
                 className="font-heading block w-full cursor-pointer rounded-[9px] bg-[var(--color-brand-blue)] py-[12px] text-center text-[14px] font-semibold transition-colors hover:bg-[#85f0e4] lg:py-[13px]"
                 style={{ color: ON_ACCENT }}
               >
