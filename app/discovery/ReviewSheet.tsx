@@ -154,7 +154,7 @@ export function ReviewSheet({
               consent={consent}
               onSubmit={onSubmit}
               className="dw-btn-teal"
-              restingLabel="Submit & book workshop →"
+              restingLabel="Submit answers →"
               sentLabel="✓ SENT"
               consentHint="Tick the consent box to the left of this button"
             />
