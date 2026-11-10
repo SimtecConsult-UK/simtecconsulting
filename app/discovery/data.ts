@@ -1595,7 +1595,7 @@ function reconcileGeneratedRows(question: Question, answers: Answers, saved: Rep
 // are cleared in these rows, so the review and the submission match the
 // blank dropdown on screen. Only the returned copy is changed: the stored
 // value is kept, and comes back if that option is offered again.
-export function clearUnofferedCells(
+function clearUnofferedCells(
   question: Question,
   answers: Answers,
   repRows: Record<string, RepRow[]>,
@@ -1609,13 +1609,33 @@ export function clearUnofferedCells(
       const value = row[col.key];
       if (!hasText(value)) return;
       const offered = new Set(col.dynamicOptions!(answers, repRows, row));
-      const kept = Array.isArray(value) ? value.filter((v) => offered.has(v)) : offered.has(value as string) ? value : "";
-      if (Array.isArray(value) ? kept.length !== value.length : kept !== value) {
-        next = { ...next, [col.key]: kept };
+      if (Array.isArray(value)) {
+        const kept = value.filter((v) => offered.has(v));
+        if (kept.length !== value.length) next = { ...next, [col.key]: kept };
+      } else if (!offered.has(value)) {
+        next = { ...next, [col.key]: "" };
       }
     });
     return next;
   });
+}
+
+const REP_QUESTIONS = SECTIONS.flatMap((sec) => sec.questions).filter((q) => q.type === "rep");
+
+// Every table's rows as the visitor sees them — what the review sheet and the
+// submission read. Each table is reconciled first (seeded rows added, rows
+// under an unticked system hidden); only then are stale dropdown picks
+// cleared, because some columns' options come from another table's rows
+// (e.g. `dashboardsReports.audience` reads `userRoles`).
+export function reconcileAllRepRows(answers: Answers, repRows: Record<string, RepRow[]>): Record<string, RepRow[]> {
+  const map: Record<string, RepRow[]> = { ...repRows };
+  REP_QUESTIONS.forEach((q) => {
+    map[q.id] = reconcileRepRows(q, answers, repRows[q.id]);
+  });
+  REP_QUESTIONS.forEach((q) => {
+    map[q.id] = clearUnofferedCells(q, answers, map, map[q.id]);
+  });
+  return map;
 }
 
 // Rows `reconcileRepRows` hides (their system/module/role is unticked) are
@@ -1651,10 +1671,6 @@ export function hasNonKeyValue(row: RepRow): boolean {
   return Object.entries(row).some(([key, value]) => !key.startsWith("__") && hasText(value));
 }
 
-// Default rep validation is lenient (any cell anywhere has text). Questions
-// that set `requiredColumns` (e.g. proposedModules) instead require every
-// row to have those specific columns filled in — half-finished rows don't
-// count as done.
 // Required columns (see `requiredColumns`) left empty on at least one row.
 export function missingRequiredColumns(question: Question, rows: RepRow[]): RepColumn[] {
   return (question.columns || []).filter(
@@ -1662,6 +1678,10 @@ export function missingRequiredColumns(question: Question, rows: RepRow[]): RepC
   );
 }
 
+// Default rep validation is lenient (any cell anywhere has text). Questions
+// that set `requiredColumns` (e.g. proposedModules) instead require every
+// row to have those specific columns filled in — half-finished rows don't
+// count as done.
 export function isRepFullyAnswered(question: Question, rows: RepRow[]): boolean {
   if (question.requiredColumns && question.requiredColumns.length > 0) {
     return rows.length > 0 && missingRequiredColumns(question, rows).length === 0;
