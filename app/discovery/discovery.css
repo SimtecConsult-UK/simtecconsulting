@@ -7,6 +7,8 @@
      and .dw-fitem.dw-on so the three don't each hardcode the same colors. */
   --dw-selected-bg: #e9faf7;
   --dw-selected-text: #075e52;
+  /* Error red, shared by the field-level and send-failure messages. */
+  --dw-err: #b3261e;
 }
 
 .dw-wiz {
@@ -761,6 +763,21 @@ select.dw-rinp {
   color: #8a93a3;
   letter-spacing: 0.04em;
 }
+/* A typed answer in the wrong shape (e.g. a malformed email). */
+.dw-fielderr {
+  margin-top: 10px;
+  color: var(--dw-err);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.dw-input[aria-invalid="true"] {
+  border-bottom-color: var(--dw-err);
+}
+
+.dw-help.dw-startover-q {
+  margin: 0;
+}
+
 .dw-okrow,
 .dw-endaction {
   display: flex;
@@ -1376,7 +1393,7 @@ select.dw-rinp {
 /* Shown beside the submit button when sending the wizard failed. The draft is
    still in local storage, so the visitor loses nothing by trying again. */
 .dw-senderr {
-  color: #b3261e;
+  color: var(--dw-err);
   font-size: 13px;
   line-height: 1.5;
   max-width: 34ch;

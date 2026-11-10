@@ -20,8 +20,10 @@ import {
   buildReviewData,
   cellArray,
   cellText,
+  formatProblem,
   isBottomBarVisible,
   isGeneratedRowKey,
+  isQuestionAnswered,
   isQuestionComplete,
   isSectionAnswered,
   isSectionJumpVisible,
@@ -30,6 +32,7 @@ import {
   padSectionNumber,
   reconcileDynamicMultiAnswers,
   reconcileRepRows,
+  withParkedRows,
   sanitizeAnswers,
 } from "./data";
 
@@ -43,6 +46,10 @@ type PersistedState = {
   consent: boolean;
   submitted: boolean;
 };
+
+// A blank questionnaire — the starting state, and what "Start a new
+// questionnaire" resets to.
+const EMPTY_DRAFT: PersistedState = { idx: 0, answers: {}, repRows: {}, consent: false, submitted: false };
 
 // Rows carry a "__key" field purely so React can track row identity across
 // add/remove — it's not real column data and should be ignored by anything
@@ -109,10 +116,10 @@ const MINUTES_PER_QUESTION = 0.6;
 const MIN_SECTION_FILL_PCT = 8;
 
 export function DiscoveryWizard() {
-  const [idx, setIdx] = useState(0);
-  const [answers, setAnswers] = useState<Answers>({});
-  const [repRows, setRepRows] = useState<Record<string, RepRow[]>>({});
-  const [consent, setConsent] = useState(false);
+  const [idx, setIdx] = useState(EMPTY_DRAFT.idx);
+  const [answers, setAnswers] = useState<Answers>(EMPTY_DRAFT.answers);
+  const [repRows, setRepRows] = useState<Record<string, RepRow[]>>(EMPTY_DRAFT.repRows);
+  const [consent, setConsent] = useState(EMPTY_DRAFT.consent);
   /**
    * One value rather than a `submitted` / `sending` / `error` trio: those had
    * eight combinations for four real states, and every write site had to
@@ -148,23 +155,36 @@ export function DiscoveryWizard() {
     pendingSave.current = null;
   }, []);
 
+  // Loads a whole draft into the wizard — shared by the on-mount rehydrate
+  // and "Start a new questionnaire", so a field added to the draft later
+  // can't be restored by one and forgotten by the other.
+  const applyDraft = useCallback((draft: PersistedState) => {
+    setIdx(draft.idx);
+    setAnswers(sanitizeAnswers(draft.answers));
+    setRepRows(draft.repRows);
+    setConsent(draft.consent);
+    setSubmitState(draft.submitted ? { kind: "sent" } : { kind: "idle" });
+  }, []);
+
   // Rehydrate the saved draft on mount.
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const saved = JSON.parse(raw) as Partial<PersistedState>;
-        setIdx(saved.idx || 0);
-        setAnswers(sanitizeAnswers(saved.answers || {}));
-        setRepRows(saved.repRows || {});
-        setConsent(!!saved.consent);
-        if (saved.submitted) setSubmitState({ kind: "sent" });
+        applyDraft({
+          idx: saved.idx || EMPTY_DRAFT.idx,
+          answers: saved.answers || EMPTY_DRAFT.answers,
+          repRows: saved.repRows || EMPTY_DRAFT.repRows,
+          consent: !!saved.consent,
+          submitted: !!saved.submitted,
+        });
       }
     } catch {
       // ignore malformed drafts
     }
     setHydrated(true);
-  }, []);
+  }, [applyDraft]);
 
   // Auto-save on state change, debounced so fast typing doesn't serialize the
   // whole draft on every keystroke (skip the initial pre-hydration render).
@@ -249,11 +269,13 @@ export function DiscoveryWizard() {
   // after deselecting a module, before any cell in the table is next
   // edited) — and with the section-nav "done" check, which reconciles the
   // same way via `reconcileRepRows`.
-  const blockedForward = !!(
+  // A typed value in the wrong shape (e.g. a malformed email) blocks too,
+  // required or not — see `Question.format`.
+  const currentFormatProblem = current?.kind === "question" ? formatProblem(current.question, answers) : null;
+  const blockedForward =
     current?.kind === "question" &&
-    current.question.required &&
-    !isQuestionComplete(current.question, answers, currentRows)
-  );
+    (!!current.question.required || !!currentFormatProblem) &&
+    !isQuestionComplete(current.question, answers, currentRows);
 
   const nav = useCallback(
     (delta: number) => {
@@ -286,14 +308,26 @@ export function DiscoveryWizard() {
       // questions aren't answered yet — otherwise a later question that
       // depends on an earlier answer (e.g. a dropdown fed by modules chosen
       // in "Scope & modules") can be reached in a broken, unusable state.
-      // Redirect to that earlier section instead of the requested target.
+      // Redirect to that earlier section's first unanswered required question
+      // (e.g. an email that fails the format check) — straight to the thing
+      // that needs fixing, rather than the section's intro with no reason
+      // given.
       const firstIncompleteSection = SECTIONS.findIndex((sec) => !isSectionRequiredComplete(sec, answers, repRows));
       const resolvedSectionIndex =
         firstIncompleteSection !== -1 && firstIncompleteSection < sectionIndex ? firstIncompleteSection : sectionIndex;
+      const firstUnanswered = visibleSteps.findIndex(
+        (step) =>
+          step.kind === "question" &&
+          step.sectionIndex === resolvedSectionIndex &&
+          !!step.question.required &&
+          !isQuestionAnswered(step.question, answers, repRows)
+      );
       const target =
         resolvedSectionIndex === sectionIndex
           ? requestedTarget
-          : visibleSteps.findIndex((step) => step.kind === "sintro" && step.sectionIndex === resolvedSectionIndex);
+          : firstUnanswered >= 0
+            ? firstUnanswered
+            : visibleSteps.findIndex((step) => step.kind === "sintro" && step.sectionIndex === resolvedSectionIndex);
       if (target < 0) return;
       clearTimeout(advanceTimer.current);
       setIdx(target);
@@ -376,6 +410,19 @@ export function DiscoveryWizard() {
     });
   }, [answers, consent, reconciledRepRows, sending]);
 
+  /**
+   * Clears a sent questionnaire so the same browser can send another one.
+   * Without this, anyone coming back after sending was stuck on "SENT" for
+   * good — the saved draft reopens on every visit. Only offered once the
+   * answers have actually reached us, so nothing unsent can be lost here.
+   */
+  const startOver = useCallback(() => {
+    clearTimeout(advanceTimer.current);
+    applyDraft(EMPTY_DRAFT);
+    setOverlay("none");
+    setNavOpen(false);
+  }, [applyDraft]);
+
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
   // The robot graphic on the intro screen is pinned to the top of the
@@ -417,25 +464,29 @@ export function DiscoveryWizard() {
     [setAnswer, next]
   );
 
-  const setRepCell = useCallback(
-    (question: Question, rowIndex: number, colKey: string, value: string | string[]) => {
+  // The one way a table's rows get written: change what's on screen, then
+  // carry along any rows hidden because their source is deselected (see
+  // `withParkedRows`), so no table action can silently wipe them.
+  const updateRepRows = useCallback(
+    (question: Question, change: (rows: RepRow[]) => RepRow[]) => {
       setRepRows((prev) => {
-        const rows = [...rowsFor(prev, question, answers)];
-        rows[rowIndex] = { ...rows[rowIndex], [colKey]: value };
-        return { ...prev, [question.id]: rows };
+        const onScreen = rowsFor(prev, question, answers);
+        return { ...prev, [question.id]: withParkedRows(prev[question.id], onScreen, change(onScreen)) };
       });
     },
     [answers]
   );
 
+  const setRepCell = useCallback(
+    (question: Question, rowIndex: number, colKey: string, value: string | string[]) =>
+      updateRepRows(question, (rows) => rows.map((row, i) => (i === rowIndex ? { ...row, [colKey]: value } : row))),
+    [updateRepRows]
+  );
+
   const addRepRow = useCallback(
-    (question: Question, extra?: Record<string, string>) => {
-      setRepRows((prev) => ({
-        ...prev,
-        [question.id]: [...rowsFor(prev, question, answers), { ...makeRepRow(), ...extra }],
-      }));
-    },
-    [answers]
+    (question: Question, extra?: Record<string, string>) =>
+      updateRepRows(question, (rows) => [...rows, { ...makeRepRow(), ...extra }]),
+    [updateRepRows]
   );
 
   const removeRepRow = useCallback(
@@ -449,12 +500,9 @@ export function DiscoveryWizard() {
       if (isGeneratedRowKey(target.__key as string | undefined) && question.removeSource) {
         setAnswers((prev) => question.removeSource!(target, prev));
       }
-      setRepRows((prev) => ({
-        ...prev,
-        [question.id]: rowsFor(prev, question, answers).filter((_, i) => i !== rowIndex),
-      }));
+      updateRepRows(question, (onScreen) => onScreen.filter((_, i) => i !== rowIndex));
     },
-    [answers, repRows]
+    [answers, repRows, updateRepRows]
   );
 
   const { qTotal, qNum } = useMemo(
@@ -636,6 +684,7 @@ export function DiscoveryWizard() {
               rows={currentRows}
               repRows={reconciledRepRows}
               blocked={blockedForward}
+              formatMessage={currentFormatProblem}
               onSetAnswer={setAnswer}
               onToggleMulti={toggleMulti}
               onChooseSingle={chooseSingle}
@@ -646,7 +695,9 @@ export function DiscoveryWizard() {
             />
           )}
 
-          {current.kind === "end" && <EndScreen submitted={submitted} onReview={() => setOverlay("review")} />}
+          {current.kind === "end" && (
+            <EndScreen submitted={submitted} onReview={() => setOverlay("review")} onStartOver={startOver} />
+          )}
         </div>
       </div>
 
@@ -852,6 +903,7 @@ function QuestionScreen({
   rows,
   repRows,
   blocked,
+  formatMessage,
   onSetAnswer,
   onToggleMulti,
   onChooseSingle,
@@ -866,6 +918,8 @@ function QuestionScreen({
   rows: RepRow[];
   repRows: Record<string, RepRow[]>;
   blocked: boolean;
+  /** The typed answer's format problem (e.g. a malformed email), if any. */
+  formatMessage: string | null;
   onSetAnswer: (id: string, value: string) => void;
   onToggleMulti: (id: string, option: string) => void;
   onChooseSingle: (id: string, option: string) => void;
@@ -875,7 +929,19 @@ function QuestionScreen({
   onNext: () => void;
 }) {
   const showOk = question.type !== "choice";
-  const enterHint = blocked
+  // The format message waits until the visitor leaves the field or presses
+  // Enter, so it doesn't nag halfway through typing "name@comp…". The
+  // screen is keyed by question, so this resets for every new question.
+  // Arriving on a question whose saved answer already has a problem (via
+  // Back, the review sheet's EDIT, or a section-jump redirect) shows it
+  // straight away — there's no typing in progress to wait for.
+  const [formatTouched, setFormatTouched] = useState(() => !!formatMessage);
+  const showFormatMessage = !!formatMessage && formatTouched;
+  const enterHint = showFormatMessage
+    ? "Check your answer to continue"
+    : formatMessage
+    ? "Finish your answer to continue"
+    : blocked
     ? "Add an answer to continue"
     : question.type === "long"
       ? "Enter to continue · ⌘+Enter for new line"
@@ -912,7 +978,18 @@ function QuestionScreen({
             onChange={(e) =>
               onSetAnswer(question.id, question.type === "number" ? e.target.value.replace(/[^0-9]/g, "") : e.target.value)
             }
+            onBlur={() => setFormatTouched(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") setFormatTouched(true);
+            }}
+            aria-invalid={showFormatMessage || undefined}
+            aria-describedby={showFormatMessage ? `${question.id}-format` : undefined}
           />
+        )}
+        {showFormatMessage && (
+          <p className="dw-fielderr" id={`${question.id}-format`} role="alert">
+            {formatMessage}
+          </p>
         )}
 
         {question.type === "long" && (
@@ -1254,10 +1331,15 @@ function MultiSelectCell({
 function EndScreen({
   submitted,
   onReview,
+  onStartOver,
 }: {
   submitted: boolean;
   onReview: () => void;
+  onStartOver: () => void;
 }) {
+  // Two clicks, because starting over wipes this browser's copy of the
+  // answers — the first click says so, the second does it.
+  const [confirming, setConfirming] = useState(false);
   return (
     <>
       <p className="dw-kick dw-kick-lone">Final step</p>
@@ -1275,7 +1357,28 @@ function EndScreen({
           <span className="dw-enter">{ENTER_HINT}</span>
         </div>
       ) : (
-        <div className="dw-sentmsg dw-endaction">✓ SENT — WE&rsquo;LL REPLY WITHIN ONE WORKING DAY.</div>
+        <>
+          <div className="dw-sentmsg dw-endaction">✓ SENT — WE&rsquo;LL REPLY WITHIN ONE WORKING DAY.</div>
+          <div className="dw-endaction">
+            {confirming ? (
+              <>
+                <span className="dw-help dw-startover-q">
+                  This clears your answers from this browser. Your sent copy is safe with us.
+                </span>
+                <button className="dw-btn-teal" onClick={onStartOver}>
+                  Yes, start again
+                </button>
+                <button className="dw-ghost" onClick={() => setConfirming(false)}>
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button className="dw-ghost" onClick={() => setConfirming(true)}>
+                Start a new questionnaire
+              </button>
+            )}
+          </div>
+        </>
       )}
     </>
   );
