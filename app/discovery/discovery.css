@@ -799,6 +799,12 @@ select.dw-rinp {
   border-bottom-color: var(--dw-err);
 }
 
+.dw-help.dw-carried {
+  margin-top: 10px;
+  font-size: clamp(14px, 0.9vw, 16px);
+  color: var(--dw-selected-text);
+}
+
 .dw-help.dw-startover-q {
   margin: 0;
 }

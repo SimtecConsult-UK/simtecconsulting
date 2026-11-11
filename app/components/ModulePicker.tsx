@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BOOKING_URL, SECTION_IDS } from "../lib/sections";
 import { MODULE_CATALOG } from "../lib/moduleCatalog";
+import { saveModulePicks } from "../lib/modulePicks";
 
 // Accent matches the nav "Book a Workshop" CTA (brand teal + dark ink text on fills)
 const ACCENT = "var(--color-brand-blue)";
@@ -58,17 +59,23 @@ export function ModulePicker() {
   const [activeType, setActiveType] = useState(1);
   const [picks, setPicks] = useState<Record<number, string[]>>({});
 
-  function toggle(id: string) {
-    setPicks((prev) => {
-      const cur = prev[activeType] ?? RECOMMENDED[activeType];
-      return {
-        ...prev,
-        [activeType]: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id],
-      };
-    });
+  const currentPicks = picks[activeType] ?? RECOMMENDED[activeType];
+
+  // Every change is remembered as it happens, so the discovery questionnaire
+  // (where Calendly sends them after booking) opens with these ticked —
+  // whichever "Book a Workshop" button they use, however they open it. Only
+  // once they've engaged (picked a business type or ticked a module): the
+  // untouched default suggestions are never carried over.
+  function chooseType(type: number) {
+    setActiveType(type);
+    saveModulePicks(picks[type] ?? RECOMMENDED[type]);
   }
 
-  const currentPicks = picks[activeType] ?? RECOMMENDED[activeType];
+  function toggle(id: string) {
+    const next = currentPicks.includes(id) ? currentPicks.filter((x) => x !== id) : [...currentPicks, id];
+    setPicks((prev) => ({ ...prev, [activeType]: next }));
+    saveModulePicks(next);
+  }
 
   return (
     <section id={SECTION_IDS.solutions} className="bg-white px-5 py-8 md:px-10 md:py-11 lg:px-16 lg:py-16">
@@ -103,7 +110,7 @@ export function ModulePicker() {
               return (
                 <button
                   key={label}
-                  onClick={() => setActiveType(i)}
+                  onClick={() => chooseType(i)}
                   className="font-heading cursor-pointer whitespace-nowrap rounded-full border-[1.5px] px-[13px] py-2 text-[12.5px] transition-all duration-150 md:px-4 md:py-[9px] md:text-[13.5px]"
                   style={{
                     borderColor: active ? ACCENT : "#e3e7ec",

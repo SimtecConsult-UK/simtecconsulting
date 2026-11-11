@@ -3,6 +3,7 @@
 import { Fragment, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { Logo } from "../components/Logo";
+import { clearModulePicks, loadModulePickIds } from "../lib/modulePicks";
 import { DiscoveryBrief } from "./DiscoveryBrief";
 import { ReviewSheet } from "./ReviewSheet";
 import { submitDiscovery } from "./actions";
@@ -38,6 +39,8 @@ import {
   reconcileRepRows,
   withParkedRows,
   sanitizeAnswers,
+  answersFromModuleIds,
+  hasText,
 } from "./data";
 
 const STORAGE_KEY = "simtec_discovery_wizard";
@@ -54,6 +57,58 @@ type PersistedState = {
 // A blank questionnaire — the starting state, and what "Start a new
 // questionnaire" resets to.
 const EMPTY_DRAFT: PersistedState = { idx: 0, answers: {}, repRows: {}, consent: false, submitted: false };
+
+// The one place the draft is written to and read from browser storage.
+function writeDraft(draft: PersistedState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+  } catch {
+    // storage unavailable — draft simply won't persist
+  }
+}
+
+// A saved draft (as text) back into a full draft; `null` if malformed.
+function parseDraft(raw: string): PersistedState | null {
+  try {
+    const saved = JSON.parse(raw) as Partial<PersistedState> | null;
+    if (!saved) return null;
+    return {
+      idx: saved.idx || EMPTY_DRAFT.idx,
+      answers: saved.answers || EMPTY_DRAFT.answers,
+      repRows: saved.repRows || EMPTY_DRAFT.repRows,
+      consent: !!saved.consent,
+      submitted: !!saved.submitted,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Pre-fills the questions the homepage module picker covers (see
+ * lib/modulePicks.ts), if any picks were saved. Only when the visitor hasn't
+ * answered any of them — their own answers always win — and never into a
+ * questionnaire that's already been sent (the picks then wait for "Start a
+ * new questionnaire"). `carried` lists the pre-filled question ids.
+ *
+ * The picks are used up once read, so they can't reappear later over answers
+ * since changed. A pre-filled draft is saved before that, so reading again
+ * (React re-runs mount effects in development) finds the same result.
+ */
+function withHomepagePicks(draft: PersistedState): { draft: PersistedState; carried: string[] } {
+  if (draft.submitted) return { draft, carried: [] };
+  const ids = loadModulePickIds();
+  const prefill = ids && answersFromModuleIds(ids);
+  const carried = prefill ? Object.keys(prefill) : [];
+  if (!prefill || carried.some((id) => hasText(draft.answers[id]))) {
+    clearModulePicks();
+    return { draft, carried: [] };
+  }
+  const next = { ...draft, answers: { ...draft.answers, ...prefill } };
+  writeDraft(next);
+  clearModulePicks();
+  return { draft: next, carried };
+}
 
 // Rows carry a "__key" field purely so React can track row identity across
 // add/remove — it's not real column data and should be ignored by anything
@@ -161,6 +216,9 @@ export function DiscoveryWizard() {
   const [sending, startSending] = useTransition();
   const submitted = submitState.kind === "sent";
   const [hydrated, setHydrated] = useState(false);
+  // Questions pre-filled from the homepage picker on this visit — they show
+  // a short note saying so. Not saved: it's a one-off heads-up.
+  const [carriedIds, setCarriedIds] = useState<string[]>([]);
   const [navOpen, setNavOpen] = useState(false);
   // How many times the visitor has tried to move on from the current step
   // while blocked (Enter, arrow keys, section menu) — a count so a repeat
@@ -184,11 +242,7 @@ export function DiscoveryWizard() {
 
   const flushSave = useCallback(() => {
     if (!pendingSave.current) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingSave.current));
-    } catch {
-      // storage unavailable — draft simply won't persist
-    }
+    writeDraft(pendingSave.current);
     pendingSave.current = null;
   }, []);
 
@@ -203,24 +257,45 @@ export function DiscoveryWizard() {
     setSubmitState(draft.submitted ? { kind: "sent" } : { kind: "idle" });
   }, []);
 
+  // `applyDraft` plus any homepage picks (see `withHomepagePicks`). Only ever
+  // turns the note on, so a repeat run that finds the picks used up keeps it.
+  const applyDraftWithPicks = useCallback(
+    (base: PersistedState) => {
+      const { draft, carried } = withHomepagePicks(base);
+      applyDraft(draft);
+      if (carried.length > 0) setCarriedIds(carried);
+    },
+    [applyDraft]
+  );
+
   // Rehydrate the saved draft on mount.
   useEffect(() => {
+    let raw: string | null = null;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as Partial<PersistedState>;
-        applyDraft({
-          idx: saved.idx || EMPTY_DRAFT.idx,
-          answers: saved.answers || EMPTY_DRAFT.answers,
-          repRows: saved.repRows || EMPTY_DRAFT.repRows,
-          consent: !!saved.consent,
-          submitted: !!saved.submitted,
-        });
-      }
+      raw = localStorage.getItem(STORAGE_KEY);
     } catch {
-      // ignore malformed drafts
+      // storage unavailable — start blank
     }
+    applyDraftWithPicks((raw && parseDraft(raw)) || EMPTY_DRAFT);
     setHydrated(true);
+  }, [applyDraftWithPicks]);
+
+  // Another tab of this questionnaire saved (e.g. Calendly opened a second
+  // one, pre-filled from the homepage, while an older one was still open):
+  // follow it, instead of this tab later saving its out-of-date copy over it.
+  // Once both hold the same draft, saving it again is a no-op (the browser
+  // only notifies other tabs of real changes), so the tabs can't ping-pong.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY || !e.newValue) return;
+      const draft = parseDraft(e.newValue);
+      if (!draft) return;
+      clearTimeout(saveTimer.current);
+      pendingSave.current = null;
+      applyDraft(draft);
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, [applyDraft]);
 
   // Auto-save on state change, debounced so fast typing doesn't serialize the
@@ -480,10 +555,13 @@ export function DiscoveryWizard() {
    */
   const startOver = useCallback(() => {
     clearTimeout(advanceTimer.current);
-    applyDraft(EMPTY_DRAFT);
+    // Picks made on the homepage since this one was sent (e.g. before booking
+    // another workshop) pre-fill the new one; older ones were already used up.
+    setCarriedIds([]);
+    applyDraftWithPicks(EMPTY_DRAFT);
     setOverlay("none");
     setNavOpen(false);
-  }, [applyDraft]);
+  }, [applyDraftWithPicks]);
 
   useEffect(() => () => clearTimeout(advanceTimer.current), []);
 
@@ -745,6 +823,7 @@ export function DiscoveryWizard() {
               key={current.question.id}
               question={current.question}
               secLabel={`${secNo} · ${section.name}`}
+              carried={carriedIds.includes(current.question.id) && hasText(answers[current.question.id])}
               answers={answers}
               rows={currentRows}
               repRows={reconciledRepRows}
@@ -965,6 +1044,7 @@ function NeedHelpPanel({ questionId, needHelp }: { questionId: string; needHelp:
 function QuestionScreen({
   question,
   secLabel,
+  carried,
   answers,
   rows,
   repRows,
@@ -981,6 +1061,8 @@ function QuestionScreen({
 }: {
   question: Question;
   secLabel: string;
+  /** Pre-filled from the homepage module picker on this visit, and still has something ticked. */
+  carried: boolean;
   answers: Answers;
   rows: RepRow[];
   repRows: Record<string, RepRow[]>;
@@ -1034,6 +1116,9 @@ function QuestionScreen({
           </>
         ) : (
           <p className="dw-help dw-qhelp">{question.help || ""}</p>
+        )}
+        {carried && (
+          <p className="dw-help dw-carried">We&apos;ve carried over the modules from our homepage. Change anything you like.</p>
         )}
       </div>
 
