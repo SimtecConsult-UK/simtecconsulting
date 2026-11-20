@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { type Answers, type Question, type ReviewSectionData, padSectionNumber } from "./data";
-import { ReviewValueView, SubmitButton, useBodyScrollLock, useEscapeKey } from "./ReviewShared";
+import { type Answers, type Question, type ReviewSectionData, padSectionNumber, reviewTotals } from "./data";
+import { SubmitButton, useBodyScrollLock, useEscapeKey } from "./ReviewShared";
+import { ReviewValueView } from "./ReviewValue";
 import type { SubmitStatus } from "./submission";
 
 export function ReviewSheet({
@@ -29,8 +30,7 @@ export function ReviewSheet({
   useBodyScrollLock();
   useEscapeKey(onClose);
 
-  const totalAnswered = sections.reduce((sum, s) => sum + s.answeredCount, 0);
-  const totalTbc = sections.reduce((sum, s) => sum + s.tbcCount, 0);
+  const { answered: totalAnswered, tbc: totalTbc } = reviewTotals(sections);
 
   const company = (answers.company as string | undefined) || "";
   const projectName = (answers.projectName as string | undefined) || "";

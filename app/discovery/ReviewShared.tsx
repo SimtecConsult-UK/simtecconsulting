@@ -1,12 +1,10 @@
-// Shared bits between the review sheet (ReviewSheet.tsx, "1a") and the
-// discovery brief (DiscoveryBrief.tsx, "1c") — both render the exact same
-// `ReviewValue` (see data.ts) the exact same way, just inside different
-// surrounding layout (a `.dw-qrow` grid vs. a `.dw-dl` definition list).
+// Shared client-side bits between the review sheet (ReviewSheet.tsx, "1a")
+// and the discovery brief (DiscoveryBrief.tsx, "1c"): scroll lock, Escape to
+// close, and the submit button. The answers themselves are drawn by
+// ReviewValue.tsx, which both import directly.
 
 import { useEffect } from "react";
 import type { SubmitStatus } from "./submission";
-
-export { ReviewTable, ReviewValueView } from "./ReviewValue";
 
 // Both overlays are full-screen and modal over the wizard behind them, so
 // each locks body scroll for as long as it's mounted — mount/unmount already

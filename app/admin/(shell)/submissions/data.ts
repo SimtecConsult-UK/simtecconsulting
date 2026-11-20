@@ -147,14 +147,19 @@ export async function getSubmission(id: string): Promise<Submission | null> {
   };
 }
 
-/** "12 September 2026, 14:03" — the same en-GB/UTC rule the blog dates use. */
+/**
+ * "12 September 2026 at 14:03", in UK local time. Unlike the blog's dates,
+ * which are days and can safely use UTC, this is a time of day — and it ends
+ * up in the downloaded brief, where an unlabelled UTC time would be an hour
+ * off for the half of the year the UK is on summer time.
+ */
 const STAMP = new Intl.DateTimeFormat("en-GB", {
   day: "2-digit",
   month: "long",
   year: "numeric",
   hour: "2-digit",
   minute: "2-digit",
-  timeZone: "UTC",
+  timeZone: "Europe/London",
 });
 
 export function formatSubmittedAt(iso: string): string {

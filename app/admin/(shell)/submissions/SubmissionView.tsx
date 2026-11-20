@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { DeleteSubmission } from "./DeleteSubmission";
+import { DownloadBrief } from "./DownloadBrief";
+import { BriefPaper } from "../../../discovery/BriefPaper";
+import { briefFileName } from "../../../discovery/printBrief";
 import { formatSubmittedAt, type Submission } from "./data";
 import { buildReviewData, padSectionNumber, SECTIONS } from "../../../discovery/data";
 import { ReviewValueView } from "../../../discovery/ReviewValue";
-// The answers are drawn with the wizard's own classes, which live in the
-// wizard's stylesheet. Without this every chip, table and "TBC" marker renders
-// as unstyled text, because the admin stylesheet has no `dw-` rules.
-import "../../../discovery/discovery.css";
 
 /**
  * One submission, read back.
@@ -31,60 +30,78 @@ export function SubmissionView({ submission }: { submission: Submission }) {
       isEmail: q.id === "email",
     }));
 
+  const sentAt = formatSubmittedAt(submission.createdAt);
+  const consentNote = submission.consent
+    ? "Consented to Simtec preparing a Phase 1 scope from these answers."
+    : "No consent recorded — check before acting on this.";
+
   return (
     <div className="cms-page cms-page--narrow">
-      <Link href="/admin/submissions" className="cms-link-btn">
-        ← All submissions
-      </Link>
+      <div className="cms-screen-only">
+        <Link href="/admin/submissions" className="cms-link-btn">
+          ← All submissions
+        </Link>
 
-      <div className="cms-editor-head">
-        <h1 className="cms-h">{submission.company || "Company not given"}</h1>
-        <span className="cms-mono">Sent {formatSubmittedAt(submission.createdAt)}</span>
+        <div className="cms-editor-head">
+          <h1 className="cms-h">{submission.company || "Company not given"}</h1>
+          <div className="cms-editor-head-row">
+            <span className="cms-mono">Sent {sentAt}</span>
+            <DownloadBrief fileName={briefFileName(submission.company, submission.projectName)} />
+          </div>
+        </div>
+
+        <div className="cms-card">
+          <span className="cms-label">Who sent it</span>
+          <div className="cms-grid-2">
+            {contact.map(({ label, value, isEmail }) => (
+              <div key={label} className="cms-field">
+                <span className="cms-label">{label}</span>
+                <span>
+                  {isEmail && value ? (
+                    <a href={`mailto:${value}`} className="cms-link-btn" style={{ padding: 0 }}>
+                      {value}
+                    </a>
+                  ) : (
+                    value || "—"
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="cms-help">{consentNote}</p>
+        </div>
+
+        {replayed.map(({ section, sectionIndex, items, answeredCount, total }) => (
+          <div className="cms-card" key={section.name}>
+            <span className="cms-label">
+              {padSectionNumber(sectionIndex)} · {section.name} — {answeredCount} of {total} answered
+            </span>
+
+            {items.map(({ question, value }) => (
+              <div className="cms-field" key={question.id}>
+                <span className="cms-label">{question.label}</span>
+                <ReviewValueView value={value} />
+              </div>
+            ))}
+
+            {items.length === 0 && <p className="cms-help">Nothing answered in this section.</p>}
+          </div>
+        ))}
+
+        <DeleteSubmission id={submission.id} />
       </div>
 
-      <div className="cms-card">
-        <span className="cms-label">Who sent it</span>
-        <div className="cms-grid-2">
-          {contact.map(({ label, value, isEmail }) => (
-            <div key={label} className="cms-field">
-              <span className="cms-label">{label}</span>
-              <span>
-                {isEmail && value ? (
-                  <a href={`mailto:${value}`} className="cms-link-btn" style={{ padding: 0 }}>
-                    {value}
-                  </a>
-                ) : (
-                  value || "—"
-                )}
-              </span>
-            </div>
-          ))}
-        </div>
-        <p className="cms-help">
-          {submission.consent
-            ? "Consented to Simtec preparing a Phase 1 scope from these answers."
-            : "No consent recorded — check before acting on this."}
-        </p>
+      {/* What "Download PDF" saves. Every section is included — Project
+          Basics too, since the PDF has no contact card above it. */}
+      <div className="cms-print-only">
+        <BriefPaper
+          company={submission.company}
+          projectName={submission.projectName}
+          stage={`SENT ${sentAt.toUpperCase()}`}
+          note={consentNote}
+          sections={sections}
+        />
       </div>
-
-      {replayed.map(({ section, sectionIndex, items, answeredCount, total }) => (
-        <div className="cms-card" key={section.name}>
-          <span className="cms-label">
-            {padSectionNumber(sectionIndex)} · {section.name} — {answeredCount} of {total} answered
-          </span>
-
-          {items.map(({ question, value }) => (
-            <div className="cms-field" key={question.id}>
-              <span className="cms-label">{question.label}</span>
-              <ReviewValueView value={value} />
-            </div>
-          ))}
-
-          {items.length === 0 && <p className="cms-help">Nothing answered in this section.</p>}
-        </div>
-      ))}
-
-      <DeleteSubmission id={submission.id} />
     </div>
   );
 }
