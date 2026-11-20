@@ -920,3 +920,39 @@
 .cms-pager > :last-child {
   justify-self: end;
 }
+
+/* ---------------------------------------------------------------------
+   Printing. The admin itself never prints — the sidebar goes and the page is
+   white. A page that wants to print something specific (a submission's
+   "Download PDF") wraps its screen content in .cms-screen-only and the
+   printable part in .cms-print-only. The brief's own print rules (page size,
+   margins, table breaks) come from discovery.css, which BriefPaper imports.
+--------------------------------------------------------------------- */
+.cms-screen-only {
+  display: contents; /* adds no box, so the page's own layout is untouched */
+}
+.cms-print-only {
+  display: none;
+}
+
+@media print {
+  .cms-shell {
+    display: block;
+    min-height: 0;
+  }
+  .cms-side,
+  .cms-screen-only {
+    display: none !important;
+  }
+  .cms-print-only {
+    display: block;
+  }
+  .cms-page {
+    padding: 0;
+    max-width: none;
+  }
+  body,
+  .cms {
+    background: #fff !important;
+  }
+}

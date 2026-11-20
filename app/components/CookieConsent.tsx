@@ -120,7 +120,7 @@ export function CookieConsent() {
         <div
           role="region"
           aria-label="Cookie choices"
-          className="fixed inset-x-0 bottom-0 z-[150] px-[22px] pb-[22px]"
+          className="fixed inset-x-0 bottom-0 z-[150] px-[22px] pb-[22px] print:hidden"
         >
           <div
             className="mx-auto flex max-w-[var(--container-content)] flex-col gap-4 rounded-2xl border border-white/10 p-5 text-white sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6"
@@ -155,7 +155,7 @@ export function CookieConsent() {
           aria-modal="true"
           aria-labelledby="cookie-settings-title"
           onKeyDown={onKeyDown}
-          className="fixed inset-0 z-[200] flex items-end justify-center p-0 sm:items-center sm:p-6"
+          className="fixed inset-0 z-[200] flex items-end justify-center p-0 sm:items-center sm:p-6 print:hidden"
         >
           <div
             aria-hidden="true"

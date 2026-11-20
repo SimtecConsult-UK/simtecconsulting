@@ -1920,3 +1920,11 @@ export function buildReviewData(answers: Answers, repRows: Record<string, RepRow
     return { section, sectionIndex, items, total: items.length, answeredCount: items.length - tbcCount, tbcCount };
   });
 }
+
+/** Answered and TBC counts across every section — the review sheet's stats and the brief's header. */
+export function reviewTotals(sections: ReviewSectionData[]): { answered: number; tbc: number } {
+  return sections.reduce(
+    (t, s) => ({ answered: t.answered + s.answeredCount, tbc: t.tbc + s.tbcCount }),
+    { answered: 0, tbc: 0 }
+  );
+}

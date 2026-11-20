@@ -4,6 +4,10 @@
 // client-only — these use no hooks, and the CMS renders them on the server.
 
 import { Fragment } from "react";
+// The wizard's stylesheet, imported here rather than by each page that draws
+// these: the CMS renders them outside the wizard, and without it every chip,
+// table and "TBC" marker — and the brief's A4 print setup — would be lost.
+import "./discovery.css";
 import { type RepColumn, type RepRow, type ReviewValue, UNGROUPED_ROWS_HEADER, cellArray, cellText } from "./data";
 
 function cellDisplay(column: RepColumn, row: RepRow): string {

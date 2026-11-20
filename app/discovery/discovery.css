@@ -1325,6 +1325,12 @@ select.dw-rinp {
   font-size: 11px;
   letter-spacing: 0.06em;
 }
+/* A line under the brief's header (the CMS's consent record). */
+.dw-docnote {
+  font-size: 12px;
+  color: #667082;
+  margin: -12px 0 22px;
+}
 .dw-dsec {
   margin-bottom: 24px;
 }
